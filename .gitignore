@@ -1,0 +1,9 @@
+.DS_Store
+node_modules/
+*.wbn
+*.warc.gz
+*.wacz
+test.js
+examples/
+__*.js
+

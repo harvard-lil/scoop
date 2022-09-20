@@ -1,0 +1,30 @@
+{
+  "name": "mischief",
+  "version": "1.0.0",
+  "description": "Experimental single-page web archiving solution using Playwright.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "postinstall": "cp ./node_modules/warcio/dist/warcio.js ./node_modules/warcio/dist/warcio.mjs;",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/matteocargnelutti/mischief.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/matteocargnelutti/mischief/issues"
+  },
+  "homepage": "https://github.com/matteocargnelutti/mischief#readme",
+  "dependencies": {
+    "warcio": "^1.5.1",
+    "wbn": "^0.0.8",
+    "whatwg-url": "^11.0.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.26.0",
+    "prettier": "^2.7.1"
+  }
+}
