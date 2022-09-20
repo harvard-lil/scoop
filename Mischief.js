@@ -304,6 +304,7 @@ export class Mischief {
 
   /**
    * Retrieves resources that could not be intercepted during in-browser capture and adds them to the exchange list.
+   * 
    * @param {string} url - The url to capture 
    * @param {string} userAgent - Ideally, the user agent used by Playwright during the in-browser capture phase.
    * @returns {Promise<boolean>}
@@ -365,6 +366,7 @@ export class Mischief {
 
   /**
    * Adds an entry to the exchange list (`this.exchange`) unless size limit has been reached.
+   * 
    * @param {MischiefExchange} exchange 
    * @returns {boolean}
    */
@@ -417,6 +419,7 @@ export class Mischief {
   /**
    * Creates and stores a log entry.
    * Will automatically be printed to STDOUT if `this.options.verbose` is `true`.
+   * 
    * @param {string} message 
    * @param {boolean} [isWarning=false] 
    * @param {string} [trace=""] 
@@ -507,8 +510,7 @@ export class Mischief {
   }
 
   /**
-   * Export capture to WARC files.
-   *
+   * Export capture to WARC.
    * @param {boolean} [gzip=false] - If `true`, will be compressed using GZIP (for `.warc.gz`). 
    * @returns {Promise<ArrayBuffer>} - Binary data ready to be saved a .warc or .warc.gz
    */
