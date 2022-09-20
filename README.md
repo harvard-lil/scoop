@@ -32,9 +32,7 @@ const myArchive = await myCapture.toWarc(gzip=true);
 - [x] Auto play media
 - [x] Auto scroll
 - [ ] Per-website scripts
-  - [ ] Twitter video
-  - [ ] TikTok 
-  - [ ] ...
+  - [ ] _(As necessary to cover playback edge cases_)
 
 ### Security
 - [x] New browser context for each capture _(incognito mode)_ 
@@ -48,18 +46,32 @@ const myArchive = await myCapture.toWarc(gzip=true);
 ### Export formats
 - [x] `.warc`
 - [x] `.warc.gz`
-- [ ] `.wacz`
+- [ ] `.wacz` _(unsigned)_
+- [ ] `.wacz` _(signed)_
 - [ ] ~`.wbn`~ _(later, optional)_
 
 ## Playback
+> Current focus
 - [ ] Fully functional YouTube playbacks:
   - At the moment, the video stops after a few seconds. Resources seem to be captured.
   - Clue: See how the `.warc` in `warcembed-demo.s3.amazonaws.com/youtube.com-2020-09-03.wacz` looks different. It seems that the [status line](https://github.com/webrecorder/warcio.js/blob/32d62bf39cdbff0c68c523a192c793e33504101d/src/warcrecord.js#L27) is rewritten in a way to give `<replay-web-page>` clues as to how to interpret it.  
 - [ ] Functional Twitter Videos playback:
   - May require additional browser script.
   - Clues from YouTube playback bug may apply.
-- [ ] Functional TikTok playbacks
+- [ ] Functional TikTok captures and playbacks
+  - We're likely identified as bots
+  - Clues from YouTube playback bug may apply.
 - [ ] Functional Instagram playbacks
+  - Video doesn't playback
+
+### Other Known issues
+> Note: A lot of these issues appeared as I added _requests_ to WARCs.
+- [ ] Fonts sometimes don't get downloaded or played back correctly
+- [ ] Using incognito mode _(Playwright contexts)_ seems to be triggering bot detection scripts
+  - Can this be avoided?
+- [ ] CDX rewriting quirks:
+  - When capturing `https://lil.law.harvard.edu`, the root url is rewritten as `https://lil.law.harvard.edu/?__wb_method=HTTP/1.1&__wb_post_data=`
+- [ ] Screenshots sometimes come back empty
 
 ---
 
@@ -68,15 +80,3 @@ const myArchive = await myCapture.toWarc(gzip=true);
 - Install dependencies: `npm install`
 - You may need to install Playwright manually: `npm i -D playwright`
 - Get started by having a look and running `example.js`
-
----
-
-## Known issues
-- [ ] Fonts sometimes don't get downloaded or played back correctly
-- [ ] Using incognito mode _(Playwright contexts)_ seems to be triggering bot detection scripts
-  - Can this be avoided?
-- [ ] CDX rewriting quirks:
-  - When capturing `https://lil.law.harvard.edu`, the root url is rewritten as `https://lil.law.harvard.edu/?__wb_method=HTTP/1.1&__wb_post_data=`
-- [ ] Screenshots sometimes come back empty
-
-> Note: A lot of these issues appeared as I added _requests_ to WARCs.
