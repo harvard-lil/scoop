@@ -31,6 +31,7 @@ const myArchive = await myCapture.toWarc(gzip=true);
 - [x] Listing of audio and video sources for out-of-browser capture
 - [x] Auto play media
 - [x] Auto scroll
+- [ ] Grab `@font-face` references
 - [ ] Per-website scripts
   - [ ] _(As necessary to cover playback edge cases_)
 
