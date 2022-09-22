@@ -1,5 +1,7 @@
-/**
- * Mischief
+import { STATUS_CODES } from "http";
+
+ /**
+ * * Mischief
  * @module MischiefExchange
  * @author The Harvard Library Innovation Lab
  * @license MIT
@@ -30,6 +32,16 @@ export class MischiefExchange {
 
   /** @type {?number} */
   status;
+
+  /**
+   * Approximates what the status line might have been.
+   * Playwright doesn't give us access to the original,
+   * nor does it surface the HTTP version, which we leave as "?" here.
+   * @returns {?string}
+   */
+  get statusLine() {
+    return this.status ? `HTTP/? ${this.status} ${STATUS_CODES[this.status]}` : null;
+  };
 
   /** @type {?Object} */
   headers;

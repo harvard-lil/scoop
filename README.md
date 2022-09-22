@@ -69,7 +69,7 @@ const myArchive = await myCapture.toWarc(gzip=true);
 - [ ] Fonts sometimes don't get downloaded or played back correctly
 - [ ] Using incognito mode _(Playwright contexts)_ seems to be triggering bot detection scripts
   - Can this be avoided?
-- [ ] CDX rewriting quirks:
+- [x] CDX rewriting quirks:
   - When capturing `https://lil.law.harvard.edu`, the root url is rewritten as `https://lil.law.harvard.edu/?__wb_method=HTTP/1.1&__wb_post_data=`
 - [ ] Screenshots sometimes come back empty
 
