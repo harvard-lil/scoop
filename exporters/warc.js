@@ -44,10 +44,16 @@ export async function warc(capture, gzip=false) {
       }
 
       const record = WARCRecord.create({
-        url: exchange.url, 
+        url: exchange.url,
         date: exchange.date.toISOString(), 
         type: exchange.type, 
-        warcVersion: warcVersion, 
+        warcVersion: warcVersion,
+        // warcio expects the method to be prepended to the statusLine
+        // Reference:
+        // - https://github.com/webrecorder/pywb/pull/636#issue-869181282
+        // - https://github.com/webrecorder/warcio.js/blob/d5dcaec38ffb0a905fd7151273302c5f478fe5d9/src/statusandheaders.js#L69-L74
+        // - https://github.com/webrecorder/warcio.js/blob/fdb68450e2e011df24129bac19691073ab6b2417/test/testSerializer.js#L212
+        statusline: `${exchange.method} ${exchange.statusLine}`,
         httpHeaders: exchange.headers,
         keepHeadersCase: false
       }, content());
