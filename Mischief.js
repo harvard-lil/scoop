@@ -102,6 +102,16 @@ export class Mischief {
       height: options.captureWindowY,
     });
 
+    if (options.runSiteSpecificBehaviors){
+      await page.addInitScript({ path: './node_modules/browsertrix-behaviors/dist/behaviors.js' });
+      await page.addInitScript({
+        content: `
+        self.__bx_behaviors.init({
+          siteSpecific: true
+        });`
+      });
+    }
+
     page.on("response", this.networkInterception);
 
     //
@@ -120,6 +130,14 @@ export class Mischief {
 
     // Run browser scripts
     this.addToLogs("Running browser scripts.");
+
+    try {
+      if (options.runSiteSpecificBehaviors){
+        await Promise.allSettled(page.frames().map(frame => frame.evaluate("self.__bx_behaviors.run()")));
+      }
+    } catch(err) {
+      this.addToLogs("Browser Script: Site specific behaviors failed.", true, err);
+    }
 
     try {
       if (options.autoPlayMedia === true) {

@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/matteocargnelutti/mischief#readme",
   "dependencies": {
+    "browsertrix-behaviors": "^0.3.4",
     "warcio": "^1.5.1",
     "wbn": "^0.0.8",
     "whatwg-url": "^11.0.0"

@@ -25,7 +25,8 @@
  * @property {number} autoScrollTimeout - How long should Mischief wait for the scroll process to go through, in ms? Defaults to 5s.
  * @property {boolean} grabResponsiveImages - Should Mischief try to list and download all responsive images? Defaults to `true`.
  * @property {boolean} grabAllStylesheets - Should Mischief try to list and download all stylesheets? Defaults to `true`.
- * @property {boolean} grabMedia - Should Mischief try to list and download all `<audio>` and `<video>` sources? Defaults to `true`. 
+ * @property {boolean} grabMedia - Should Mischief try to list and download all `<audio>` and `<video>` sources? Defaults to `true`.
+ * @property {boolean} runSiteSpecificBehaviors - Should Mischief run behaviors tailored to specific sites (ex: Twitter) in an attempt to better grab the page? Defaults to `true`.
  */
 export const MischiefOptions = {
   verbose: true,
@@ -44,5 +45,6 @@ export const MischiefOptions = {
   autoScrollTimeout: 5 * 1000,
   grabResponsiveImages: true,
   grabAllStylesheets: true,
-  grabMedia: true
+  grabMedia: true,
+  runSiteSpecificBehaviors: true
 };
