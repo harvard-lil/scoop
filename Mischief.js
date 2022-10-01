@@ -6,6 +6,13 @@
  */
 import { chromium } from "playwright";
 
+import http from "http";
+import https from "https";
+import httpProxy from "http-proxy";
+import ProxyServer from "transparent-proxy";
+import { readFileSync } from "fs";
+import { execSync } from "child_process";
+
 import * as browserScripts from "./browser-scripts/index.js";
 import * as exporters from "./exporters/index.js";
 import { MischiefExchange } from "./MischiefExchange.js";
@@ -91,9 +98,65 @@ export class Mischief {
    * @returns {Promise<boolean>}
    */
   async capture() {
+    const proxyHost = 'localhost';
+    const proxyPort = 9000;
+    // const proxy = httpProxy.createProxyServer();
+    // proxy.on('proxyRes', (proxyRes, req, res) => {
+    //   console.log("derp", req.url);
+    // });
+    // const server = http.createServer((req, res) => {
+    //   console.log("BOO", req.url);
+    //   proxy.web(req, res, {target: req.url});
+    // }).listen(9000, () => {
+    //   console.log("Waiting for requests...");
+    // });
+    const ca = readFileSync('certauth.pem');
+
+    const server = new ProxyServer({
+      intercept: true,
+      verbose: true,
+      keys: (tunnel) => {
+        const certsDir = 'certs';
+        const domain = tunnel._tunnel.ADDRESS.match(/(?:[a-zA-Z-]+\.)?((?:[a-zA-Z-]+\.)*(?:[a-zA-Z-]+\.[a-zA-Z-]+))/)[1];
+        const pemPath = `${certsDir}/${domain}.pem`;
+        let pemBuffer;
+        try {
+          pemBuffer = readFileSync(pemPath);
+        } catch(e) {
+          execSync(`certauth certauth.pem --certs-dir ${certsDir} --hostname "${domain}" --wildcard_cert`);
+          pemBuffer = readFileSync(pemPath);
+        }
+
+        const pem = pemBuffer.toString().split(/(?=-----BEGIN CERTIFICATE-----)/);
+
+        return {
+          ca: ca,
+          key: pem[0],
+          cert: pem[1],
+          servername: domain,
+          checkServerIdentity: () => { return null; }
+        };
+        // return {
+        //   key: readFileSync('hexeract.key').toString(),
+        //   cert: readFileSync('hexeract.crt').toString(),
+        // };
+      },
+      injectData: (data, session) => {
+        console.log("injectData", data.toString());
+        return data;
+      }
+    });
+    server.listen(proxyPort, proxyHost, () => {
+      console.log('TCP-Proxy-Server started!', server.address());
+    }).on('error', (e) => { console.log("ERRROR!", e) });
+
     const options = this.options;
-    const browser = await chromium.launch({headless: options.headless, channel: "chrome"});
-    const context = await browser.newContext();
+    const browser = await chromium.launch({
+      headless: options.headless,
+      channel: "chrome",
+      proxy: {server: `http://${proxyHost}:${proxyPort}`}
+    });
+    const context = await browser.newContext({ignoreHTTPSErrors: true});
     const page = await context.newPage();
     const userAgent = await page.evaluate(() => navigator.userAgent);
 
@@ -211,10 +274,11 @@ export class Mischief {
       this.addToLogs("Document never reached network idle state. Moving along.", true);
     }
     finally {
-      this.addToLogs("Closing browser.");
-      await page.close();
-      await context.close();
-      await browser.close();
+      // this.addToLogs("Closing browser.");
+      // await page.close();
+      // await context.close();
+      // await browser.close();
+      // await server.close();
     }
 
     //
