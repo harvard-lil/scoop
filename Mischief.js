@@ -96,7 +96,7 @@ export class Mischief {
 
     const server = new ProxyServer({
       intercept: true,
-      verbose: true,
+      verbose: options.verbose,
       injectData(data, session) {
         // capture to happen here
         return data;
