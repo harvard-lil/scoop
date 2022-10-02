@@ -11,6 +11,8 @@
  * 
  * @property {boolean} verbose - Should log entries be printed as they are created? Defaults to `true`.
  * @property {boolean} headless - Should Playwright run in headless mode? Defaults to `false`.
+ * @property {string} proxyHost - What host should Playwright proxy through for capture? Defaults to `localhost`.
+ * @property {number} proxyPort - What port should Playwright proxy through for capture? Defaults to 9000.
  * @property {number} loadTimeout - How long should Mischief wait for the page to load, in ms? Defaults to 30s.
  * @property {number} networkIdleTimeout - How long should Mischief wait for network events to complete, in ms. Defaults to 30s.
  * @property {number} fallbackCaptureTimeout -  How long should Mischief run out-of-browser capture of non-intercepted elements for, in ms? Defaults to 60s.
@@ -30,6 +32,8 @@
 export const MischiefOptions = {
   verbose: true,
   headless: false,
+  proxyHost: "localhost",
+  proxyPort: 9000,
   loadTimeout: 30 * 1000, 
   networkIdleTimeout: 30 * 1000, 
   fallbackCaptureTimeout: 60 * 1000,

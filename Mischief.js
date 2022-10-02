@@ -5,13 +5,7 @@
  * @license MIT
  */
 import { chromium } from "playwright";
-
-import http from "http";
-import https from "https";
-
 import ProxyServer from "transparent-proxy";
-import { readFileSync } from "fs";
-import { execSync } from "child_process";
 
 import * as browserScripts from "./browser-scripts/index.js";
 import * as exporters from "./exporters/index.js";
@@ -98,44 +92,24 @@ export class Mischief {
    * @returns {Promise<boolean>}
    */
   async capture() {
-    const proxyHost = 'localhost';
-    const proxyPort = 9000;
+    const options = this.options;
 
     const server = new ProxyServer({
       intercept: true,
       verbose: true,
-      keys: (tunnel) => {
-        const certsDir = 'certs';
-        const domain = tunnel._tunnel.ADDRESS.match(/(?:[a-zA-Z-]+\.)?((?:[a-zA-Z-]+\.)*(?:[a-zA-Z-]+\.[a-zA-Z-]+))/)[1];
-        const pemPath = `${certsDir}/${domain}.pem`;
-        let pemBuffer;
-        try {
-          pemBuffer = readFileSync(pemPath);
-        } catch(e) {
-          execSync(`certauth certauth.pem --certs-dir ${certsDir} --hostname "${domain}" --wildcard_cert`);
-          pemBuffer = readFileSync(pemPath);
-        }
-
-        const pem = pemBuffer.toString().split(/(?=-----BEGIN CERTIFICATE-----)/);
-        return {
-          key: pem[0],
-          cert: pem[1]
-        };
-      },
-      injectData: (data, session) => {
-        console.log("injectData", data.toString());
+      injectData(data, session) {
+        // capture to happen here
         return data;
       }
     });
-    server.listen(proxyPort, proxyHost, () => {
+    server.listen(options.proxyPort, options.proxyHost, () => {
       console.log('TCP-Proxy-Server started!', server.address());
     });
 
-    const options = this.options;
     const browser = await chromium.launch({
       headless: options.headless,
       channel: "chrome",
-      proxy: {server: `http://${proxyHost}:${proxyPort}`}
+      proxy: {server: `http://${options.proxyHost}:${options.proxyPort}`}
     });
     const context = await browser.newContext({ignoreHTTPSErrors: true});
     const page = await context.newPage();
