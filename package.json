@@ -19,8 +19,7 @@
   },
   "homepage": "https://github.com/matteocargnelutti/mischief#readme",
   "dependencies": {
-    "http-proxy": "^1.18.1",
-    "transparent-proxy": "^1.8.11",
+    "transparent-proxy": "github:leppert/transparent-proxy#set-servername",
     "warcio": "^1.5.1",
     "wbn": "^0.0.8",
     "whatwg-url": "^11.0.0"
