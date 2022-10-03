@@ -43,18 +43,11 @@ export class Mischief {
    */
   options = {};
 
-  /** 
+  /**
    * Array of HTTP exchanges that constitute the capture.
-   * @type {MischiefExchange[]} 
+   * @type {MischiefExchange[]}
    */
   exchanges = [];
-
-  /** 
-   * List of urls that could not be captured via in-browser network interception.
-   * `this.capture()` will try to download them using `this.fallbackCapture()`.
-   * @type {string[]} 
-   */
-  fallbackCaptureQueue = [];
 
   /** @type {MischiefLog[]} */
   logs = [];
@@ -79,7 +72,6 @@ export class Mischief {
     this.url = this.filterUrl(url);
     this.options = this.filterOptions(options);
     this.networkInterception = this.networkInterception.bind(this);
-    this.fallbackCapture = this.fallbackCapture.bind(this);
   }
 
   /**
@@ -97,10 +89,8 @@ export class Mischief {
     const server = new ProxyServer({
       intercept: true,
       verbose: options.verbose,
-      injectData(data, session) {
-        // capture to happen here
-        return data;
-      }
+      injectData: (data, session) => this.networkInterception("request", data, session),
+      injectResponse: (data, session) => this.networkInterception("response", data, session)
     });
     server.listen(options.proxyPort, options.proxyHost, () => {
       console.log('TCP-Proxy-Server started!', server.address());
@@ -120,7 +110,23 @@ export class Mischief {
       height: options.captureWindowY,
     });
 
-    page.on("response", this.networkInterception);
+    const runBrowsertrixBehaviors =
+          options.grabSecondaryResources ||
+          options.autoPlayMedia ||
+          options.runSiteSpecificBehaviors;
+
+    if (runBrowsertrixBehaviors){
+      await page.addInitScript({ path: './node_modules/browsertrix-behaviors/dist/behaviors.js' });
+      await page.addInitScript({
+        content: `
+         self.__bx_behaviors.init({
+           autofetch: ${options.grabSecondaryResources},
+           autoplay: ${options.autoPlayMedia},
+           siteSpecific: ${options.runSiteSpecificBehaviors},
+           timeout: ${options.behaviorsTimeout}
+         });`
+      });
+    }
 
     //
     // Phase 1: In-browser capture
@@ -140,14 +146,11 @@ export class Mischief {
     this.addToLogs("Running browser scripts.");
 
     try {
-      if (options.autoPlayMedia === true) {
-        this.addToLogs("Browser Script: Auto-play medias.");
-        const maxDuration = await page.evaluate(browserScripts.autoPlayMedia);
-        await page.waitForTimeout(Math.min(maxDuration, options.autoPlayMediaTimeout));
+      if (runBrowsertrixBehaviors){
+        await Promise.allSettled(page.frames().map(frame => frame.evaluate("self.__bx_behaviors.run()")));
       }
-    }
-    catch(err) {
-      this.addToLogs("Browser Script: Auto-play medias failed.", true, err);
+    } catch(err) {
+      this.addToLogs("Browser Script: browsertrix-bheaviors failed.", true, err);
     }
 
     try {
@@ -158,48 +161,6 @@ export class Mischief {
     }
     catch(err) {
       this.addToLogs("Browser Script: Auto-scroll failed.", true, err);
-    }
-
-    try {
-      if (options.grabResponsiveImages === true) {
-        this.addToLogs("Browser Script: Grab Responsive Images.");
-        const urls = await page.evaluate(browserScripts.listResponsiveImages);
-
-        for (let url of urls) {
-          this.addToFallbackCaptureQueue(url);
-        }
-      }
-    }
-    catch(err) {
-      this.addToLogs("Browser Script: Grab Responsive Images failed.", true, err);
-    }
-
-    try {
-      if (options.grabAllStylesheets === true) {
-        this.addToLogs("Browser Script: Grab Stylesheets.");
-        const urls = await page.evaluate(browserScripts.listAllStylesheets);
-
-        for (let url of urls) { // TODO: Exclude stylesheets already captured?
-          this.addToFallbackCaptureQueue(url);
-        }
-      }
-    }
-    catch(err) {
-      this.addToLogs("Browser Script: Grab Stylesheets failed.", true, err);
-    }
-
-    try {
-      if (options.grabMedia === true) {
-        this.addToLogs("Browser Script: Grab Audio and Video sources.");
-        const urls = await page.evaluate(browserScripts.listMediaSources);
-
-        for (let url of urls) {
-          this.addToFallbackCaptureQueue(url);
-        }
-      }
-    }
-    catch(err) {
-      this.addToLogs("Browser Script: Grab Audio and Video sources.", true, err);
     }
 
     // Screenshot
@@ -213,7 +174,8 @@ export class Mischief {
         screenshot.url = "file:///screenshot.png";
         screenshot.status = 200;
 
-        this.addMischiefExchange(screenshot);
+        // FIXME
+        // this.addMischiefExchange(screenshot);
       }
     }
     catch(err) {
@@ -236,203 +198,25 @@ export class Mischief {
       await server.close();
     }
 
-    //
-    // Phase 2: Fallback capture. Fetching remaining elements outside of the browser.
-    //
-    try {
-      this.addToLogs("Out-of-browser fallback capture of remaining elements.");
-      const captures = await Promise.allSettled(
-        this.fallbackCaptureQueue.map(url => this.fallbackCapture(url, userAgent))
-      );
-
-      for (let capture of captures) {
-        if (capture.status === "rejected") {
-          this.addToLogs(`Capture failed`, true, capture.reason);
-          continue;
-        }
-      }
-    }
-    catch(err) {
-      this.addToLogs("Uncaught exception during out-of-browser capture", true, err);
-    }
-
-    this.success = true;
-    return true;
+    return this.success = true;
   }
 
   /**
-   * Processes HTTP requests and responses intercepted by Playwright and adds them to the exchange list.
-   * Will try to download HTTP bodies but add to fallback capture queue if the operation fails.
-   * 
-   * @param {Playwright.Response} event - https://playwright.dev/docs/api/class-response
-   * @returns {Promise<boolean>}
+   * Returns an exchange based on the session and type.
+   * If the type is a request and there's already been a response on that same session,
+   * create a new exchange. Otherwise append to continue the exchange.
    */
-  async networkInterception(event) {
-    const response = new MischiefExchange();
-    const request = new MischiefExchange();
-
-    // Capture request
-    try {
-      request.url = event.request().url();
-      request.status = null;
-      request.method = event.request().method();
-      request.headers = this.filterHeaders(await event.request().allHeaders());
-      request.date = new Date();
-      request.type = "request";
-
-      const body = await event.request().postDataBuffer();
-      if (body) {
-        request.body = body.buffer; // Pulls the `ArrayBuffer` instance from `Buffer`
-      }
-
-      this.addMischiefExchange(request);
-    }
-    catch(err) {
-      this.addToLogs("Error occurred while intercepting request.", true, err);
-    }
-    
-    // Capture response
-    try {
-      response.url = event.url();
-      response.status = event.status();
-      response.headers = this.filterHeaders(await event.allHeaders());
-      response.method = event.request().method();
-      response.body = null;
-      response.type = "response";
-    }
-    catch(err) {
-      this.addToLogs("Error occurred while intercepting response.", true, err);
-      return;
-    }
-
-    // If redirect: add exchange as is.
-    if (parseInt(response.status / 100) === 3) {
-      this.addMischiefExchange(response);
-      return;
-    }
-
-    // Try to pull body, add to post-capture queue if operation fails (i.e: timeout).
-    try {
-      response.body = await event.body();
-      this.addMischiefExchange(response);
-    }
-    catch(err) {
-      this.addToFallbackCaptureQueue(response.url);
-    } 
+  getOrInitExchange(session, type) {
+    return this.exchanges.findLast((ex) => {
+      return ex.session === session && (type == "response" || !ex.responseRaw);
+    }) || this.exchanges[this.exchanges.push(new MischiefExchange(session)) - 1];
   }
 
-  /**
-   * Retrieves resources that could not be intercepted during in-browser capture and adds them to the exchange list.
-   * 
-   * @param {string} url - The url to capture 
-   * @param {string} userAgent - Ideally, the user agent used by Playwright during the in-browser capture phase.
-   * @returns {Promise<boolean>}
-   */
-  async fallbackCapture(url, userAgent) {
-    this.addToLogs(`Fallback capture of: ${url}.`);
-
-    const exchange = new MischiefExchange();
-    const response = await fetch(url, {headers: {"User-Agent": userAgent}});
-
-    exchange.url = url;
-    exchange.status = response.status;
-    exchange.body = null;
-    exchange.headers = this.filterHeaders(response.headers);
-    exchange.type = "response";
-
-    // Stream response until either time runs out or size limit is reached
-    let timeIsOut = false;
-    let isComplete = true;
-    let timer = setTimeout(() => timeIsOut = true, this.options.fallbackCaptureTimeout);
-
-    for await (let chunk of response.body) {
-      this.addToLogs(`Received a ${chunk.byteLength}-byte slice from ${url}.`);
-
-      // Break on time limit
-      if (timeIsOut === true) {
-        this.addToLogs(`Capture of ${url} interrupted (timeout).`, true);
-        isComplete = false;
-        break;
-      }
-
-      // Break on size limit
-      if (chunk.byteLength + exchange.byteLength + this.totalSize > this.options.maxSize) {
-        this.addToLogs(`Capture of ${url} interrupted (max size reached).`, true);
-        isComplete = false;
-        break;
-      }
-
-      let body = null;
-
-      // Merge existing ArrayBuffers
-      body = exchange.body ? new Blob([exchange.body, chunk]) : new Blob([chunk]);
-      exchange.body = await body.arrayBuffer();
-    }
-
-    clearTimeout(timer);
-
-    if (isComplete || (!isComplete && this.options.keepPartialResponses)) {
-      this.addMischiefExchange(exchange);
-      return true;
-    }
-
-    if (!isComplete && !this.options.keepPartialResponses) {
-      this.addToLogs(`Partial response for ${url} will be discarded (settings).`, true);
-    }
-
-    return false;
-  }
-
-  /**
-   * Adds an entry to the exchange list (`this.exchange`) unless size limit has been reached.
-   * 
-   * @param {MischiefExchange} exchange 
-   * @returns {boolean}
-   */
-  addMischiefExchange(exchange) {
-    if (!(exchange instanceof MischiefExchange)) {
-      this.addToLogs("`exchange` must be a valid exchange.");
-      return false;
-    }
-
-    if (exchange.byteLength + this.totalSize > this.options.maxSize) {
-      this.addToLogs(`${exchange.url} (${exchange.byteLength} bytes) was discarded because of ${this.options.maxSize} bytes total cap.`, true);
-      return false;
-    }
-
-    this.exchanges.push(exchange);
-    this.addToLogs(`${exchange.url} was captured (${exchange.byteLength} bytes)`);
-    return true;
-  }
-
-  /**
-   * Adds an url to the post capture queue (`this.postCaptureQueue`) unless:
-   * - Max size was reached
-   * - Url is not valid
-   * 
-   * @param {string} url 
-   * @returns {boolean}
-   */
-  addToFallbackCaptureQueue(url) {
-    if (this.totalSize >= this.options.maxSize) {
-      this.addToLogs(
-        `${url} was not added to the fallback capture queue (max size of ${this.options.maxSize} bytes reached).`,
-        true
-      );
-      return false;
-    }
-
-    try {
-      url = new URL(url).href;
-    }
-    catch(err) {
-      this.addToLogs(`${url} was not added to the fallback capture queue (invalid url).`, true);
-      return false;
-    }
-
-    this.fallbackCaptureQueue.push(url);
-    this.addToLogs(`${url} was added to fallback capture queue.`);
-    return true;
+  networkInterception(type, data, session) {
+    const ex = this.getOrInitExchange(session, type);
+    const prop = `${type}Raw`;
+    ex[prop] = ex[prop] ? Buffer.concat([ex[prop], data], ex[prop].length + data.length) : data;
+    return data;
   }
 
   /**
