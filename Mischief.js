@@ -169,13 +169,17 @@ export class Mischief {
         this.addToLogs("Making a full-page screenshot of the document.");
 
         const screenshot = new MischiefExchange();
-        screenshot.body = await page.screenshot({fullPage: true});
-        screenshot.headers = {"Content-Type": "image/png"};
         screenshot.url = "file:///screenshot.png";
-        screenshot.status = 200;
+        screenshot.response = {
+          headers: ["Content-Type", "image/png"],
+          versionMajor: 1,
+          versionMinor: 1,
+          statusCode: 200,
+          statusMessage: "OK",
+          body: await page.screenshot({fullPage: true}),
+        }
 
-        // FIXME
-        // this.addMischiefExchange(screenshot);
+        this.exchanges.push(screenshot);
       }
     }
     catch(err) {

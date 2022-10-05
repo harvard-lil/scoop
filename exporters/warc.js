@@ -40,10 +40,10 @@ export async function warc(capture, gzip=false) {
   //
   for (let exchange of capture.exchanges) {
     for (let type of ['request', 'response']){
-      if(!exchange[`${type}Raw`]) continue;
+      if(!exchange[type]) continue;
       try {
         async function* content() {
-          yield new Uint8Array(exchange[`${type}Parsed`].body);
+          yield new Uint8Array(exchange[type].body);
         }
 
         const record = WARCRecord.create({
@@ -56,15 +56,14 @@ export async function warc(capture, gzip=false) {
           // - https://github.com/webrecorder/pywb/pull/636#issue-869181282
           // - https://github.com/webrecorder/warcio.js/blob/d5dcaec38ffb0a905fd7151273302c5f478fe5d9/src/statusandheaders.js#L69-L74
           // - https://github.com/webrecorder/warcio.js/blob/fdb68450e2e011df24129bac19691073ab6b2417/test/testSerializer.js#L212
-          statusline: exchange.requestParsed.method + " " + exchange[`${type}StatusLine`],
-          httpHeaders: HTTPParser.headersToMap(exchange[`${type}Parsed`].headers),
+          statusline: `${(exchange.request || {method: "GET"}).method} ${exchange.statusLine}`,
+          httpHeaders: HTTPParser.headersToMap(exchange[type].headers),
           keepHeadersCase: false
         }, content());
 
         serializedRecords.push(await WARCSerializer.serialize(record, {gzip}));
       }
       catch(err) {
-        debugger;
         capture.addToLogs(`${exchange.url} could not be added to warc.`, true, err);
       }
     }

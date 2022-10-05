@@ -23,51 +23,59 @@ export class MischiefExchange {
 
   /** @type {?Buffer} */
   requestRaw;
-
   set requestRaw(val){
-    this.requestRaw = val;
-    this.#requestParsed = null;
+    this.#request = null;
+    return this.requestRaw = val;
   }
 
   /** @type {?Buffer} */
   responseRaw;
-
   set responseRaw(val){
-    this.responseRaw = val;
-    this.#responseParsed = null;
+    this.#response = null;
+    return this.responseRaw = val;
   }
 
   /** @type {?object} */
-  #requestParsed;
-
-  get requestParsed() {
-    return this.#requestParsed = this.#requestParsed || HTTPParser.parseRequest(this.requestRaw);
+  #request;
+  get request() {
+    if(!this.#request && this.requestRaw){
+      this.#request = HTTPParser.parseRequest(this.requestRaw);
+    }
+    return this.#request;
   }
+  set request(val) { return this.#request = val; }
 
   /** @type {?object} */
-  #responseParsed;
-
-  get responseParsed() {
-    return this.#responseParsed = this.#responseParsed || HTTPParser.parseResponse(this.responseRaw);
+  #response;
+  get response() {
+    if(!this.#response && this.responseRaw){
+      this.#response = HTTPParser.parseResponse(this.responseRaw);
+    }
+    return this.#response;
   }
+  set response(val) { return this.#response = val; }
 
+  /** @type {?string} */
+  #url;
   get url() {
-    return this.session.isHttps ?
-      `https://${this.requestParsed.headers[1]}${this.requestParsed.url}` :
-      this.requestParsed.url;
+    if(!this.#url && this.session) {
+      this.#url = this.session.isHttps ?
+        `https://${this.request.headers[1]}${this.request.url}` :
+        this.request.url;
+    }
+    return this.#url;
   }
+  set url(val) { return this.#url = val; }
 
-  #formatStatusLine(parsed) {
-    return `HTTP/${parsed.versionMajor}.${parsed.versionMinor} ${parsed.statusCode} ${parsed.statusMessage}`
+  /** @type {?string} */
+  #statusLine;
+  get statusLine() {
+    if(!this.#statusLine){
+      this.#statusLine = `HTTP/${this.response.versionMajor}.${this.response.versionMinor} ${this.response.statusCode} ${this.response.statusMessage}`;
+    }
+    return this.#statusLine;
   }
-
-  get requestStatusLine() {
-    return this.#formatStatusLine(this.requestParsed);
-  }
-
-  get responseStatusLine() {
-    return this.#formatStatusLine(this.responseParsed);
-  }
+  set statusLine(val) { return this.#statusLine = val; }
 
   constructor(session) {
     this.session = session;
