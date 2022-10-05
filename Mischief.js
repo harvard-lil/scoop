@@ -86,14 +86,14 @@ export class Mischief {
   async capture() {
     const options = this.options;
 
-    const server = new ProxyServer({
+    const proxy = new ProxyServer({
       intercept: true,
       verbose: options.verbose,
       injectData: (data, session) => this.networkInterception("request", data, session),
       injectResponse: (data, session) => this.networkInterception("response", data, session)
     });
-    server.listen(options.proxyPort, options.proxyHost, () => {
-      console.log('TCP-Proxy-Server started!', server.address());
+    proxy.listen(options.proxyPort, options.proxyHost, () => {
+      console.log('TCP-Proxy-Server started!', proxy.address());
     });
 
     const browser = await chromium.launch({
@@ -195,7 +195,7 @@ export class Mischief {
       await page.close();
       await context.close();
       await browser.close();
-      await server.close();
+      await proxy.close();
     }
 
     return this.success = true;
