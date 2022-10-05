@@ -195,9 +195,7 @@ export class Mischief {
       this.addToLogs("Document never reached network idle state. Moving along.", true);
     }
     finally {
-      this.addToLogs("Closing browser.");
-      await page.close();
-      await context.close();
+      this.addToLogs("Closing browser and proxy server.");
       await browser.close();
       await proxy.close();
     }
