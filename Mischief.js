@@ -128,10 +128,6 @@ export class Mischief {
       });
     }
 
-    //
-    // Phase 1: In-browser capture
-    //
-
     // Go to page and wait until load.
     try {
       this.addToLogs(`Starting capture of ${this.url} with options: ${options}`);
@@ -285,32 +281,6 @@ export class Mischief {
     }
 
     return options;
-  }
-
-  /**
-   * Filters-out headers:
-   * - Excludes keys that are invalid
-   * - Remove `\n` from values
-   * 
-   * TODO: Reconsider this. We should at least give the option to capture everything unfiltered.
-   *
-   * @param {object|Header} headers - Can either be a standard object or a `Headers` instance.
-   * @returns {object}
-   */
-  filterHeaders(headers) {
-    const newHeaders = {};
-    const iterator = headers.entries ? headers.entries() : Object.entries(headers);
-
-    for (let [key, value] of iterator) {
-      if (!key.match(/^[A-Za-z0-9\-\_]+$/)) { // Key must be valid
-        continue;
-      }
-
-      let newValue = value.replaceAll("\n", " ");
-      newHeaders[key] = newValue;
-    }
-    
-    return newHeaders;
   }
 
   /**
