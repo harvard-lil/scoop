@@ -38,7 +38,7 @@ export async function warc(capture, gzip=false) {
   //
   // Prepare WARC records section
   //
-  for (let exchange of capture.exchanges) {
+  for (let exchange of capture.exchanges.filter((ex) => ex.response)) {
     for (let type of ['request', 'response']){
       if(!exchange[type]) continue;
       try {

@@ -64,6 +64,9 @@ export class Mischief {
    */
   success = false;
 
+  #browser;
+  #proxy;
+
   /**
    * @param {string} url - Must be a valid HTTP(S) url.
    * @param {object} [options={}] - See `MischiefOptions` for details.
@@ -86,22 +89,22 @@ export class Mischief {
   async capture() {
     const options = this.options;
 
-    const proxy = new ProxyServer({
+    this.#proxy = new ProxyServer({
       intercept: true,
       verbose: options.verbose,
       injectData: (data, session) => this.networkInterception("request", data, session),
       injectResponse: (data, session) => this.networkInterception("response", data, session)
     });
-    proxy.listen(options.proxyPort, options.proxyHost, () => {
-      console.log('TCP-Proxy-Server started!', proxy.address());
+    this.#proxy.listen(options.proxyPort, options.proxyHost, () => {
+      console.log('TCP-Proxy-Server started!', this.#proxy.address());
     });
 
-    const browser = await chromium.launch({
+    this.#browser = await chromium.launch({
       headless: options.headless,
       channel: "chrome",
       proxy: {server: `http://${options.proxyHost}:${options.proxyPort}`}
     });
-    const context = await browser.newContext({ignoreHTTPSErrors: true});
+    const context = await this.#browser.newContext({ignoreHTTPSErrors: true});
     const page = await context.newPage();
     const userAgent = await page.evaluate(() => navigator.userAgent);
 
@@ -190,12 +193,16 @@ export class Mischief {
       this.addToLogs("Document never reached network idle state. Moving along.", true);
     }
     finally {
-      this.addToLogs("Closing browser and proxy server.");
-      await browser.close();
-      await proxy.close();
+      await this.close();
     }
 
     return this.success = true;
+  }
+
+  async close(){
+    this.addToLogs("Closing browser and proxy server.");
+    await this.#browser.close();
+    await this.#proxy.close();
   }
 
   /**
@@ -213,6 +220,11 @@ export class Mischief {
     const ex = this.getOrInitExchange(session, type);
     const prop = `${type}Raw`;
     ex[prop] = ex[prop] ? Buffer.concat([ex[prop], data], ex[prop].length + data.length) : data;
+    this.totalSize += data.byteLength
+    if(this.totalSize >= this.options.maxSize){
+      this.addToLogs("Max size reached. Ending further capture.");
+      this.close();
+    }
     return data;
   }
 
