@@ -18,8 +18,8 @@ export class MischiefExchange {
   /** @type {Date} */
   date = new Date();
 
-  /** @type {?Session} */
-  session;
+  /** @type {?string} */
+  id;
 
   /** @type {?Buffer} */
   requestRaw;
@@ -58,8 +58,9 @@ export class MischiefExchange {
   /** @type {?string} */
   #url;
   get url() {
-    if(!this.#url && this.session) {
-      this.#url = this.session.isHttps ?
+    if(!this.#url) {
+      // if the url lacks a protocol, assume https
+      this.#url = this.request.url[0] == '/' ?
         `https://${this.request.headers[1]}${this.request.url}` :
         this.request.url;
     }
@@ -77,7 +78,8 @@ export class MischiefExchange {
   }
   set statusLine(val) { return this.#statusLine = val; }
 
-  constructor(session) {
-    this.session = session;
+  constructor(props) {
+    Object.assign(this, props);
+    return this;
   }
 }

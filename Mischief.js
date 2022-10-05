@@ -168,18 +168,17 @@ export class Mischief {
       if (options.screenshot) {
         this.addToLogs("Making a full-page screenshot of the document.");
 
-        const screenshot = new MischiefExchange();
-        screenshot.url = "file:///screenshot.png";
-        screenshot.response = {
-          headers: ["Content-Type", "image/png"],
-          versionMajor: 1,
-          versionMinor: 1,
-          statusCode: 200,
-          statusMessage: "OK",
-          body: await page.screenshot({fullPage: true}),
-        }
-
-        this.exchanges.push(screenshot);
+        this.exchanges.push(new MischiefExchange({
+          url: "file:///screenshot.png",
+          response: {
+            headers: ["Content-Type", "image/png"],
+            versionMajor: 1,
+            versionMinor: 1,
+            statusCode: 200,
+            statusMessage: "OK",
+            body: await page.screenshot({fullPage: true})
+          }
+        }));
       }
     }
     catch(err) {
@@ -210,8 +209,8 @@ export class Mischief {
    */
   getOrInitExchange(session, type) {
     return this.exchanges.findLast((ex) => {
-      return ex.session === session && (type == "response" || !ex.responseRaw);
-    }) || this.exchanges[this.exchanges.push(new MischiefExchange(session)) - 1];
+      return ex.id == session._id && (type == "response" || !ex.responseRaw);
+    }) || this.exchanges[this.exchanges.push(new MischiefExchange({id: session._id})) - 1];
   }
 
   networkInterception(type, data, session) {
