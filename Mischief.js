@@ -15,8 +15,7 @@ import { MischiefOptions } from "./MischiefOptions.js";
 
 /**
  * Experimental single-page web archiving solution using Playwright.
- * - Relies mainly on network interception. 
- * - Uses custom browser scripts and out-of-browser capture as a fallback for resources that cannot be captured otherwise.
+ * - Uses a proxy to allow for comprehensive and raw network interception.
  * 
  * Usage:
  * ```javascript
@@ -30,6 +29,10 @@ import { MischiefOptions } from "./MischiefOptions.js";
  * ```
  */
 export class Mischief {
+  /**
+   * Enum-like states that the capture occupies.
+   * @type {object}
+   */
   static states = Object.freeze({
     INIT: 0,
     SETUP: 1,
@@ -40,6 +43,11 @@ export class Mischief {
     ERROR: 6
   });
 
+  /**
+   * Current state of the capture.
+   * Should only contain states defined in `states`.
+   * @type {number}
+   */
   state = Mischief.states.INIT;
 
   /**
@@ -179,6 +187,11 @@ export class Mischief {
     return this.state = Mischief.states.COMPLETE;
   }
 
+  /**
+   * Sets up the proxy and Playwright resources
+   *
+   * @returns {Promise<boolean>}
+   */
   async setup(){
     this.state = Mischief.states.SETUP;
     const options = this.options;
@@ -211,6 +224,11 @@ export class Mischief {
     return page;
   }
 
+  /**
+   * Tears down the Playwright and (via event listener) the proxy resources.
+   *
+   * @returns {Promise<boolean>}
+   */
   async teardown(){
     if(this.state == Mischief.states.TEARDOWN) { return; }
     this.state = Mischief.states.TEARDOWN;
@@ -219,18 +237,29 @@ export class Mischief {
   }
 
   /**
-   * Returns an exchange based on the session and type.
+   * Returns an exchange based on the session id and type ("request" or "response").
    * If the type is a request and there's already been a response on that same session,
    * create a new exchange. Otherwise append to continue the exchange.
+   *
+   * @param {string} id
+   * @param {string} type
    */
-  getOrInitExchange(session, type) {
+  getOrInitExchange(id, type) {
     return this.exchanges.findLast((ex) => {
-      return ex.id == session._id && (type == "response" || !ex.responseRaw);
-    }) || this.exchanges[this.exchanges.push(new MischiefExchange({id: session._id})) - 1];
+      return ex.id == id && (type == "response" || !ex.responseRaw);
+    }) || this.exchanges[this.exchanges.push(new MischiefExchange({id: id})) - 1];
   }
 
+  /**
+   * Collates network data (both requests and responses) from the proxy.
+   * Capture size enforcement happens here.
+   *
+   * @param {string} type
+   * @param {Buffer} data
+   * @param {Session} session
+   */
   networkInterception(type, data, session) {
-    const ex = this.getOrInitExchange(session, type);
+    const ex = this.getOrInitExchange(session._id, type);
     const prop = `${type}Raw`;
     ex[prop] = ex[prop] ? Buffer.concat([ex[prop], data], ex[prop].length + data.length) : data;
 

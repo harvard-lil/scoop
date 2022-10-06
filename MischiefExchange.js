@@ -12,6 +12,7 @@ import { HTTPParser } from "./parsers/http.js";
  * 
  * Usage:
  * ```javascript
+ * const exchange = new MischiefExchange({url: "https://example.com"});
  * ```
  */
 export class MischiefExchange {
