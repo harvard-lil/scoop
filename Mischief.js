@@ -30,6 +30,18 @@ import { MischiefOptions } from "./MischiefOptions.js";
  * ```
  */
 export class Mischief {
+  static states = Object.freeze({
+    INIT: 0,
+    SETUP: 1,
+    CAPTURE: 2,
+    TEARDOWN: 3,
+    COMPLETE: 4,
+    PARTIAL: 5,
+    ERROR: 6
+  });
+
+  state = Mischief.states.INIT;
+
   /**
    * URL to capture.
    * @type {string} 
@@ -59,13 +71,10 @@ export class Mischief {
   totalSize = 0;
 
   /**
-   * Set to true when the capture went through.
-   * @type {boolean}
+   * The Playwright browser instance for this capture.
+   * @type {Browser}
    */
-  success = false;
-
   #browser;
-  #proxy;
 
   /**
    * @param {string} url - Must be a valid HTTP(S) url.
@@ -88,121 +97,125 @@ export class Mischief {
    */
   async capture() {
     const options = this.options;
+    const steps = [];
 
-    this.#proxy = new ProxyServer({
+    steps.push({
+      name: "initial load",
+      fn: async (page) => { await page.goto(this.url, { waitUntil: "load", timeout: options.loadTimeout }); }
+    });
+
+    if (options.grabSecondaryResources ||
+        options.autoPlayMedia ||
+        options.runSiteSpecificBehaviors){
+      steps.push({
+        name: "browser scripts",
+        fn: async (page) => {
+          await page.addInitScript({ path: './node_modules/browsertrix-behaviors/dist/behaviors.js' });
+          await page.addInitScript({
+            content: `
+              self.__bx_behaviors.init({
+                autofetch: ${options.grabSecondaryResources},
+                autoplay: ${options.autoPlayMedia},
+                siteSpecific: ${options.runSiteSpecificBehaviors},
+                timeout: ${options.behaviorsTimeout}
+              });`
+          });
+          await Promise.allSettled(page.frames().map(frame => frame.evaluate("self.__bx_behaviors.run()")));
+        }
+      });
+    }
+
+    if (options.autoScroll === true) {
+      steps.push({
+        name: "auto-scroll",
+        fn: async (page) => { await page.evaluate(browserScripts.autoScroll, {timeout: options.autoScrollTimeout}); }
+      });
+    }
+
+    if (options.screenshot) {
+      steps.push({
+        name: "screenshot",
+        fn: async (page) => {
+          this.exchanges.push(new MischiefExchange({
+            url: "file:///screenshot.png",
+            response: {
+              headers: ["Content-Type", "image/png"],
+              versionMajor: 1,
+              versionMinor: 1,
+              statusCode: 200,
+              statusMessage: "OK",
+              body: await page.screenshot({fullPage: true})
+            }
+          }));
+        }
+      });
+    }
+
+    steps.push({
+      name: "network idle",
+      fn: async (page) => { await page.waitForLoadState("networkidle", {timeout: options.networkIdleTimeout}); }
+    });
+
+    const page = await this.setup();
+    this.addToLogs(`Starting capture of ${this.url} with options: ${JSON.stringify(options)}`);
+    this.state = Mischief.states.CAPTURE;
+
+    let i = 0;
+    do {
+      const step = steps[i];
+      try {
+        this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name}`);
+        await step.fn(page);
+      } catch(err) {
+        if(this.state == Mischief.states.CAPTURE){
+          this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name} - failed`, true, err);
+        } else {
+          this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name} - ended due to max size reached`, true);
+        }
+      }
+    } while(this.state == Mischief.states.CAPTURE && i++ < steps.length-1);
+
+    await this.teardown(page);
+    return this.state = Mischief.states.COMPLETE;
+  }
+
+  async setup(){
+    this.state = Mischief.states.SETUP;
+    const options = this.options;
+
+    const proxy = new ProxyServer({
       intercept: true,
-      verbose: options.verbose,
+      verbose: options.proxyVerbose,
       injectData: (data, session) => this.networkInterception("request", data, session),
       injectResponse: (data, session) => this.networkInterception("response", data, session)
     });
-    this.#proxy.listen(options.proxyPort, options.proxyHost, () => {
-      console.log('TCP-Proxy-Server started!', this.#proxy.address());
+    proxy.listen(options.proxyPort, options.proxyHost, () => {
+      console.log('TCP-Proxy-Server started!', proxy.address());
     });
 
     this.#browser = await chromium.launch({
       headless: options.headless,
       channel: "chrome",
       proxy: {server: `http://${options.proxyHost}:${options.proxyPort}`}
-    });
+    })
+    this.#browser.on('disconnected', () => proxy.close());
+
     const context = await this.#browser.newContext({ignoreHTTPSErrors: true});
     const page = await context.newPage();
-    const userAgent = await page.evaluate(() => navigator.userAgent);
 
     page.setViewportSize({
       width: options.captureWindowX,
       height: options.captureWindowY,
     });
 
-    const runBrowsertrixBehaviors =
-          options.grabSecondaryResources ||
-          options.autoPlayMedia ||
-          options.runSiteSpecificBehaviors;
-
-    if (runBrowsertrixBehaviors){
-      await page.addInitScript({ path: './node_modules/browsertrix-behaviors/dist/behaviors.js' });
-      await page.addInitScript({
-        content: `
-         self.__bx_behaviors.init({
-           autofetch: ${options.grabSecondaryResources},
-           autoplay: ${options.autoPlayMedia},
-           siteSpecific: ${options.runSiteSpecificBehaviors},
-           timeout: ${options.behaviorsTimeout}
-         });`
-      });
-    }
-
-    // Go to page and wait until load.
-    try {
-      this.addToLogs(`Starting capture of ${this.url} with options: ${options}`);
-      this.addToLogs("Waiting for browser to reach load state.");
-      await page.goto(this.url, { waitUntil: "load", timeout: options.loadTimeout });
-    }
-    catch(err) {
-      this.addToLogs("Document never reached load state. Moving along.", true);
-    }
-
-    // Run browser scripts
-    this.addToLogs("Running browser scripts.");
-
-    try {
-      if (runBrowsertrixBehaviors){
-        await Promise.allSettled(page.frames().map(frame => frame.evaluate("self.__bx_behaviors.run()")));
-      }
-    } catch(err) {
-      this.addToLogs("Browser Script: browsertrix-bheaviors failed.", true, err);
-    }
-
-    try {
-      if (options.autoScroll === true) {
-        this.addToLogs("Browser Script: Auto-scroll.");
-        await page.evaluate(browserScripts.autoScroll, {timeout: options.autoScrollTimeout});
-      }
-    }
-    catch(err) {
-      this.addToLogs("Browser Script: Auto-scroll failed.", true, err);
-    }
-
-    // Screenshot
-    try {
-      if (options.screenshot) {
-        this.addToLogs("Making a full-page screenshot of the document.");
-
-        this.exchanges.push(new MischiefExchange({
-          url: "file:///screenshot.png",
-          response: {
-            headers: ["Content-Type", "image/png"],
-            versionMajor: 1,
-            versionMinor: 1,
-            statusCode: 200,
-            statusMessage: "OK",
-            body: await page.screenshot({fullPage: true})
-          }
-        }));
-      }
-    }
-    catch(err) {
-      this.addToLogs("Could not make a full-page screenshot of the document.", true, err);
-    }
-
-    // Wait for network idle and close browser
-    try {
-      this.addToLogs("Waiting for browser to reach network idle state.");
-      await page.waitForLoadState("networkidle", {timeout: options.networkIdleTimeout});
-    }
-    catch(err) {
-      this.addToLogs("Document never reached network idle state. Moving along.", true);
-    }
-    finally {
-      await this.close();
-    }
-
-    return this.success = true;
+    return page;
   }
 
-  async close(){
+  async teardown(){
+    if(this.state == Mischief.states.TEARDOWN) { return; }
+    this.state = Mischief.states.TEARDOWN;
     this.addToLogs("Closing browser and proxy server.");
     await this.#browser.close();
-    await this.#proxy.close();
   }
 
   /**
@@ -220,10 +233,11 @@ export class Mischief {
     const ex = this.getOrInitExchange(session, type);
     const prop = `${type}Raw`;
     ex[prop] = ex[prop] ? Buffer.concat([ex[prop], data], ex[prop].length + data.length) : data;
-    this.totalSize += data.byteLength
-    if(this.totalSize >= this.options.maxSize){
+
+    this.totalSize += data.byteLength;
+    if(this.totalSize >= this.options.maxSize && this.state == Mischief.states.CAPTURE){
       this.addToLogs("Max size reached. Ending further capture.");
-      this.close();
+      this.teardown();
     }
     return data;
   }

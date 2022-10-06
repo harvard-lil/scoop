@@ -22,7 +22,7 @@ export async function warc(capture, gzip=false) {
   let serializedRecords = [];
   let filename = `archive${gzip ? ".warc.gz" : ".warc"}`;
 
-  if (!capture instanceof Mischief || !capture.success) {
+  if (!capture instanceof Mischief || !capture.state == Mischief.states.COMPLETE) {
     throw new Error("`capture` must be a complete Mischief object.");
   }
 
