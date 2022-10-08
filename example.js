@@ -1,13 +1,19 @@
 // [!] Example file -- to be deleted at earliest convenience.
 import crypto from "crypto";
-import fs from "fs";
+import { mkdir, writeFile } from "fs/promises";
 import { Mischief } from "./Mischief.js";
 
 const toCapture = [
+  {name: "google", url: "https://google.com"},
   {name: "lil", url: "https://lil.law.harvard.edu"},
+  {name: "example", url: "https://example.com"},
+  {name: "df", url: "https://daringfireball.net"},
+  {name: "nyt", url: "https://www.nytimes.com"},
+  {name: "present-studio", url: "https://www.presentstudio.co/"},
   {name: "partytronic", url: "https://partytronic.com/"},
   {name: "cnn", url: "https://www.cnn.com/2022/08/23/tech/twitter-foreign-intel-problem/index.html"},
   {name: "youtube-stream", url: "https://www.youtube.com/watch?v=jfKfPfyJRdk"},
+  {name: "twitter-profile", url: "https://twitter.com/macargnelutti"},
   {name: "twitter-video", url: "https://twitter.com/dog_rates/status/1298052245209006086?s=20"},
   {name: "youtube-video", url: "https://www.youtube.com/watch?v=zVz1SAtdw8A"},
   {name: "cern", url: "http://info.cern.ch/hypertext/WWW/TheProject.html"},
@@ -21,20 +27,21 @@ const toCapture = [
 const path = "./examples/";
 
 try {
-  fs.mkdirSync(path);
+  await mkdir(path);
 }
 catch(err) {
 }
 
 for (let entry of toCapture) {
   let {name, url} = entry;
-  const filename = `${path}${name}.warc`;
 
   const myCapture = new Mischief(url);
   await myCapture.capture();
-  
-  const warc = await myCapture.toWarc();
-  fs.writeFileSync(filename, Buffer.from(warc));
+
+  const format = "wacz";
+  const filename = `${path}${name}.${format}`;
+  const data = await myCapture[`to${format.charAt(0).toUpperCase() + format.slice(1)}`]();
+  await writeFile(filename, Buffer.from(data));
 
   console.log(`💾 Saved ${url} as ${filename}`);
 }

@@ -347,4 +347,12 @@ export class Mischief {
     return await exporters.warc(this, gzip);
   }
 
+  /**
+   * Export capture to WACZ.
+   * @returns {Promise<ArrayBuffer>} - Binary data ready to be saved a .wacz
+   */
+  async toWacz() {
+    return await exporters.wacz(this);
+  }
+
 }

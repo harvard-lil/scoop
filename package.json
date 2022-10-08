@@ -22,6 +22,7 @@
     "browsertrix-behaviors": "^0.3.4",
     "http-parser-js": "^0.5.8",
     "transparent-proxy": "github:leppert/transparent-proxy#set-servername",
+    "uuid": "^9.0.0",
     "warcio": "^1.5.1",
     "wbn": "^0.0.8",
     "whatwg-url": "^11.0.0"
