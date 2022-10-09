@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/matteocargnelutti/mischief#readme",
   "dependencies": {
+    "archiver": "^5.3.1",
     "browsertrix-behaviors": "^0.3.4",
     "http-parser-js": "^0.5.8",
     "transparent-proxy": "github:harvard-lil/transparent-proxy#handle-colons-in-urls",
