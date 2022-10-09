@@ -19,21 +19,21 @@ export async function wacz(capture) {
   if (!capture instanceof Mischief || !capture.state == Mischief.states.COMPLETE) {
     throw new Error("`capture` must be a complete Mischief object.");
   }
-  const warc = await capture.toWarc();
-  const pagesData = [{"format": "json-pages-1.0", "id": "pages", "title": "All Pages", hasText: false},
-                     {id: uuidv4(), url: capture.url, title: "", seed: true}].map(JSON.stringify).join('\n');
 
   let tmpDir;
-  const appPrefix = 'mischief';
   try {
-    const tmpDir = await mkdtemp(path.join(tmpdir(), appPrefix));
+    tmpDir = await mkdtemp(path.join(tmpdir(), 'mischief'));
     const pagesFile = path.join(tmpDir, 'pages.jsonl')
     const warcFile = path.join(tmpDir, 'warc.warc');
+    const waczFile = path.join(tmpDir, 'wacz.wacz');
 
+    const pagesData = [{"format": "json-pages-1.0", "id": "pages", "title": "All Pages", hasText: false},
+                       {id: uuidv4(), url: capture.url, title: "", seed: true}].map(JSON.stringify).join('\n');
     await writeFile(pagesFile, pagesData);
+
+    const warc = await capture.toWarc();
     await writeFile(warcFile, Buffer.from(warc));
 
-    const waczFile = path.join(tmpDir, 'wacz.wacz');
     const createArgs = ["create", "--split-seeds", "-o", waczFile, "--pages", pagesFile, warcFile];
     await awaitProcess(spawn("wacz" , createArgs, {stdio: "inherit"}));
 
