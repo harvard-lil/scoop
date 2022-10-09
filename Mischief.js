@@ -109,7 +109,7 @@ export class Mischief {
 
     steps.push({
       name: "initial load",
-      fn: async (page) => { await page.goto(this.url, { waitUntil: "load", timeout: options.loadTimeout }); }
+      main: async (page) => { await page.goto(this.url, { waitUntil: "load", timeout: options.loadTimeout }); }
     });
 
     if (options.grabSecondaryResources ||
@@ -117,7 +117,7 @@ export class Mischief {
         options.runSiteSpecificBehaviors){
       steps.push({
         name: "browser scripts",
-        fn: async (page) => {
+        setup: async (page) => {
           await page.addInitScript({ path: './node_modules/browsertrix-behaviors/dist/behaviors.js' });
           await page.addInitScript({
             content: `
@@ -129,21 +129,22 @@ export class Mischief {
               });`
           });
           await Promise.allSettled(page.frames().map(frame => frame.evaluate("self.__bx_behaviors.run()")));
-        }
+        },
+        main: async (page) => { await Promise.allSettled(page.frames().map(frame => frame.evaluate("self.__bx_behaviors.run()"))); }
       });
     }
 
     if (options.autoScroll === true) {
       steps.push({
         name: "auto-scroll",
-        fn: async (page) => { await page.evaluate(browserScripts.autoScroll, {timeout: options.autoScrollTimeout}); }
+        main: async (page) => { await page.evaluate(browserScripts.autoScroll, {timeout: options.autoScrollTimeout}); }
       });
     }
 
     if (options.screenshot) {
       steps.push({
         name: "screenshot",
-        fn: async (page) => {
+        main: async (page) => {
           this.exchanges.push(new MischiefExchange({
             url: "file:///screenshot.png",
             response: {
@@ -161,19 +162,23 @@ export class Mischief {
 
     steps.push({
       name: "network idle",
-      fn: async (page) => { await page.waitForLoadState("networkidle", {timeout: options.networkIdleTimeout}); }
+      main: async (page) => { await page.waitForLoadState("networkidle", {timeout: options.networkIdleTimeout}); }
     });
 
     const page = await this.setup();
     this.addToLogs(`Starting capture of ${this.url} with options: ${JSON.stringify(options)}`);
     this.state = Mischief.states.CAPTURE;
 
+    for (let step of steps.filter((step) => step.setup)) {
+      await step.setup(page);
+    }
+
     let i = 0;
     do {
       const step = steps[i];
       try {
         this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name}`);
-        await step.fn(page);
+        await step.main(page);
       } catch(err) {
         if(this.state == Mischief.states.CAPTURE){
           this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name} - failed`, true, err);
@@ -183,7 +188,7 @@ export class Mischief {
       }
     } while(this.state == Mischief.states.CAPTURE && i++ < steps.length-1);
 
-    await this.teardown(page);
+    await this.teardown();
     return this.state = Mischief.states.COMPLETE;
   }
 
