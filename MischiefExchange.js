@@ -1,11 +1,10 @@
-import { HTTPParser } from "./parsers/http.js";
-
- /**
- * * Mischief
+/**
+ * Mischief
  * @module MischiefExchange
  * @author The Harvard Library Innovation Lab
  * @license MIT
- */
+*/
+import { HTTPParser } from "./parsers/http.js";
 
 /**
  * Represents an HTTP exchange to be added to the web archive.
@@ -24,60 +23,75 @@ export class MischiefExchange {
 
   /** @type {?Buffer} */
   requestRaw;
-  set requestRaw(val){
+  
+  set requestRaw(val) {
     this.#request = null;
-    return this.requestRaw = val;
+    return (this.requestRaw = val);
   }
 
   /** @type {?Buffer} */
   responseRaw;
-  set responseRaw(val){
+
+  set responseRaw(val) {
     this.#response = null;
-    return this.responseRaw = val;
+    return (this.responseRaw = val);
   }
 
   /** @type {?object} */
   #request;
   get request() {
-    if(!this.#request && this.requestRaw){
+    if (!this.#request && this.requestRaw) {
       this.#request = HTTPParser.parseRequest(this.requestRaw);
     }
     return this.#request;
   }
-  set request(val) { return this.#request = val; }
+
+  set request(val) {
+    return (this.#request = val);
+  }
 
   /** @type {?object} */
   #response;
   get response() {
-    if(!this.#response && this.responseRaw){
+    if (!this.#response && this.responseRaw) {
       this.#response = HTTPParser.parseResponse(this.responseRaw);
     }
     return this.#response;
   }
-  set response(val) { return this.#response = val; }
+
+  set response(val) {
+    return (this.#response = val);
+  }
 
   /** @type {?string} */
   #url;
   get url() {
-    if(!this.#url) {
+    if (!this.#url) {
       // if the url lacks a protocol, assume https
-      this.#url = this.request.url[0] == '/' ?
-        `https://${this.request.headers[1]}${this.request.url}` :
-        this.request.url;
+      this.#url =
+        this.request.url[0] == "/"
+          ? `https://${this.request.headers[1]}${this.request.url}`
+          : this.request.url;
     }
     return this.#url;
   }
-  set url(val) { return this.#url = val; }
+
+  set url(val) {
+    return (this.#url = val);
+  }
 
   /** @type {?string} */
   #statusLine;
   get statusLine() {
-    if(!this.#statusLine){
+    if (!this.#statusLine) {
       this.#statusLine = `HTTP/${this.response.versionMajor}.${this.response.versionMinor} ${this.response.statusCode} ${this.response.statusMessage}`;
     }
     return this.#statusLine;
   }
-  set statusLine(val) { return this.#statusLine = val; }
+
+  set statusLine(val) {
+    return (this.#statusLine = val);
+  }
 
   constructor(props) {
     Object.assign(this, props);
