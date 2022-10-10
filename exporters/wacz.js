@@ -1,6 +1,7 @@
 import { createWriteStream } from "fs";
 import { v4 as uuidv4 } from "uuid";
 import { Writable } from "stream";
+import { createHash } from "crypto";
 import Archiver from "archiver";
 
 import { Mischief } from "../Mischief.js";
@@ -15,6 +16,15 @@ import * as exporters from "../exporters/index.js";
  * @param {Mischief} capture
  * @returns {Promise<ArrayBuffer>}
  */
+
+const FILES = {
+  pages: {name: 'pages.jsonl', path: 'pages/pages.jsonl'},
+  warc: {name: 'warc.warc', path: 'archive/warc.warc'},
+  indexIDX: {name: 'index.idx', path: 'indexes/index.idx'},
+  indexCDX: {name: 'index.cdx.gz', path: 'indexes/index.cdx.gz'},
+  datapackage: {path: 'datapackage.json'},
+  datapackageDigest: {path: 'datapackage-digest.json'}
+};
 
 export function wacz(capture) {
   return new Promise((resolve, reject) => {
@@ -35,13 +45,51 @@ export function wacz(capture) {
     archive.on('error', err => { reject(err) });
     archive.pipe(converter);
 
-    const pages = [{"format": "json-pages-1.0", "id": "pages", "title": "All Pages", hasText: false},
-                   {id: uuidv4(), url: capture.url, title: "", seed: true}].map(JSON.stringify).join('\n');
-    archive.append(pages, {name: 'pages/pages.jsonl'});
+    exporters.warc(capture).then((warcArrayBuffer) => {
+      const warc = Buffer.from(warcArrayBuffer);
+      archive.append(warc, {name: FILES.warc.path});
 
-    exporters.warc(capture).then((warc) => {
-      archive.append(Buffer.from(warc), {name: 'archive/archive.warc'});
+      const pages = generatePages(capture);
+      archive.append(pages, {name: FILES.pages.path});
+
+      const datapackage = generateDatapackage(Buffer.from(''), Buffer.from(''), warc, pages);
+      archive.append(datapackage, {name: FILES.datapackage.path});
+
+      const datapackageDigest = generateDatapackageDigest(datapackage);
+      archive.append(datapackageDigest, {name: FILES.datapackageDigest.path});
+
       archive.finalize();
     });
+  });
+};
+
+const hash = (buffer) => 'sha256:' + createHash('sha256').update(buffer).digest('hex');
+const stringify = (obj) => JSON.stringify(obj, null, 2);
+
+const generatePages = (capture) => {
+  return Buffer.from([{"format": "json-pages-1.0", "id": "pages", "title": "All Pages", hasText: false},
+                      {id: uuidv4(), url: capture.url, title: "", seed: true}].map(JSON.stringify).join('\n'));
+};
+
+const generateDatapackage = function(indexIDX, indexCDX, warc, pages) {
+  return stringify({
+    "profile": "data-package",
+    "resources": ['indexIDX', 'indexCDX', 'warc', 'pages'].map((el, i) => {
+      return {
+        ...FILES[el],
+        "hash": hash(arguments[i]),
+        "bytes": arguments[i].byteLength
+      }
+    }),
+    "created": (new Date()).toISOString(),
+    "wacz_version": "1.1.1",
+    "software": "mischief"
+  });
+}
+
+const generateDatapackageDigest = (datapackage) => {
+  return stringify({
+    path: FILES.datapackage.path,
+    hash: hash(datapackage)
   });
 };
