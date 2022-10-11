@@ -136,6 +136,11 @@ export class Mischief {
       });
     }
 
+    steps.push({
+      name: "network idle",
+      main: async (page) => { await page.waitForLoadState("networkidle", {timeout: options.networkIdleTimeout}); }
+    });
+
     if (options.screenshot) {
       steps.push({
         name: "screenshot",
@@ -154,11 +159,6 @@ export class Mischief {
         }
       });
     }
-
-    steps.push({
-      name: "network idle",
-      main: async (page) => { await page.waitForLoadState("networkidle", {timeout: options.networkIdleTimeout}); }
-    });
 
     const page = await this.setup();
     this.addToLogs(`Starting capture of ${this.url} with options: ${JSON.stringify(options)}`);
