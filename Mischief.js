@@ -203,7 +203,7 @@ export class Mischief {
       injectResponse: (data, session) => this.networkInterception("response", data, session)
     });
     proxy.listen(options.proxyPort, options.proxyHost, () => {
-      console.log('TCP-Proxy-Server started!', proxy.address());
+      this.addToLogs(`TCP-Proxy-Server started ${JSON.stringify(proxy.address())}`);
     });
 
     this.#browser = await chromium.launch({
