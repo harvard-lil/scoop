@@ -31,9 +31,10 @@ import { MischiefOptions } from "./MischiefOptions.js";
 export class Mischief {
   /**
    * Enum-like states that the capture occupies.
-   * @type {object}
+   * @readonly
+   * @enum {number}
    */
-  static states = Object.freeze({
+  static states = {
     INIT: 0,
     SETUP: 1,
     CAPTURE: 2,
@@ -41,7 +42,7 @@ export class Mischief {
     COMPLETE: 4,
     PARTIAL: 5,
     FAILED: 6
-  });
+  };
 
   /**
    * Current state of the capture.
