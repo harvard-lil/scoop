@@ -23,7 +23,6 @@
  * @property {number} captureWindowX - Browser window resolution in pixels: X axis. Defaults to 1600.
  * @property {number} captureWindowY - Browser window resolution in pixels: Y axis. Defaults to 900.
  * @property {boolean} autoScroll - Should Mischief try to scroll through the page? Defaults to `true`.
- * @property {number} autoScrollTimeout - How long should Mischief wait for the scroll process to go through, in ms? Defaults to 5s.
  * @property {boolean} autoPlayMedia - Should Mischief try to autoplay `<audio>` and `<video>` tags? Defaults to `true`.
  * @property {boolean} grabSecondaryResources - Should Mischief try to download img srcsets and secondary stylesheets? Defaults to `true`.
  * @property {boolean} runSiteSpecificBehaviors - Should Mischief run behaviors tailored to specific sites (ex: Twitter) in an attempt to better grab the page? Defaults to `true`.
@@ -43,7 +42,6 @@ export const MischiefOptions = {
   captureWindowX: 1600,
   captureWindowY: 900,
   autoScroll: true,
-  autoScrollTimeout: 5 * 1000,
   autoPlayMedia: true,
   grabSecondaryResources: true,
   runSiteSpecificBehaviors: true

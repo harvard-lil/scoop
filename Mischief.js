@@ -114,7 +114,8 @@ export class Mischief {
 
     if (options.grabSecondaryResources ||
         options.autoPlayMedia ||
-        options.runSiteSpecificBehaviors){
+        options.runSiteSpecificBehaviors ||
+        options.autoScroll){
       steps.push({
         name: "browser scripts",
         setup: async (page) => {
@@ -124,6 +125,7 @@ export class Mischief {
               self.__bx_behaviors.init({
                 autofetch: ${options.grabSecondaryResources},
                 autoplay: ${options.autoPlayMedia},
+                autoscroll: ${options.autoScroll},
                 siteSpecific: ${options.runSiteSpecificBehaviors},
                 timeout: ${options.behaviorsTimeout}
               });`
@@ -131,13 +133,6 @@ export class Mischief {
           await Promise.allSettled(page.frames().map(frame => frame.evaluate("self.__bx_behaviors.run()")));
         },
         main: async (page) => { await Promise.allSettled(page.frames().map(frame => frame.evaluate("self.__bx_behaviors.run()"))); }
-      });
-    }
-
-    if (options.autoScroll === true) {
-      steps.push({
-        name: "auto-scroll",
-        main: async (page) => { await page.evaluate(browserScripts.autoScroll, {timeout: options.autoScrollTimeout}); }
       });
     }
 
