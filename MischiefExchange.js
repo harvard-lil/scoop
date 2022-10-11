@@ -1,96 +1,110 @@
-import { STATUS_CODES } from "http";
-
- /**
- * * Mischief
+/**
+ * Mischief
  * @module MischiefExchange
  * @author The Harvard Library Innovation Lab
  * @license MIT
- */
+*/
+import { HTTPParser } from "./parsers/http.js";
 
 /**
  * Represents an HTTP exchange to be added to the web archive.
  * 
  * Usage:
  * ```javascript
- * const exchange = new MischiefExchange();
- * exchange.url = "https://example.com";
- * exchange.status = 200;
- * exchange.type = "response";
- * exchange.headers = {"Content-Type": "text/html", ...};
- * exchange.body = [...] // Some binary data as ArrayBuffer
+ * const exchange = new MischiefExchange({url: "https://example.com"});
  * ```
  */
 export class MischiefExchange {
-  /** @type {?string} */
-  url;
-
-  /** 
-   * Should be a valid HTTP verb.
-   * @type {?string} 
-   */
-  method = "GET";
-
-  /** @type {?number} */
-  status;
-
-  /**
-   * Approximates what the status line might have been.
-   * Playwright doesn't give us access to the original,
-   * nor does it surface the HTTP version, which we leave as "?" here.
-   * @returns {?string}
-   */
-  get statusLine() {
-    return this.status ? `HTTP/? ${this.status} ${STATUS_CODES[this.status]}` : null;
-  };
-
-  /** @type {?Object} */
-  headers;
-
-  /** @type {?ArrayBuffer} */
-  body = null;
-
   /** @type {Date} */
   date = new Date();
 
-  /** 
-   * Should be either "response" or "request".
-   * @type {string} 
-   */
-  type = "response";
+  /** @type {?string} */
+  id;
 
-  /**
-   * Combined byte length of the exchange, including headers.
-   * Used to determine if an exchange can be added to a collection (size limit).
-   * @returns {number} 
-   */
-  get byteLength() {
-    let byteLength = 0;
-    let encoder = new TextEncoder();
+  /** @type {?Buffer} */
+  requestRaw;
+  
+  set requestRaw(val) {
+    this.#request = null;
+    return (this.requestRaw = val);
+  }
 
-    if (this.url) {
-      byteLength += encoder.encode(this.url).byteLength;
+  /** @type {?Buffer} */
+  responseRaw;
+
+  set responseRaw(val) {
+    this.#response = null;
+    return (this.responseRaw = val);
+  }
+
+  /** @type {?object} */
+  #request;
+  get request() {
+    if (!this.#request && this.requestRaw) {
+      this.#request = HTTPParser.parseRequest(this.requestRaw);
     }
+    return this.#request;
+  }
 
-    if (this.method) {
-      byteLength += encoder.encode(this.method).byteLength;
+  set request(val) {
+    return (this.#request = val);
+  }
+
+  /** @type {?object} */
+  #response;
+  get response() {
+    if (!this.#response && this.responseRaw) {
+      this.#response = HTTPParser.parseResponse(this.responseRaw);
     }
+    return this.#response;
+  }
 
-    if (this.status) {
-      byteLength += encoder.encode(String(this.status)).byteLength;
+  set response(val) {
+    return (this.#response = val);
+  }
+
+  /** @type {?string} */
+  #url;
+  get url() {
+    if (!this.#url) {
+      // if the url lacks a protocol, assume https
+      this.#url =
+        this.request.url[0] == "/"
+          ? `https://${this.request.headers[1]}${this.request.url}`
+          : this.request.url;
     }
+    return this.#url;
+  }
 
-    if (this.headers) {
-      byteLength += encoder.encode(JSON.stringify(this.headers)).byteLength;
+  set url(val) {
+    return (this.#url = val);
+  }
+
+  /** @type {?string} */
+  #statusLine;
+  get statusLine() {
+    if (!this.#statusLine) {
+      this.#statusLine = `HTTP/${this.response.versionMajor}.${this.response.versionMinor} ${this.response.statusCode} ${this.response.statusMessage}`;
     }
+    return this.#statusLine;
+  }
 
-    if (this.body) {
-      byteLength += this.body.byteLength;
+  set statusLine(val) {
+    return (this.#statusLine = val);
+  }
+
+  constructor(props) {
+    const allowed = ["date",
+                     "id",
+                     "requestRaw",
+                     "responseRaw",
+                     "request",
+                     "response",
+                     "url",
+                     "statusLine"];
+    for(let prop of Object.keys(props).filter(k => allowed.includes(k))) {
+      this[prop] = props[prop];
     }
-
-    if (this.date) {
-      byteLength += encoder.encode(String(this.date.toISOString())).byteLength;
-    }
-
-    return byteLength;
+    return this;
   }
 }

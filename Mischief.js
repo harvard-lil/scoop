@@ -5,6 +5,7 @@
  * @license MIT
  */
 import { chromium } from "playwright";
+import ProxyServer from "transparent-proxy";
 
 import * as browserScripts from "./browser-scripts/index.js";
 import * as exporters from "./exporters/index.js";
@@ -14,8 +15,7 @@ import { MischiefOptions } from "./MischiefOptions.js";
 
 /**
  * Experimental single-page web archiving solution using Playwright.
- * - Relies mainly on network interception. 
- * - Uses custom browser scripts and out-of-browser capture as a fallback for resources that cannot be captured otherwise.
+ * - Uses a proxy to allow for comprehensive and raw network interception.
  * 
  * Usage:
  * ```javascript
@@ -30,6 +30,28 @@ import { MischiefOptions } from "./MischiefOptions.js";
  */
 export class Mischief {
   /**
+   * Enum-like states that the capture occupies.
+   * @readonly
+   * @enum {number}
+   */
+  static states = {
+    INIT: 0,
+    SETUP: 1,
+    CAPTURE: 2,
+    TEARDOWN: 3,
+    COMPLETE: 4,
+    PARTIAL: 5,
+    FAILED: 6
+  };
+
+  /**
+   * Current state of the capture.
+   * Should only contain states defined in `states`.
+   * @type {number}
+   */
+  state = Mischief.states.INIT;
+
+  /**
    * URL to capture.
    * @type {string} 
    */
@@ -42,18 +64,11 @@ export class Mischief {
    */
   options = {};
 
-  /** 
+  /**
    * Array of HTTP exchanges that constitute the capture.
-   * @type {MischiefExchange[]} 
+   * @type {MischiefExchange[]}
    */
   exchanges = [];
-
-  /** 
-   * List of urls that could not be captured via in-browser network interception.
-   * `this.capture()` will try to download them using `this.fallbackCapture()`.
-   * @type {string[]} 
-   */
-  fallbackCaptureQueue = [];
 
   /** @type {MischiefLog[]} */
   logs = [];
@@ -65,10 +80,10 @@ export class Mischief {
   totalSize = 0;
 
   /**
-   * Set to true when the capture went through.
-   * @type {boolean}
+   * The Playwright browser instance for this capture.
+   * @type {Browser}
    */
-  success = false;
+  #browser;
 
   /**
    * @param {string} url - Must be a valid HTTP(S) url.
@@ -78,7 +93,6 @@ export class Mischief {
     this.url = this.filterUrl(url);
     this.options = this.filterOptions(options);
     this.networkInterception = this.networkInterception.bind(this);
-    this.fallbackCapture = this.fallbackCapture.bind(this);
   }
 
   /**
@@ -92,328 +106,177 @@ export class Mischief {
    */
   async capture() {
     const options = this.options;
-    const browser = await chromium.launch({headless: options.headless, channel: "chrome"});
-    const context = await browser.newContext();
+    const steps = [];
+
+    steps.push({
+      name: "initial load",
+      main: async (page) => { await page.goto(this.url, { waitUntil: "load", timeout: options.loadTimeout }); }
+    });
+
+    if (options.grabSecondaryResources ||
+        options.autoPlayMedia ||
+        options.runSiteSpecificBehaviors ||
+        options.autoScroll){
+      steps.push({
+        name: "browser scripts",
+        setup: async (page) => {
+          await page.addInitScript({ path: './node_modules/browsertrix-behaviors/dist/behaviors.js' });
+          await page.addInitScript({
+            content: `
+              self.__bx_behaviors.init({
+                autofetch: ${options.grabSecondaryResources},
+                autoplay: ${options.autoPlayMedia},
+                autoscroll: ${options.autoScroll},
+                siteSpecific: ${options.runSiteSpecificBehaviors},
+                timeout: ${options.behaviorsTimeout}
+              });`
+          });
+          await Promise.allSettled(page.frames().map(frame => frame.evaluate("self.__bx_behaviors.run()")));
+        },
+        main: async (page) => { await Promise.allSettled(page.frames().map(frame => frame.evaluate("self.__bx_behaviors.run()"))); }
+      });
+    }
+
+    steps.push({
+      name: "network idle",
+      main: async (page) => { await page.waitForLoadState("networkidle", {timeout: options.networkIdleTimeout}); }
+    });
+
+    if (options.screenshot) {
+      steps.push({
+        name: "screenshot",
+        main: async (page) => {
+          this.exchanges.push(new MischiefExchange({
+            url: "file:///screenshot.png",
+            response: {
+              headers: ["Content-Type", "image/png"],
+              versionMajor: 1,
+              versionMinor: 1,
+              statusCode: 200,
+              statusMessage: "OK",
+              body: await page.screenshot({fullPage: true})
+            }
+          }));
+        }
+      });
+    }
+
+    let page;
+    try {
+      page = await this.setup();
+      this.addToLogs(`Starting capture of ${this.url} with options: ${JSON.stringify(options)}`);
+      this.state = Mischief.states.CAPTURE;
+    } catch(e) {
+      this.addToLogs('An error ocurred during capture setup', true, e);
+      this.state = Mischief.states.FAILED;
+      return; // exit early if the browser and proxy couldn't be launched
+    }
+
+    for (let step of steps.filter((step) => step.setup)) {
+      await step.setup(page);
+    }
+
+    let i = 0;
+    do {
+      const step = steps[i];
+      try {
+        this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name}`);
+        await step.main(page);
+      } catch(err) {
+        if(this.state == Mischief.states.CAPTURE){
+          this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name} - failed`, true, err);
+        } else {
+          this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name} - ended due to max size reached`, true);
+        }
+      }
+    } while(this.state == Mischief.states.CAPTURE && i++ < steps.length-1);
+
+    await this.teardown();
+    return this.state = Mischief.states.COMPLETE;
+  }
+
+  /**
+   * Sets up the proxy and Playwright resources
+   *
+   * @returns {Promise<boolean>}
+   */
+  async setup(){
+    this.state = Mischief.states.SETUP;
+    const options = this.options;
+
+    const proxy = new ProxyServer({
+      intercept: true,
+      verbose: options.proxyVerbose,
+      injectData: (data, session) => this.networkInterception("request", data, session),
+      injectResponse: (data, session) => this.networkInterception("response", data, session)
+    });
+    proxy.listen(options.proxyPort, options.proxyHost, () => {
+      this.addToLogs(`TCP-Proxy-Server started ${JSON.stringify(proxy.address())}`);
+    });
+
+    this.#browser = await chromium.launch({
+      headless: options.headless,
+      channel: "chrome",
+      proxy: {server: `http://${options.proxyHost}:${options.proxyPort}`}
+    })
+    this.#browser.on('disconnected', () => proxy.close());
+
+    const context = await this.#browser.newContext({ignoreHTTPSErrors: true});
     const page = await context.newPage();
-    const userAgent = await page.evaluate(() => navigator.userAgent);
 
     page.setViewportSize({
       width: options.captureWindowX,
       height: options.captureWindowY,
     });
 
-    page.on("response", this.networkInterception);
-
-    //
-    // Phase 1: In-browser capture
-    //
-
-    // Go to page and wait until load.
-    try {
-      this.addToLogs(`Starting capture of ${this.url} with options: ${options}`);
-      this.addToLogs("Waiting for browser to reach load state.");
-      await page.goto(this.url, { waitUntil: "load", timeout: options.loadTimeout });
-    }
-    catch(err) {
-      this.addToLogs("Document never reached load state. Moving along.", true);
-    }
-
-    // Run browser scripts
-    this.addToLogs("Running browser scripts.");
-
-    try {
-      if (options.autoPlayMedia === true) {
-        this.addToLogs("Browser Script: Auto-play medias.");
-        const maxDuration = await page.evaluate(browserScripts.autoPlayMedia);
-        await page.waitForTimeout(Math.min(maxDuration, options.autoPlayMediaTimeout));
-      }
-    }
-    catch(err) {
-      this.addToLogs("Browser Script: Auto-play medias failed.", true, err);
-    }
-
-    try {
-      if (options.autoScroll === true) {
-        this.addToLogs("Browser Script: Auto-scroll.");
-        await page.evaluate(browserScripts.autoScroll, {timeout: options.autoScrollTimeout});
-      }
-    }
-    catch(err) {
-      this.addToLogs("Browser Script: Auto-scroll failed.", true, err);
-    }
-
-    try {
-      if (options.grabResponsiveImages === true) {
-        this.addToLogs("Browser Script: Grab Responsive Images.");
-        const urls = await page.evaluate(browserScripts.listResponsiveImages);
-
-        for (let url of urls) {
-          this.addToFallbackCaptureQueue(url);
-        }
-      }
-    }
-    catch(err) {
-      this.addToLogs("Browser Script: Grab Responsive Images failed.", true, err);
-    }
-
-    try {
-      if (options.grabAllStylesheets === true) {
-        this.addToLogs("Browser Script: Grab Stylesheets.");
-        const urls = await page.evaluate(browserScripts.listAllStylesheets);
-
-        for (let url of urls) { // TODO: Exclude stylesheets already captured?
-          this.addToFallbackCaptureQueue(url);
-        }
-      }
-    }
-    catch(err) {
-      this.addToLogs("Browser Script: Grab Stylesheets failed.", true, err);
-    }
-
-    try {
-      if (options.grabMedia === true) {
-        this.addToLogs("Browser Script: Grab Audio and Video sources.");
-        const urls = await page.evaluate(browserScripts.listMediaSources);
-
-        for (let url of urls) {
-          this.addToFallbackCaptureQueue(url);
-        }
-      }
-    }
-    catch(err) {
-      this.addToLogs("Browser Script: Grab Audio and Video sources.", true, err);
-    }
-
-    // Screenshot
-    try {
-      if (options.screenshot) {
-        this.addToLogs("Making a full-page screenshot of the document.");
-
-        const screenshot = new MischiefExchange();
-        screenshot.body = await page.screenshot({fullPage: true});
-        screenshot.headers = {"Content-Type": "image/png"};
-        screenshot.url = "file:///screenshot.png";
-        screenshot.status = 200;
-
-        this.addMischiefExchange(screenshot);
-      }
-    }
-    catch(err) {
-      this.addToLogs("Could not make a full-page screenshot of the document.", true, err);
-    }
-
-    // Wait for network idle and close browser
-    try {
-      this.addToLogs("Waiting for browser to reach network idle state.");
-      await page.waitForLoadState("networkidle", {timeout: options.networkIdleTimeout});
-    }
-    catch(err) {
-      this.addToLogs("Document never reached network idle state. Moving along.", true);
-    }
-    finally {
-      this.addToLogs("Closing browser.");
-      await page.close();
-      await context.close();
-      await browser.close();
-    }
-
-    //
-    // Phase 2: Fallback capture. Fetching remaining elements outside of the browser.
-    //
-    try {
-      this.addToLogs("Out-of-browser fallback capture of remaining elements.");
-      const captures = await Promise.allSettled(
-        this.fallbackCaptureQueue.map(url => this.fallbackCapture(url, userAgent))
-      );
-
-      for (let capture of captures) {
-        if (capture.status === "rejected") {
-          this.addToLogs(`Capture failed`, true, capture.reason);
-          continue;
-        }
-      }
-    }
-    catch(err) {
-      this.addToLogs("Uncaught exception during out-of-browser capture", true, err);
-    }
-
-    this.success = true;
-    return true;
+    return page;
   }
 
   /**
-   * Processes HTTP requests and responses intercepted by Playwright and adds them to the exchange list.
-   * Will try to download HTTP bodies but add to fallback capture queue if the operation fails.
-   * 
-   * @param {Playwright.Response} event - https://playwright.dev/docs/api/class-response
+   * Tears down the Playwright and (via event listener) the proxy resources.
+   *
    * @returns {Promise<boolean>}
    */
-  async networkInterception(event) {
-    const response = new MischiefExchange();
-    const request = new MischiefExchange();
-
-    // Capture request
-    try {
-      request.url = event.request().url();
-      request.status = null;
-      request.method = event.request().method();
-      request.headers = this.filterHeaders(await event.request().allHeaders());
-      request.date = new Date();
-      request.type = "request";
-
-      const body = await event.request().postDataBuffer();
-      if (body) {
-        request.body = body.buffer; // Pulls the `ArrayBuffer` instance from `Buffer`
-      }
-
-      this.addMischiefExchange(request);
-    }
-    catch(err) {
-      this.addToLogs("Error occurred while intercepting request.", true, err);
-    }
-    
-    // Capture response
-    try {
-      response.url = event.url();
-      response.status = event.status();
-      response.headers = this.filterHeaders(await event.allHeaders());
-      response.method = event.request().method();
-      response.body = null;
-      response.type = "response";
-    }
-    catch(err) {
-      this.addToLogs("Error occurred while intercepting response.", true, err);
-      return;
-    }
-
-    // If redirect: add exchange as is.
-    if (parseInt(response.status / 100) === 3) {
-      this.addMischiefExchange(response);
-      return;
-    }
-
-    // Try to pull body, add to post-capture queue if operation fails (i.e: timeout).
-    try {
-      response.body = await event.body();
-      this.addMischiefExchange(response);
-    }
-    catch(err) {
-      this.addToFallbackCaptureQueue(response.url);
-    } 
+  async teardown(){
+    if(this.state == Mischief.states.TEARDOWN) { return; }
+    this.state = Mischief.states.TEARDOWN;
+    this.addToLogs("Closing browser and proxy server.");
+    await this.#browser.close();
   }
 
   /**
-   * Retrieves resources that could not be intercepted during in-browser capture and adds them to the exchange list.
-   * 
-   * @param {string} url - The url to capture 
-   * @param {string} userAgent - Ideally, the user agent used by Playwright during the in-browser capture phase.
-   * @returns {Promise<boolean>}
+   * Returns an exchange based on the session id and type ("request" or "response").
+   * If the type is a request and there's already been a response on that same session,
+   * create a new exchange. Otherwise append to continue the exchange.
+   *
+   * @param {string} id
+   * @param {string} type
    */
-  async fallbackCapture(url, userAgent) {
-    this.addToLogs(`Fallback capture of: ${url}.`);
-
-    const exchange = new MischiefExchange();
-    const response = await fetch(url, {headers: {"User-Agent": userAgent}});
-
-    exchange.url = url;
-    exchange.status = response.status;
-    exchange.body = null;
-    exchange.headers = this.filterHeaders(response.headers);
-    exchange.type = "response";
-
-    // Stream response until either time runs out or size limit is reached
-    let timeIsOut = false;
-    let isComplete = true;
-    let timer = setTimeout(() => timeIsOut = true, this.options.fallbackCaptureTimeout);
-
-    for await (let chunk of response.body) {
-      this.addToLogs(`Received a ${chunk.byteLength}-byte slice from ${url}.`);
-
-      // Break on time limit
-      if (timeIsOut === true) {
-        this.addToLogs(`Capture of ${url} interrupted (timeout).`, true);
-        isComplete = false;
-        break;
-      }
-
-      // Break on size limit
-      if (chunk.byteLength + exchange.byteLength + this.totalSize > this.options.maxSize) {
-        this.addToLogs(`Capture of ${url} interrupted (max size reached).`, true);
-        isComplete = false;
-        break;
-      }
-
-      let body = null;
-
-      // Merge existing ArrayBuffers
-      body = exchange.body ? new Blob([exchange.body, chunk]) : new Blob([chunk]);
-      exchange.body = await body.arrayBuffer();
-    }
-
-    clearTimeout(timer);
-
-    if (isComplete || (!isComplete && this.options.keepPartialResponses)) {
-      this.addMischiefExchange(exchange);
-      return true;
-    }
-
-    if (!isComplete && !this.options.keepPartialResponses) {
-      this.addToLogs(`Partial response for ${url} will be discarded (settings).`, true);
-    }
-
-    return false;
+  getOrInitExchange(id, type) {
+    return this.exchanges.findLast((ex) => {
+      return ex.id == id && (type == "response" || !ex.responseRaw);
+    }) || this.exchanges[this.exchanges.push(new MischiefExchange({id: id})) - 1];
   }
 
   /**
-   * Adds an entry to the exchange list (`this.exchange`) unless size limit has been reached.
-   * 
-   * @param {MischiefExchange} exchange 
-   * @returns {boolean}
+   * Collates network data (both requests and responses) from the proxy.
+   * Capture size enforcement happens here.
+   *
+   * @param {string} type
+   * @param {Buffer} data
+   * @param {Session} session
    */
-  addMischiefExchange(exchange) {
-    if (!(exchange instanceof MischiefExchange)) {
-      this.addToLogs("`exchange` must be a valid exchange.");
-      return false;
-    }
+  networkInterception(type, data, session) {
+    const ex = this.getOrInitExchange(session._id, type);
+    const prop = `${type}Raw`;
+    ex[prop] = ex[prop] ? Buffer.concat([ex[prop], data], ex[prop].length + data.length) : data;
 
-    if (exchange.byteLength + this.totalSize > this.options.maxSize) {
-      this.addToLogs(`${exchange.url} (${exchange.byteLength} bytes) was discarded because of ${this.options.maxSize} bytes total cap.`, true);
-      return false;
+    this.totalSize += data.byteLength;
+    if(this.totalSize >= this.options.maxSize && this.state == Mischief.states.CAPTURE){
+      this.addToLogs("Max size reached. Ending further capture.");
+      this.teardown();
     }
-
-    this.exchanges.push(exchange);
-    this.addToLogs(`${exchange.url} was captured (${exchange.byteLength} bytes)`);
-    return true;
-  }
-
-  /**
-   * Adds an url to the post capture queue (`this.postCaptureQueue`) unless:
-   * - Max size was reached
-   * - Url is not valid
-   * 
-   * @param {string} url 
-   * @returns {boolean}
-   */
-  addToFallbackCaptureQueue(url) {
-    if (this.totalSize >= this.options.maxSize) {
-      this.addToLogs(
-        `${url} was not added to the fallback capture queue (max size of ${this.options.maxSize} bytes reached).`,
-        true
-      );
-      return false;
-    }
-
-    try {
-      url = new URL(url).href;
-    }
-    catch(err) {
-      this.addToLogs(`${url} was not added to the fallback capture queue (invalid url).`, true);
-      return false;
-    }
-
-    this.fallbackCaptureQueue.push(url);
-    this.addToLogs(`${url} was added to fallback capture queue.`);
-    return true;
+    return data;
   }
 
   /**
@@ -484,38 +347,20 @@ export class Mischief {
   }
 
   /**
-   * Filters-out headers:
-   * - Excludes keys that are invalid
-   * - Remove `\n` from values
-   * 
-   * TODO: Reconsider this. We should at least give the option to capture everything unfiltered.
-   *
-   * @param {object|Header} headers - Can either be a standard object or a `Headers` instance.
-   * @returns {object}
-   */
-  filterHeaders(headers) {
-    const newHeaders = {};
-    const iterator = headers.entries ? headers.entries() : Object.entries(headers);
-
-    for (let [key, value] of iterator) {
-      if (!key.match(/^[A-Za-z0-9\-\_]+$/)) { // Key must be valid
-        continue;
-      }
-
-      let newValue = value.replaceAll("\n", " ");
-      newHeaders[key] = newValue;
-    }
-    
-    return newHeaders;
-  }
-
-  /**
    * Export capture to WARC.
    * @param {boolean} [gzip=false] - If `true`, will be compressed using GZIP (for `.warc.gz`). 
    * @returns {Promise<ArrayBuffer>} - Binary data ready to be saved a .warc or .warc.gz
    */
   async toWarc(gzip=false) {
     return await exporters.warc(this, gzip);
+  }
+
+  /**
+   * Export capture to WACZ.
+   * @returns {Promise<ArrayBuffer>} - Binary data ready to be saved a .wacz
+   */
+  async toWacz() {
+    return await exporters.wacz(this);
   }
 
 }
