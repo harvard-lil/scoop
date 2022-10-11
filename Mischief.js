@@ -40,7 +40,7 @@ export class Mischief {
     TEARDOWN: 3,
     COMPLETE: 4,
     PARTIAL: 5,
-    ERROR: 6
+    FAILED: 6
   });
 
   /**
@@ -160,9 +160,16 @@ export class Mischief {
       });
     }
 
-    const page = await this.setup();
-    this.addToLogs(`Starting capture of ${this.url} with options: ${JSON.stringify(options)}`);
-    this.state = Mischief.states.CAPTURE;
+    let page;
+    try {
+      page = await this.setup();
+      this.addToLogs(`Starting capture of ${this.url} with options: ${JSON.stringify(options)}`);
+      this.state = Mischief.states.CAPTURE;
+    } catch(e) {
+      this.addToLogs('An error ocurred during capture setup', true, e);
+      this.state = Mischief.states.FAILED;
+      return; // exit early if the browser and proxy couldn't be launched
+    }
 
     for (let step of steps.filter((step) => step.setup)) {
       await step.setup(page);
