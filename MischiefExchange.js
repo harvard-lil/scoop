@@ -94,7 +94,17 @@ export class MischiefExchange {
   }
 
   constructor(props) {
-    Object.assign(this, props);
+    const allowed = ["date",
+                     "id",
+                     "requestRaw",
+                     "responseRaw",
+                     "request",
+                     "response",
+                     "url",
+                     "statusLine"];
+    for(let prop of Object.keys(props).filter(k => allowed.includes(k))) {
+      this[prop] = props[prop];
+    }
     return this;
   }
 }
