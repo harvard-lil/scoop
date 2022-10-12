@@ -7,7 +7,6 @@
 import { chromium } from "playwright";
 import ProxyServer from "transparent-proxy";
 
-import * as browserScripts from "./browser-scripts/index.js";
 import * as exporters from "./exporters/index.js";
 import { MischiefExchange } from "./MischiefExchange.js";
 import { MischiefLog } from "./MischiefLog.js";
