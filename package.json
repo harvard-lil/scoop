@@ -21,7 +21,7 @@
   "dependencies": {
     "browsertrix-behaviors": "^0.3.4",
     "http-parser-js": "^0.5.8",
-    "transparent-proxy": "github:leppert/transparent-proxy#set-servername",
+    "transparent-proxy": "github:harvard-lil/transparent-proxy#handle-colons-in-urls",
     "uuid": "^9.0.0",
     "warcio": "^1.5.1",
     "wbn": "^0.0.8",

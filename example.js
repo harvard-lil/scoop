@@ -5,8 +5,10 @@ import { Mischief } from "./Mischief.js";
 
 const toCapture = [
   {name: "google", url: "https://google.com"},
+  {name: "chrome-update", url: "http://update.googleapis.com/service/update2/json?cup2key=12:EhHNMQsbmQEJvI_P7gxZrdMKErBWF-wj-U6U8Mi83co&cup2hreq=1338f1651449d867f560f6fd72886fa074753bf76320d7864159e993fc33527b"},
   {name: "lil", url: "https://lil.law.harvard.edu"},
-  {name: "example", url: "https://example.com"},
+  {name: "example-http", url: "http://example.com"},
+  {name: "example-https", url: "https://example.com"},
   {name: "df", url: "https://daringfireball.net"},
   {name: "nyt", url: "https://www.nytimes.com"},
   {name: "present-studio", url: "https://www.presentstudio.co/"},
