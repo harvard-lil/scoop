@@ -18,7 +18,7 @@ export class HTTPParser {
     let versionMinor;
     let headers = [];
     let trailers = [];
-    let bodyChunks = [];
+    const bodyChunks = [];
 
     parser[_HTTPParser.kOnHeadersComplete] = function (req) {
       shouldKeepAlive = req.shouldKeepAlive;
@@ -54,7 +54,7 @@ export class HTTPParser {
       throw new Error('Could not parse request');
     }
 
-    let body = Buffer.concat(bodyChunks);
+    const body = Buffer.concat(bodyChunks);
 
     return {
       shouldKeepAlive,
@@ -80,7 +80,7 @@ export class HTTPParser {
     let versionMinor;
     let headers = [];
     let trailers = [];
-    let bodyChunks = [];
+    const bodyChunks = [];
 
     parser[_HTTPParser.kOnHeadersComplete] = function (res) {
       shouldKeepAlive = res.shouldKeepAlive;
@@ -112,11 +112,7 @@ export class HTTPParser {
     parser.execute(input);
     parser.finish();
 
-    if (!complete) {
-      throw new Error('Could not parse');
-    }
-
-    let body = Buffer.concat(bodyChunks);
+    const body = Buffer.concat(bodyChunks);
 
     return {
       shouldKeepAlive,

@@ -26,7 +26,7 @@ export class MischiefExchange {
   
   set requestRaw(val) {
     this.#request = null;
-    return (this.requestRaw = val);
+    this.requestRaw = val;
   }
 
   /** @type {?Buffer} */
@@ -34,7 +34,7 @@ export class MischiefExchange {
 
   set responseRaw(val) {
     this.#response = null;
-    return (this.responseRaw = val);
+    this.responseRaw = val;
   }
 
   /** @type {?object} */
@@ -47,7 +47,7 @@ export class MischiefExchange {
   }
 
   set request(val) {
-    return (this.#request = val);
+    this.#request = val;
   }
 
   /** @type {?object} */
@@ -60,7 +60,7 @@ export class MischiefExchange {
   }
 
   set response(val) {
-    return (this.#response = val);
+    this.#response = val;
   }
 
   /** @type {?string} */
@@ -77,7 +77,7 @@ export class MischiefExchange {
   }
 
   set url(val) {
-    return (this.#url = val);
+    this.#url = val;
   }
 
   /** @type {?string} */
@@ -90,7 +90,7 @@ export class MischiefExchange {
   }
 
   set statusLine(val) {
-    return (this.#statusLine = val);
+    this.#statusLine = val;
   }
 
   constructor(props) {
