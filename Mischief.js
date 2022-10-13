@@ -129,7 +129,6 @@ export class Mischief {
                 timeout: ${options.behaviorsTimeout}
               });`
           });
-          await Promise.allSettled(page.frames().map(frame => frame.evaluate("self.__bx_behaviors.run()")));
         },
         main: async (page) => { await Promise.allSettled(page.frames().map(frame => frame.evaluate("self.__bx_behaviors.run()"))); }
       });
