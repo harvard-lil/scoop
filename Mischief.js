@@ -37,10 +37,9 @@ export class Mischief {
     INIT: 0,
     SETUP: 1,
     CAPTURE: 2,
-    TEARDOWN: 3,
-    COMPLETE: 4,
-    PARTIAL: 5,
-    FAILED: 6
+    COMPLETE: 3,
+    PARTIAL: 4,
+    FAILED: 5
   };
 
   /**
@@ -160,6 +159,14 @@ export class Mischief {
       });
     }
 
+    steps.push({
+      name: "teardown",
+      main: async () => {
+        this.state = Mischief.states.COMPLETE;
+        await this.teardown();
+      }
+    })
+
     let page;
     try {
       page = await this.setup();
@@ -185,13 +192,11 @@ export class Mischief {
         if(this.state == Mischief.states.CAPTURE){
           this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name} - failed`, true, err);
         } else {
-          this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name} - ended due to max size reached`, true);
+          this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name} - ended due to max time or size reached`, true);
         }
       }
-    } while(this.state == Mischief.states.CAPTURE && i++ < steps.length-1);
-
-    await this.teardown();
-    return this.state = Mischief.states.COMPLETE;
+    } while(i++ < steps.length-1 &&
+            this.state == Mischief.states.CAPTURE);
   }
 
   /**
@@ -202,6 +207,12 @@ export class Mischief {
   async setup(){
     this.state = Mischief.states.SETUP;
     const options = this.options;
+
+    const totalTimeoutTimer = setTimeout(() => {
+      this.addToLogs(`totalTimeout of ${options.totalTimeout}ms reached. Ending further capture.`);
+      this.state = Mischief.states.PARTIAL;
+      this.teardown();
+    }, options.totalTimeout);
 
     const proxy = new ProxyServer({
       intercept: true,
@@ -218,7 +229,10 @@ export class Mischief {
       channel: "chrome",
       proxy: {server: `http://${options.proxyHost}:${options.proxyPort}`}
     })
-    this.#browser.on('disconnected', () => proxy.close());
+    this.#browser.on('disconnected', () => {
+      clearTimeout(totalTimeoutTimer);
+      proxy.close()
+    });
 
     const context = await this.#browser.newContext({ignoreHTTPSErrors: true});
     const page = await context.newPage();
@@ -237,8 +251,6 @@ export class Mischief {
    * @returns {Promise<boolean>}
    */
   async teardown(){
-    if(this.state == Mischief.states.TEARDOWN) { return; }
-    this.state = Mischief.states.TEARDOWN;
     this.addToLogs("Closing browser and proxy server.");
     await this.#browser.close();
   }
@@ -272,7 +284,8 @@ export class Mischief {
 
     this.totalSize += data.byteLength;
     if(this.totalSize >= this.options.maxSize && this.state == Mischief.states.CAPTURE){
-      this.addToLogs("Max size reached. Ending further capture.");
+      this.addToLogs(`Max size of ${this.options.maxSize} reached. Ending further capture.`);
+      this.state = Mischief.states.PARTIAL;
       this.teardown();
     }
     return data;

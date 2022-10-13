@@ -16,8 +16,9 @@ import { Mischief } from "../Mischief.js";
  * @returns {Promise<ArrayBuffer>}
  */
 export async function wacz(capture) {
-  if (!(capture instanceof Mischief) || capture.state != Mischief.states.COMPLETE) {
-    throw new Error("`capture` must be a complete Mischief object.");
+  const validStates = [Mischief.states.PARTIAL, Mischief.states.COMPLETE];
+  if (!(capture instanceof Mischief) || !validStates.includes(capture.state)) {
+    throw new Error("`capture` must be a partial or complete Mischief object.");
   }
 
   let tmpDir;
