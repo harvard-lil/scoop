@@ -19,17 +19,17 @@ export async function warc(capture, gzip=false) {
   const warcVersion = "WARC/1.1";
   gzip = Boolean(gzip);
   let serializedInfo = null;
-  let serializedRecords = [];
-  let filename = `archive${gzip ? ".warc.gz" : ".warc"}`;
+  const serializedRecords = [];
+  const filename = `archive${gzip ? ".warc.gz" : ".warc"}`;
 
-  if (!capture instanceof Mischief || !capture.state == Mischief.states.COMPLETE) {
+  if (!(capture instanceof Mischief) || capture.state != Mischief.states.COMPLETE) {
     throw new Error("`capture` must be a complete Mischief object.");
   }
 
   //
   // Prepare WARC info section
   //
-  const info = await WARCRecord.createWARCInfo(
+  const info = WARCRecord.createWARCInfo(
     { filename, warcVersion },
     { software: "LIL Mischief DEV" }
   );

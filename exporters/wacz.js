@@ -1,5 +1,5 @@
 import * as path from "path";
-import { mkdtemp, mkdir, readFile, writeFile, rm } from "fs/promises";
+import { mkdtemp, readFile, writeFile, rm } from "fs/promises";
 import { tmpdir } from "os";
 import { v4 as uuidv4 } from "uuid";
 import { spawn  } from "child_process";
@@ -16,7 +16,7 @@ import { Mischief } from "../Mischief.js";
  * @returns {Promise<ArrayBuffer>}
  */
 export async function wacz(capture) {
-  if (!capture instanceof Mischief || !capture.state == Mischief.states.COMPLETE) {
+  if (!(capture instanceof Mischief) || capture.state != Mischief.states.COMPLETE) {
     throw new Error("`capture` must be a complete Mischief object.");
   }
 
