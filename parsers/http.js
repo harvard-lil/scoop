@@ -110,10 +110,18 @@ export class HTTPParser {
     // However, you can of course call execute() multiple times with multiple chunks, e.g. from a stream.
     // But then you have to refactor the entire logic to be async (e.g. resolve a Promise in kOnMessageComplete and add timeout logic).
     parser.execute(input);
-    parser.finish();
+    const err = parser.finish();
 
-    if (!complete) {
-      throw new Error('Could not parse');
+    // parser.finish will return an error for chunked responses
+    // that are cut off before an end of message chunk is sent
+    // (which is what happens with long streams that we truncate et al)
+    // so we ignore that error and proceed
+    if(parser.state != 'BODY_CHUNKHEAD') {
+      if(err) {
+        throw err;
+      } else if (!complete) {
+        throw new Error('Could not parse');
+      }
     }
 
     const body = Buffer.concat(bodyChunks);
