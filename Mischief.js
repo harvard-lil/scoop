@@ -177,12 +177,13 @@ export class Mischief {
       return; // exit early if the browser and proxy couldn't be launched
     }
 
-    for (let step of steps.filter((step) => step.setup)) {
+    for (const step of steps.filter((step) => step.setup)) {
       await step.setup(page);
     }
 
-    let i = 0;
-    do {
+    let i = -1;
+    while(i++ < steps.length-1 &&
+          this.state == Mischief.states.CAPTURE) {
       const step = steps[i];
       try {
         this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name}`);
@@ -194,8 +195,7 @@ export class Mischief {
           this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name} - ended due to max time or size reached`, true);
         }
       }
-    } while(i++ < steps.length-1 &&
-            this.state == Mischief.states.CAPTURE);
+    }
   }
 
   /**
@@ -313,7 +313,7 @@ export class Mischief {
    */
   filterUrl(url) {
     try {
-      let filteredUrl = new URL(url); // Will throw if not a valid url
+      const filteredUrl = new URL(url); // Will throw if not a valid url
 
       if (filteredUrl.protocol !== "https:" && filteredUrl.protocol !== "http:") {
         throw new Error("Invalid protocol.");
@@ -335,7 +335,7 @@ export class Mischief {
   filterOptions(newOptions) {
     const options = {};
 
-    for (let key of Object.keys(MischiefOptions)) {
+    for (const key of Object.keys(MischiefOptions)) {
       options[key] = key in newOptions ? newOptions[key] : MischiefOptions[key];
 
       // Apply basic type casting based on type of defaults (MischiefOptions)
