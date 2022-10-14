@@ -22,8 +22,9 @@ export async function warc(capture, gzip=false) {
   const serializedRecords = [];
   const filename = `archive${gzip ? ".warc.gz" : ".warc"}`;
 
-  if (!(capture instanceof Mischief) || capture.state != Mischief.states.COMPLETE) {
-    throw new Error("`capture` must be a complete Mischief object.");
+  const validStates = [Mischief.states.PARTIAL, Mischief.states.COMPLETE];
+  if (!(capture instanceof Mischief) || !validStates.includes(capture.state)) {
+    throw new Error("`capture` must be a partial or complete Mischief object.");
   }
 
   //
