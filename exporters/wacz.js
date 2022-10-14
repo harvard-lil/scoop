@@ -1,6 +1,10 @@
 import { v4 as uuidv4 } from "uuid";
-import { Writable } from "stream";
+import { Readable, Writable } from "stream";
+import { promisify } from "util";
+import { gzip } from "zlib";
+const asyncGzip = promisify(gzip);
 import { createHash } from "crypto";
+import { CDXIndexer } from "../node_modules/warcio/dist/warcio.mjs";
 import Archiver from "archiver";
 
 import { Mischief } from "../Mischief.js";
@@ -51,13 +55,20 @@ export function wacz(capture) {
       const pages = generatePages(capture);
       archive.append(pages, {name: FILES.pages.path});
 
-      const datapackage = generateDatapackage(Buffer.from(''), Buffer.from(''), warc, pages);
-      archive.append(datapackage, {name: FILES.datapackage.path});
+      generateIndexCDX(warc).then((indexCDX) => {
+        archive.append(indexCDX, {name: FILES.indexCDX.path});
 
-      const datapackageDigest = generateDatapackageDigest(datapackage);
-      archive.append(datapackageDigest, {name: FILES.datapackageDigest.path});
+        const indexIDX = generateIndexIDX();
+        archive.append(indexIDX, {name: FILES.indexIDX.path});
 
-      archive.finalize();
+        const datapackage = generateDatapackage(indexIDX, indexCDX, warc, pages);
+        archive.append(datapackage, {name: FILES.datapackage.path});
+
+        const datapackageDigest = generateDatapackageDigest(datapackage);
+        archive.append(datapackageDigest, {name: FILES.datapackageDigest.path});
+
+        archive.finalize();
+      });
     });
   });
 };
@@ -84,7 +95,7 @@ const generateDatapackage = function(indexIDX, indexCDX, warc, pages) {
     "wacz_version": "1.1.1",
     "software": "mischief"
   });
-}
+};
 
 const generateDatapackageDigest = (datapackage) => {
   return stringify({
@@ -92,3 +103,22 @@ const generateDatapackageDigest = (datapackage) => {
     hash: hash(datapackage)
   });
 };
+
+const generateIndexCDX = async (warcBuffer) => {
+  const buffers = [];
+  const converter = new Writable();
+  converter._write = (chunk, _encoding, cb) => {
+    buffers.push(chunk)
+    process.nextTick(cb)
+  }
+
+  // CDXIndexer expects an array of files of the format {filename: string, reader: stream}
+  await new CDXIndexer({format: 'cdxj'}, converter)
+    .run([{filename: FILES.warc.name, reader: Readable.from(warcBuffer)}]);
+
+  return await asyncGzip(Buffer.concat(buffers));
+}
+
+const generateIndexIDX = () => {
+  return `!meta 0 {"format": "cdxj-gzip-1.0", "filename": "${FILES.indexCDX.name}"}`;
+}
