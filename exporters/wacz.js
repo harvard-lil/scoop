@@ -114,5 +114,5 @@ const generateIndexCDX = async (warcBuffer) => {
 }
 
 const generateIndexIDX = () => {
-  return `!meta 0 {"format": "cdxj-gzip-1.0", "filename": "${FILES.indexCDX.name}"}`;
+  return '!meta 0 ' + JSON.stringify({format: "cdxj-gzip-1.0", filename: FILES.indexCDX.name});
 }
