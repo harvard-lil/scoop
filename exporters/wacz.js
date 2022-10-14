@@ -30,7 +30,7 @@ const FILES = {
 };
 
 export function wacz(capture) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     const validStates = [Mischief.states.PARTIAL, Mischief.states.COMPLETE];
     if (!(capture instanceof Mischief) || !validStates.includes(capture.state)) {
       throw new Error("`capture` must be a partial or complete Mischief object.");
@@ -38,7 +38,7 @@ export function wacz(capture) {
 
     const buffers = [];
     const converter = new Writable();
-    converter._write = (chunk, encoding, cb) => {
+    converter._write = (chunk, _encoding, cb) => {
       buffers.push(chunk)
       process.nextTick(cb)
     }
@@ -48,28 +48,25 @@ export function wacz(capture) {
     archive.on('error', err => { reject(err) });
     archive.pipe(converter);
 
-    exporters.warc(capture).then((warcArrayBuffer) => {
-      const warc = Buffer.from(warcArrayBuffer);
-      archive.append(warc, {name: FILES.warc.path});
+    const warc = Buffer.from(await exporters.warc(capture));
+    archive.append(warc, {name: FILES.warc.path});
 
-      const pages = generatePages(capture);
-      archive.append(pages, {name: FILES.pages.path});
+    const pages = generatePages(capture);
+    archive.append(pages, {name: FILES.pages.path});
 
-      generateIndexCDX(warc).then((indexCDX) => {
-        archive.append(indexCDX, {name: FILES.indexCDX.path});
+    const indexCDX = await generateIndexCDX(warc)
+    archive.append(indexCDX, {name: FILES.indexCDX.path});
 
-        const indexIDX = generateIndexIDX();
-        archive.append(indexIDX, {name: FILES.indexIDX.path});
+    const indexIDX = generateIndexIDX();
+    archive.append(indexIDX, {name: FILES.indexIDX.path});
 
-        const datapackage = generateDatapackage(indexIDX, indexCDX, warc, pages);
-        archive.append(datapackage, {name: FILES.datapackage.path});
+    const datapackage = generateDatapackage(indexIDX, indexCDX, warc, pages);
+    archive.append(datapackage, {name: FILES.datapackage.path});
 
-        const datapackageDigest = generateDatapackageDigest(datapackage);
-        archive.append(datapackageDigest, {name: FILES.datapackageDigest.path});
+    const datapackageDigest = generateDatapackageDigest(datapackage);
+    archive.append(datapackageDigest, {name: FILES.datapackageDigest.path});
 
-        archive.finalize();
-      });
-    });
+    archive.finalize();
   });
 };
 
