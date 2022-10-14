@@ -29,45 +29,42 @@ const FILES = {
   datapackageDigest: {path: 'datapackage-digest.json'}
 };
 
-export function wacz(capture) {
-  return new Promise(async (resolve, reject) => {
-    const validStates = [Mischief.states.PARTIAL, Mischief.states.COMPLETE];
-    if (!(capture instanceof Mischief) || !validStates.includes(capture.state)) {
-      throw new Error("`capture` must be a partial or complete Mischief object.");
-    }
+export async function wacz(capture) {
+  const validStates = [Mischief.states.PARTIAL, Mischief.states.COMPLETE];
+  if (!(capture instanceof Mischief) || !validStates.includes(capture.state)) {
+    throw new Error("`capture` must be a partial or complete Mischief object.");
+  }
 
-    const buffers = [];
-    const converter = new Writable();
-    converter._write = (chunk, _encoding, cb) => {
-      buffers.push(chunk)
-      process.nextTick(cb)
-    }
-    converter.on('finish', () => { resolve(Buffer.concat(buffers)) })
+  const archive = new Archiver('zip', { zlib: { level: 9 } });
 
-    const archive = new Archiver('zip', { zlib: { level: 9 } });
-    archive.on('error', err => { reject(err) });
-    archive.pipe(converter);
+  const buffers = [];
+  const converter = new Writable();
+  converter._write = (chunk, _encoding, cb) => {
+    buffers.push(chunk);
+    process.nextTick(cb);
+  }
+  archive.pipe(converter);
 
-    const warc = Buffer.from(await exporters.warc(capture));
-    archive.append(warc, {name: FILES.warc.path});
+  const warc = Buffer.from(await exporters.warc(capture));
+  archive.append(warc, {name: FILES.warc.path});
 
-    const pages = generatePages(capture);
-    archive.append(pages, {name: FILES.pages.path});
+  const pages = generatePages(capture);
+  archive.append(pages, {name: FILES.pages.path});
 
-    const indexCDX = await generateIndexCDX(warc)
-    archive.append(indexCDX, {name: FILES.indexCDX.path});
+  const indexCDX = await generateIndexCDX(warc)
+  archive.append(indexCDX, {name: FILES.indexCDX.path});
 
-    const indexIDX = generateIndexIDX();
-    archive.append(indexIDX, {name: FILES.indexIDX.path});
+  const indexIDX = generateIndexIDX();
+  archive.append(indexIDX, {name: FILES.indexIDX.path});
 
-    const datapackage = generateDatapackage(indexIDX, indexCDX, warc, pages);
-    archive.append(datapackage, {name: FILES.datapackage.path});
+  const datapackage = generateDatapackage(indexIDX, indexCDX, warc, pages);
+  archive.append(datapackage, {name: FILES.datapackage.path});
 
-    const datapackageDigest = generateDatapackageDigest(datapackage);
-    archive.append(datapackageDigest, {name: FILES.datapackageDigest.path});
+  const datapackageDigest = generateDatapackageDigest(datapackage);
+  archive.append(datapackageDigest, {name: FILES.datapackageDigest.path});
 
-    archive.finalize();
-  });
+  await archive.finalize();
+  return Buffer.concat(buffers);
 };
 
 const hash = (buffer) => 'sha256:' + createHash('sha256').update(buffer).digest('hex');
