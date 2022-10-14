@@ -71,8 +71,8 @@ const hash = (buffer) => 'sha256:' + createHash('sha256').update(buffer).digest(
 const stringify = (obj) => JSON.stringify(obj, null, 2);
 
 const generatePages = (capture) => {
-  return Buffer.from([{"format": "json-pages-1.0", "id": "pages", "title": "All Pages", hasText: false},
-                      {id: uuidv4(), url: capture.url, title: "", seed: true}].map(JSON.stringify).join('\n'));
+  return Buffer.from([{"format": "json-pages-1.0", "id": "pages", "title": "All Pages"},
+                      {id: uuidv4(), url: capture.url, ts: (new Date()).toISOString()}].map(JSON.stringify).join('\n'));
 };
 
 const generateDatapackage = function(indexIDX, indexCDX, warc, pages) {
