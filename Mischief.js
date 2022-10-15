@@ -77,6 +77,12 @@ export class Mischief {
   totalSize = 0;
 
   /**
+   * The time at which the page was crawled.
+   * @type {Date}
+   */
+  startedAt;
+
+  /**
    * The Playwright browser instance for this capture.
    * @type {Browser}
    */
@@ -107,7 +113,9 @@ export class Mischief {
 
     steps.push({
       name: "initial load",
-      main: async (page) => { await page.goto(this.url, { waitUntil: "load", timeout: options.loadTimeout }); }
+      main: async (page) => {
+        await page.goto(this.url, { waitUntil: "load", timeout: options.loadTimeout });
+      }
     });
 
     if (options.grabSecondaryResources ||
@@ -129,13 +137,17 @@ export class Mischief {
               });`
           });
         },
-        main: async (page) => { await Promise.allSettled(page.frames().map(frame => frame.evaluate("self.__bx_behaviors.run()"))); }
+        main: async (page) => {
+          await Promise.allSettled(page.frames().map(frame => frame.evaluate("self.__bx_behaviors.run()")));
+        }
       });
     }
 
     steps.push({
       name: "network idle",
-      main: async (page) => { await page.waitForLoadState("networkidle", {timeout: options.networkIdleTimeout}); }
+      main: async (page) => {
+        await page.waitForLoadState("networkidle", {timeout: options.networkIdleTimeout});
+      }
     });
 
     if (options.screenshot) {
@@ -203,6 +215,7 @@ export class Mischief {
    * @returns {Promise<boolean>}
    */
   async setup(){
+    this.startedAt = new Date();
     this.state = Mischief.states.SETUP;
     const options = this.options;
 

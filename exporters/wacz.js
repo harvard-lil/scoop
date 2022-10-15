@@ -57,7 +57,7 @@ export async function wacz(capture) {
   const indexIDX = generateIndexIDX();
   archive.append(indexIDX, {name: FILES.indexIDX.path});
 
-  const datapackage = generateDatapackage(indexIDX, indexCDX, warc, pages);
+  const datapackage = generateDatapackage(capture, indexCDX, warc, pages);
   archive.append(datapackage, {name: FILES.datapackage.path});
 
   const datapackageDigest = generateDatapackageDigest(datapackage);
@@ -71,23 +71,36 @@ const hash = (buffer) => 'sha256:' + createHash('sha256').update(buffer).digest(
 const stringify = (obj) => JSON.stringify(obj, null, 2);
 
 const generatePages = (capture) => {
-  return Buffer.from([{"format": "json-pages-1.0", "id": "pages", "title": "All Pages"},
-                      {id: uuidv4(), url: capture.url, ts: (new Date()).toISOString()}].map(JSON.stringify).join('\n'));
+  return Buffer.from([
+    {
+      format: "json-pages-1.0",
+      id: "pages",
+      title: "All Pages"
+    },
+    {
+      id: uuidv4(),
+      url: capture.url,
+      ts: capture.startedAt.toISOString(),
+      size: capture.totalSize
+    }
+  ].map(JSON.stringify).join('\n'));
 };
 
-const generateDatapackage = function(indexIDX, indexCDX, warc, pages) {
+const generateDatapackage = function(capture, indexCDX, warc, pages) {
   return stringify({
-    "profile": "data-package",
-    "resources": ['indexIDX', 'indexCDX', 'warc', 'pages'].map((el, i) => {
+    profile: "data-package",
+    software: "mischief",
+    wacz_version: "1.1.1",
+    created: (new Date()).toISOString(),
+    mainPageUrl: capture.url,
+    mainPageDate: capture.startedAt.toISOString(),
+    resources: [indexCDX, warc, pages].map((data, i) => {
       return {
-        ...FILES[el],
-        "hash": hash(arguments[i]),
-        "bytes": arguments[i].byteLength
+        ...FILES[['indexCDX', 'warc', 'pages'][i]],
+        hash: hash(data),
+        bytes: data.byteLength
       }
-    }),
-    "created": (new Date()).toISOString(),
-    "wacz_version": "1.1.1",
-    "software": "mischief"
+    })
   });
 };
 
