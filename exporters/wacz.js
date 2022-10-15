@@ -22,7 +22,7 @@ import * as exporters from "../exporters/index.js";
 
 const FILES = {
   pages: {name: 'pages.jsonl', path: 'pages/pages.jsonl'},
-  warc: {name: 'warc.warc', path: 'archive/warc.warc'},
+  warc: {name: 'warc.warc', path: 'archive/data.warc'},
   indexIDX: {name: 'index.idx', path: 'indexes/index.idx'},
   indexCDX: {name: 'index.cdx.gz', path: 'indexes/index.cdx.gz'},
   datapackage: {path: 'datapackage.json'},
