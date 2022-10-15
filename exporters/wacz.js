@@ -1,8 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
 import { Readable, Writable } from "stream";
-import { promisify } from "util";
-import { gzip } from "zlib";
-const asyncGzip = promisify(gzip);
 import { createHash } from "crypto";
 import { CDXIndexer } from "../node_modules/warcio/dist/warcio.mjs";
 import Archiver from "archiver";
@@ -22,9 +19,8 @@ import * as exporters from "../exporters/index.js";
 
 const FILES = {
   pages: {name: 'pages.jsonl', path: 'pages/pages.jsonl'},
-  warc: {name: 'warc.warc', path: 'archive/data.warc'},
-  indexIDX: {name: 'index.idx', path: 'indexes/index.idx'},
-  indexCDX: {name: 'index.cdx.gz', path: 'indexes/index.cdx.gz'},
+  warc: {name: 'data.warc', path: 'archive/data.warc'},
+  indexCDX: {name: 'index.cdx', path: 'indexes/index.cdx'},
   datapackage: {path: 'datapackage.json'},
   datapackageDigest: {path: 'datapackage-digest.json'}
 };
@@ -53,9 +49,6 @@ export async function wacz(capture) {
 
   const indexCDX = await generateIndexCDX(warc)
   archive.append(indexCDX, {name: FILES.indexCDX.path});
-
-  const indexIDX = generateIndexIDX();
-  archive.append(indexIDX, {name: FILES.indexIDX.path});
 
   const datapackage = generateDatapackage(capture, indexCDX, warc, pages);
   archive.append(datapackage, {name: FILES.datapackage.path});
@@ -123,9 +116,5 @@ const generateIndexCDX = async (warcBuffer) => {
   await new CDXIndexer({format: 'cdxj'}, converter)
     .run([{filename: FILES.warc.name, reader: Readable.from(warcBuffer)}]);
 
-  return await asyncGzip(Buffer.concat(buffers));
-}
-
-const generateIndexIDX = () => {
-  return '!meta 0 ' + JSON.stringify({format: "cdxj-gzip-1.0", filename: FILES.indexCDX.name});
+  return Buffer.concat(buffers);
 }
