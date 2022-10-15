@@ -80,19 +80,6 @@ export class MischiefExchange {
     this.#url = val;
   }
 
-  /** @type {?string} */
-  #statusLine;
-  get statusLine() {
-    if (!this.#statusLine) {
-      this.#statusLine = `HTTP/${this.response.versionMajor}.${this.response.versionMinor} ${this.response.statusCode} ${this.response.statusMessage}`;
-    }
-    return this.#statusLine;
-  }
-
-  set statusLine(val) {
-    this.#statusLine = val;
-  }
-
   constructor(props) {
     const allowed = ["date",
                      "id",
@@ -100,9 +87,8 @@ export class MischiefExchange {
                      "responseRaw",
                      "request",
                      "response",
-                     "url",
-                     "statusLine"];
-    for(let prop of Object.keys(props).filter(k => allowed.includes(k))) {
+                     "url"];
+    for(const prop of Object.keys(props).filter(k => allowed.includes(k))) {
       this[prop] = props[prop];
     }
     return this;

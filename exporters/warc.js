@@ -39,8 +39,8 @@ export async function warc(capture, gzip=false) {
   //
   // Prepare WARC records section
   //
-  for (let exchange of capture.exchanges.filter((ex) => ex.response)) {
-    for (let type of ['request', 'response']){
+  for (const exchange of capture.exchanges.filter((ex) => ex.response)) {
+    for (const type of ['request', 'response']){
       if(!exchange[type]) continue;
       try {
         async function* content() {
@@ -52,12 +52,7 @@ export async function warc(capture, gzip=false) {
           date: exchange.date.toISOString(),
           type: type,
           warcVersion: warcVersion,
-          // warcio expects the method to be prepended to the statusLine
-          // Reference:
-          // - https://github.com/webrecorder/pywb/pull/636#issue-869181282
-          // - https://github.com/webrecorder/warcio.js/blob/d5dcaec38ffb0a905fd7151273302c5f478fe5d9/src/statusandheaders.js#L69-L74
-          // - https://github.com/webrecorder/warcio.js/blob/fdb68450e2e011df24129bac19691073ab6b2417/test/testSerializer.js#L212
-          statusline: `${(exchange.request || {method: "GET"}).method} ${exchange.statusLine}`,
+          statusline: (type == 'request' ? requestStatusLine : responseStatusLine)(exchange),
           httpHeaders: HTTPParser.headersToMap(exchange[type].headers),
           keepHeadersCase: false
         }, content());
@@ -74,4 +69,17 @@ export async function warc(capture, gzip=false) {
   // Combine output and return as ArrayBuffer
   //
   return new Blob([serializedInfo, ...serializedRecords]).arrayBuffer();
+}
+
+// warcio expects the method to be prepended to the request statusLine
+// Reference:
+// - https://github.com/webrecorder/pywb/pull/636#issue-869181282
+// - https://github.com/webrecorder/warcio.js/blob/d5dcaec38ffb0a905fd7151273302c5f478fe5d9/src/statusandheaders.js#L69-L74
+// - https://github.com/webrecorder/warcio.js/blob/fdb68450e2e011df24129bac19691073ab6b2417/test/testSerializer.js#L212
+const requestStatusLine = (exchange) => {
+  return `${exchange.request.method} ${exchange.url} HTTP/${exchange.request.versionMajor}.${exchange.request.versionMinor}`;
+}
+
+const responseStatusLine = (exchange) => {
+  return `HTTP/${exchange.response.versionMajor}.${exchange.response.versionMinor} ${exchange.response.statusCode} ${exchange.response.statusMessage}`;
 }
