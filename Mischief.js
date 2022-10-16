@@ -7,7 +7,6 @@
 import { chromium } from "playwright";
 import ProxyServer from "transparent-proxy";
 
-import * as exporters from "./exporters/index.js";
 import { MischiefExchange } from "./MischiefExchange.js";
 import { MischiefLog } from "./MischiefLog.js";
 import { MischiefOptions } from "./MischiefOptions.js";
@@ -356,22 +355,4 @@ export class Mischief {
 
     return options;
   }
-
-  /**
-   * Export capture to WARC.
-   * @param {boolean} [gzip=false] - If `true`, will be compressed using GZIP (for `.warc.gz`). 
-   * @returns {Promise<ArrayBuffer>} - Binary data ready to be saved a .warc or .warc.gz
-   */
-  async toWarc(gzip=false) {
-    return await exporters.warc(this, gzip);
-  }
-
-  /**
-   * Export capture to WACZ.
-   * @returns {Promise<ArrayBuffer>} - Binary data ready to be saved a .wacz
-   */
-  async toWacz() {
-    return await exporters.wacz(this);
-  }
-
 }

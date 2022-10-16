@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { spawn  } from "child_process";
 
 import { Mischief } from "../Mischief.js";
+import * as exporters from "../exporters/index.js";
 
 /**
  * Mischief to WACZ converter.
@@ -32,7 +33,7 @@ export async function wacz(capture) {
                        {id: uuidv4(), url: capture.url, title: "", seed: true}].map(JSON.stringify).join('\n');
     await writeFile(pagesFile, pagesData);
 
-    const warc = await capture.toWarc();
+    const warc = await exporters.warc(capture);
     await writeFile(warcFile, Buffer.from(warc));
 
     const createArgs = ["create", "--split-seeds", "-o", waczFile, "--pages", pagesFile, warcFile];
