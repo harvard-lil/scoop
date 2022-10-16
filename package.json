@@ -29,6 +29,7 @@
     "whatwg-url": "^11.0.0"
   },
   "devDependencies": {
+    "@types/node": "^18.11.0",
     "playwright": "^1.26.0",
     "prettier": "^2.7.1"
   }
