@@ -46,5 +46,6 @@ export const MischiefOptions = {
   autoScroll: true,
   autoPlayMedia: true,
   grabSecondaryResources: true,
-  runSiteSpecificBehaviors: true
+  runSiteSpecificBehaviors: true,
+  interceptor: 'cdp'
 };

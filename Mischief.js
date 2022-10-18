@@ -219,31 +219,11 @@ export class Mischief {
     this.state = Mischief.states.SETUP;
     const options = this.options;
 
-    const totalTimeoutTimer = setTimeout(() => {
-      this.addToLogs(`totalTimeout of ${options.totalTimeout}ms reached. Ending further capture.`);
-      this.state = Mischief.states.PARTIAL;
-      this.teardown();
-    }, options.totalTimeout);
-
-    const proxy = new ProxyServer({
-      intercept: true,
-      verbose: options.proxyVerbose,
-      injectData: (data, session) => this.networkInterception("request", data, session),
-      injectResponse: (data, session) => this.networkInterception("response", data, session)
-    });
-    proxy.listen(options.proxyPort, options.proxyHost, () => {
-      this.addToLogs(`TCP-Proxy-Server started ${JSON.stringify(proxy.address())}`);
-    });
-
     this.#browser = await chromium.launch({
       headless: options.headless,
       channel: "chrome",
-      proxy: {server: `http://${options.proxyHost}:${options.proxyPort}`}
+      // proxy: {server: `http://${options.proxyHost}:${options.proxyPort}`}
     })
-    this.#browser.on('disconnected', () => {
-      clearTimeout(totalTimeoutTimer);
-      proxy.close()
-    });
 
     const context = await this.#browser.newContext({ignoreHTTPSErrors: true});
     const page = await context.newPage();
@@ -252,6 +232,40 @@ export class Mischief {
       width: options.captureWindowX,
       height: options.captureWindowY,
     });
+
+    const totalTimeoutTimer = setTimeout(() => {
+      this.addToLogs(`totalTimeout of ${options.totalTimeout}ms reached. Ending further capture.`);
+      this.state = Mischief.states.PARTIAL;
+      this.teardown();
+    }, options.totalTimeout);
+
+    this.#browser.on('disconnected', () => {
+      clearTimeout(totalTimeoutTimer);
+    });
+
+    if(options.interceptor == 'cdp'){
+      const client = await context.newCDPSession(page);
+      await client.send('Network.enable');
+      client.on('Network.requestWillBeSent', (params) => {
+        console.log(params);
+      });
+      client.on('Network.responseReceived', async (params) => {
+        console.log(await client.send('Network.getResponseBody', params));
+      });
+    } else {
+      const proxy = new ProxyServer({
+        intercept: true,
+        verbose: options.proxyVerbose,
+        injectData: (data, session) => this.networkInterception("request", data, session),
+        injectResponse: (data, session) => this.networkInterception("response", data, session)
+      });
+      proxy.listen(options.proxyPort, options.proxyHost, () => {
+        this.addToLogs(`TCP-Proxy-Server started ${JSON.stringify(proxy.address())}`);
+      });
+      this.#browser.on('disconnected', () => {
+        proxy.close()
+      });
+    }
 
     return page;
   }
