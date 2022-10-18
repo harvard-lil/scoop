@@ -31,7 +31,7 @@ export async function wacz(capture) {
     throw new Error("`capture` must be a partial or complete Mischief object.");
   }
 
-  const archive = new Archiver('zip', { zlib: { level: 9 } });
+  const archive = new Archiver('zip', {store: true});
 
   const buffers = [];
   const converter = new Writable();
