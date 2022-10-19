@@ -5,11 +5,12 @@
  * @license MIT
  */
 import { chromium } from "playwright";
-import ProxyServer from "transparent-proxy";
 
 import { MischiefExchange } from "./MischiefExchange.js";
 import { MischiefLog } from "./MischiefLog.js";
 import { MischiefOptions } from "./MischiefOptions.js";
+
+import * as intercepters from "./intercepters/index.js";
 
 /**
  * Experimental single-page web archiving solution using Playwright.
@@ -71,12 +72,6 @@ export class Mischief {
   logs = [];
 
   /**
-   * Total size of recorded exchanges, in bytes.
-   * @type {number}
-   */
-  totalSize = 0;
-
-  /**
    * The time at which the page was crawled.
    * @type {Date}
    */
@@ -88,6 +83,8 @@ export class Mischief {
    */
   #browser;
 
+  intercepter;
+
   /**
    * @param {string} url - Must be a valid HTTP(S) url.
    * @param {object} [options={}] - See `MischiefOptions` for details.
@@ -95,7 +92,7 @@ export class Mischief {
   constructor(url, options = {}) {
     this.url = this.filterUrl(url);
     this.options = this.filterOptions(options);
-    this.networkInterception = this.networkInterception.bind(this);
+    this.intercepter = new intercepters[this.options.intercepter](this);
   }
 
   /**
@@ -110,6 +107,13 @@ export class Mischief {
   async capture() {
     const options = this.options;
     const steps = [];
+
+    steps.push({
+      name: "intercepter",
+      main: (page) => {
+        this.intercepter.setup(page);
+      }
+    })
 
     steps.push({
       name: "initial load",
@@ -221,11 +225,10 @@ export class Mischief {
 
     this.#browser = await chromium.launch({
       headless: options.headless,
-      channel: "chrome",
-      // proxy: {server: `http://${options.proxyHost}:${options.proxyPort}`}
+      channel: "chrome"
     })
 
-    const context = await this.#browser.newContext({ignoreHTTPSErrors: true});
+    const context = await this.#browser.newContext(this.intercepter.contextOptions);
     const page = await context.newPage();
 
     page.setViewportSize({
@@ -243,30 +246,6 @@ export class Mischief {
       clearTimeout(totalTimeoutTimer);
     });
 
-    if(options.interceptor == 'cdp'){
-      const client = await context.newCDPSession(page);
-      await client.send('Network.enable');
-      client.on('Network.requestWillBeSent', (params) => {
-        console.log(params);
-      });
-      client.on('Network.responseReceived', async (params) => {
-        console.log(await client.send('Network.getResponseBody', params));
-      });
-    } else {
-      const proxy = new ProxyServer({
-        intercept: true,
-        verbose: options.proxyVerbose,
-        injectData: (data, session) => this.networkInterception("request", data, session),
-        injectResponse: (data, session) => this.networkInterception("response", data, session)
-      });
-      proxy.listen(options.proxyPort, options.proxyHost, () => {
-        this.addToLogs(`TCP-Proxy-Server started ${JSON.stringify(proxy.address())}`);
-      });
-      this.#browser.on('disconnected', () => {
-        proxy.close()
-      });
-    }
-
     return page;
   }
 
@@ -276,44 +255,10 @@ export class Mischief {
    * @returns {Promise<boolean>}
    */
   async teardown(){
-    this.addToLogs("Closing browser and proxy server.");
+    this.addToLogs("Closing browser and intercepter.");
     await this.#browser.close();
-  }
-
-  /**
-   * Returns an exchange based on the session id and type ("request" or "response").
-   * If the type is a request and there's already been a response on that same session,
-   * create a new exchange. Otherwise append to continue the exchange.
-   *
-   * @param {string} id
-   * @param {string} type
-   */
-  getOrInitExchange(id, type) {
-    return this.exchanges.findLast((ex) => {
-      return ex.id == id && (type == "response" || !ex.responseRaw);
-    }) || this.exchanges[this.exchanges.push(new MischiefExchange({id: id})) - 1];
-  }
-
-  /**
-   * Collates network data (both requests and responses) from the proxy.
-   * Capture size enforcement happens here.
-   *
-   * @param {string} type
-   * @param {Buffer} data
-   * @param {Session} session
-   */
-  networkInterception(type, data, session) {
-    const ex = this.getOrInitExchange(session._id, type);
-    const prop = `${type}Raw`;
-    ex[prop] = ex[prop] ? Buffer.concat([ex[prop], data], ex[prop].length + data.length) : data;
-
-    this.totalSize += data.byteLength;
-    if(this.totalSize >= this.options.maxSize && this.state == Mischief.states.CAPTURE){
-      this.addToLogs(`Max size of ${this.options.maxSize} reached. Ending further capture.`);
-      this.state = Mischief.states.PARTIAL;
-      this.teardown();
-    }
-    return data;
+    await this.intercepter.teardown();
+    this.exchanges = this.intercepter.exchanges.concat(this.exchanges);
   }
 
   /**
