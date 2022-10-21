@@ -256,8 +256,8 @@ export class Mischief {
    */
   async teardown(){
     this.addToLogs("Closing browser and intercepter.");
-    await this.#browser.close();
     await this.intercepter.teardown();
+    await this.#browser.close();
     this.exchanges = this.intercepter.exchanges.concat(this.exchanges);
   }
 
