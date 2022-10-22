@@ -159,9 +159,9 @@ export class Mischief {
         name: "screenshot",
         main: async (page) => {
           this.exchanges.push(new MischiefExchange({
-            url: "file:///screenshot.png",
             response: {
-              headers: ["Content-Type", "image/png"],
+              url: "file:///screenshot.png",
+              headers: {"Content-Type": "image/png"},
               versionMajor: 1,
               versionMinor: 1,
               statusCode: 200,

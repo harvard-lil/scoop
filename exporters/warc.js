@@ -5,9 +5,7 @@ import { WARCRecord, WARCSerializer } from "warcio";
 import { baseRules as baseDSRules } from "@webrecorder/wabac/src/rewrite/index.js";
 import { rewriteDASH, rewriteHLS } from "@webrecorder/wabac/src/rewrite/rewriteVideo.js";
 
-import { HTTPParser } from "../parsers/http.js";
 import { Mischief } from "../Mischief.js";
-import { MischiefExchange } from "../MischiefExchange.js";
 
 /**
  * Mischief to WARC converter.
@@ -49,13 +47,12 @@ export async function warc(capture, gzip=false, optimizeForPlayback=true) {
       if(!exchange[type]) continue;
       try {
         const statusLine = prepareExchangeStatusLine(exchange, type);
-        const httpHeaders = HTTPParser.headersToMap(exchange[type].headers); 
 
         async function* content() {
           let body = exchange[type].body;
 
           if (type === "response" && optimizeForPlayback === true) {
-            body = await optimizeResponseBodyForPlayback(exchange.url, body, httpHeaders);
+            body = await optimizeResponseBodyForPlayback(exchange.url, body, exchange[type].headers);
           }
 
           yield new Uint8Array(body);
@@ -63,12 +60,12 @@ export async function warc(capture, gzip=false, optimizeForPlayback=true) {
 
         const record = WARCRecord.create(
           {
-            url: exchange.url,
+            url: exchange[type].url,
             date: exchange.date.toISOString(),
             type: type,
             warcVersion: warcVersion,
             statusline: statusLine,
-            httpHeaders: httpHeaders,
+            httpHeaders: exchange[type].headers,
             keepHeadersCase: false,
           },
           content()
@@ -77,7 +74,7 @@ export async function warc(capture, gzip=false, optimizeForPlayback=true) {
         serializedRecords.push(await WARCSerializer.serialize(record, {gzip}));
       }
       catch(err) {
-        capture.addToLogs(`${exchange.url} ${type} could not be added to warc.`, true, err);
+        capture.addToLogs(`${exchange[type].url} ${type} could not be added to warc.`, true, err);
       }
     }
   }
