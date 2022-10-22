@@ -20,39 +20,11 @@ export class MischiefExchange {
   /** @type {?string} */
   id;
 
-  /** @type {?object} */
-  request;
-
-  /** @type {?object} */
-  response;
-
-  /** @type {?string} */
-  url;
-
-  /** @type {?Buffer} */
-  requestRaw;
-
-  set requestRaw(val) {
-    this._request = null;
-    this.requestRaw = val;
-  }
-
-  /** @type {?Buffer} */
-  responseRaw;
-
-  set responseRaw(val) {
-    this._response = null;
-    this.responseRaw = val;
-  }
-
   constructor(props) {
     const allowed = ["date",
                      "id",
-                     "requestRaw",
-                     "responseRaw",
                      "request",
-                     "response",
-                     "url"];
+                     "response"];
     for(const prop of Object.keys(props).filter(k => allowed.includes(k))) {
       this[prop] = props[prop];
     }

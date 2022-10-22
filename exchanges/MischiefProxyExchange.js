@@ -2,15 +2,31 @@ import { MischiefExchange } from "./MischiefExchange.js";
 import { HTTPParser } from "../parsers/http.js";
 
 export class MischiefProxyExchange extends MischiefExchange {
+  /** @type {?Buffer} */
+  requestRaw;
+
+  set requestRaw(val) {
+    this._request = null;
+    this.requestRaw = val;
+  }
+
+  /** @type {?Buffer} */
+  responseRaw;
+
+  set responseRaw(val) {
+    this._response = null;
+    this.responseRaw = val;
+  }
+
   /** @type {?object} */
   _request;
   get request() {
     if (!this._request && this.requestRaw) {
       this._request = HTTPParser.parseRequest(this.requestRaw);
-      this._request.headers = HTTPParser.headersToMap(this._request.headers);
       if(this._request.url[0] == "/"){
         this._request.url = `https://${this._request.headers[1]}${this._request.url}`;
       }
+      this._request.headers = HTTPParser.headersToMap(this._request.headers);
     }
     return this._request;
   }

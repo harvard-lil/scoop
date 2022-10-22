@@ -1,20 +1,30 @@
 import { MischiefExchange } from "./MischiefExchange.js";
+import { STATUS_CODES } from "http";
 
 export class MischiefCDPExchange extends MischiefExchange {
-  /** @type {?string} */
-  _url;
-  get url() {
-    if (!this._url) {
-      // if the url lacks a protocol, assume https
-      this._url =
-        this.request.url[0] == "/"
-        ? `https://${this.request.headers[1]}${this.request.url}`
-        : this.request.url;
-    }
-    return this._url;
+  /** @type {?object} */
+  _request;
+  get request() {
+    return this._request;
   }
 
-  set url(val) {
-    this._url = val;
+  set request(val) {
+    this._request = val;
+    this._request.versionMajor = 1;
+    this._request.versionMinor = 1;
+  }
+
+  /** @type {?object} */
+  _response;
+  get response() {
+    return this._response;
+  }
+
+  set response(val) {
+    this._response = val;
+    this._response.versionMajor = 1;
+    this._response.versionMinor = 1;
+    this._response.statusCode = val.status;
+    this._response.statusMessage = val.statusText || STATUS_CODES[val.status.toString()];
   }
 }
