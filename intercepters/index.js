@@ -5,9 +5,9 @@
  * @license MIT
  * @description Entry point for the scribes module.
  */
-import { Proxy } from "./proxy.js";
-import { CDP } from "./cdp.js";
-import { HAR } from "./har.js";
+import { Proxy } from "./Proxy.js";
+import { CDP } from "./CDP.js";
+import { HAR } from "./HAR.js";
 export {
   Proxy,
   CDP,
