@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { Readable, Writable } from "stream";
 import { createHash } from "crypto";
-import { CDXIndexer } from "../node_modules/warcio/dist/warcio.mjs";
+import { CDXIndexer } from "warcio";
 import Archiver from "archiver";
 
 import { Mischief } from "../Mischief.js";
