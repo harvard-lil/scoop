@@ -27,7 +27,8 @@ export class CDP extends Intercepter {
     const ex = this.getOrInitExchange(params.requestId, 'response');
     ex.response = params.response;
     try {
-      ex.response.body = (await this.#connection.send('Network.getResponseBody', params)).body;
+      const body = await this.#connection.send('Network.getResponseBody', params);
+      ex._response.body = Buffer.from(body.body, body.base64Encoded ? "base64" : "utf-8");
     } catch(_) {}
   }
 }
