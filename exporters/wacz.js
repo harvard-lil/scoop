@@ -1,10 +1,11 @@
-import * as path from "path";
-import { mkdtemp, readFile, writeFile, rm } from "fs/promises";
-import { tmpdir } from "os";
 import { v4 as uuidv4 } from "uuid";
-import { spawn  } from "child_process";
+import { Readable, Writable } from "stream";
+import { createHash } from "crypto";
+import { CDXIndexer } from "../node_modules/warcio/dist/warcio.mjs";
+import Archiver from "archiver";
 
 import { Mischief } from "../Mischief.js";
+import * as exporters from "../exporters/index.js";
 
 /**
  * Mischief to WACZ converter.
@@ -15,48 +16,105 @@ import { Mischief } from "../Mischief.js";
  * @param {Mischief} capture
  * @returns {Promise<ArrayBuffer>}
  */
+
+const FILES = {
+  pages: {name: 'pages.jsonl', path: 'pages/pages.jsonl'},
+  warc: {name: 'data.warc', path: 'archive/data.warc'},
+  indexCDX: {name: 'index.cdx', path: 'indexes/index.cdx'},
+  datapackage: {path: 'datapackage.json'},
+  datapackageDigest: {path: 'datapackage-digest.json'}
+};
+
 export async function wacz(capture) {
   const validStates = [Mischief.states.PARTIAL, Mischief.states.COMPLETE];
   if (!(capture instanceof Mischief) || !validStates.includes(capture.state)) {
     throw new Error("`capture` must be a partial or complete Mischief object.");
   }
 
-  let tmpDir;
-  try {
-    tmpDir = await mkdtemp(path.join(tmpdir(), 'mischief'));
-    const pagesFile = path.join(tmpDir, 'pages.jsonl')
-    const warcFile = path.join(tmpDir, 'warc.warc');
-    const waczFile = path.join(tmpDir, 'wacz.wacz');
+  const archive = new Archiver('zip', {store: true});
 
-    const pagesData = [{"format": "json-pages-1.0", "id": "pages", "title": "All Pages", hasText: false},
-                       {id: uuidv4(), url: capture.url, title: "", seed: true}].map(JSON.stringify).join('\n');
-    await writeFile(pagesFile, pagesData);
-
-    const warc = await capture.toWarc();
-    await writeFile(warcFile, Buffer.from(warc));
-
-    const createArgs = ["create", "--split-seeds", "-o", waczFile, "--pages", pagesFile, warcFile];
-    await awaitProcess(spawn("wacz" , createArgs, {stdio: "inherit"}));
-
-    return await readFile(waczFile);
+  const buffers = [];
+  const converter = new Writable();
+  converter._write = (chunk, _encoding, cb) => {
+    buffers.push(chunk);
+    process.nextTick(cb);
   }
-  catch(e) {
-    console.error(e);
-  }
-  finally {
-    try {
-      if (tmpDir) {
-        await rm(tmpDir, { recursive: true });
-      }
-    }
-    catch (e) {
-      console.error(`An error has occurred while removing the temp folder at ${tmpDir}. Please remove it manually. Error: ${e}`);
-    }
-  }
+  archive.pipe(converter);
+
+  const warc = Buffer.from(await exporters.warc(capture));
+  archive.append(warc, {name: FILES.warc.path});
+
+  const pages = generatePages(capture);
+  archive.append(pages, {name: FILES.pages.path});
+
+  const indexCDX = await generateIndexCDX(warc)
+  archive.append(indexCDX, {name: FILES.indexCDX.path});
+
+  const datapackage = generateDatapackage(capture, indexCDX, warc, pages);
+  archive.append(datapackage, {name: FILES.datapackage.path});
+
+  const datapackageDigest = generateDatapackageDigest(datapackage);
+  archive.append(datapackageDigest, {name: FILES.datapackageDigest.path});
+
+  await archive.finalize();
+  return Buffer.concat(buffers);
 };
 
-const awaitProcess = (proc) => {
-  return new Promise((resolve) => {
-    proc.on("close", (code) => resolve(code));
+const hash = (buffer) => 'sha256:' + createHash('sha256').update(buffer).digest('hex');
+const stringify = (obj) => JSON.stringify(obj, null, 2);
+
+const generatePages = (capture) => {
+  return Buffer.from([
+    {
+      format: "json-pages-1.0",
+      id: "pages",
+      title: "All Pages"
+    },
+    {
+      id: uuidv4(),
+      url: capture.url,
+      ts: capture.startedAt.toISOString(),
+      size: capture.totalSize
+    }
+  ].map(JSON.stringify).join('\n'));
+};
+
+const generateDatapackage = function(capture, indexCDX, warc, pages) {
+  return stringify({
+    profile: "data-package",
+    software: "mischief",
+    wacz_version: "1.1.1",
+    created: (new Date()).toISOString(),
+    mainPageUrl: capture.url,
+    mainPageDate: capture.startedAt.toISOString(),
+    resources: [indexCDX, warc, pages].map((data, i) => {
+      return {
+        ...FILES[['indexCDX', 'warc', 'pages'][i]],
+        hash: hash(data),
+        bytes: data.byteLength
+      }
+    })
   });
 };
+
+const generateDatapackageDigest = (datapackage) => {
+  return stringify({
+    path: FILES.datapackage.path,
+    hash: hash(datapackage)
+  });
+};
+
+const generateIndexCDX = async (warcBuffer) => {
+  const buffers = [];
+  const converter = new Writable();
+  converter._write = (chunk, _encoding, cb) => {
+    buffers.push(chunk)
+    process.nextTick(cb)
+  }
+
+  // CDXIndexer expects an array of files of the format {filename: string, reader: stream}
+  await new CDXIndexer({format: 'cdxj'}, converter)
+    .run([{filename: FILES.warc.name, reader: Readable.from(warcBuffer)}]);
+
+  return Buffer.concat(buffers);
+}

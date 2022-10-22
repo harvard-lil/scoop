@@ -1,7 +1,7 @@
 // [!] Example file -- to be deleted at earliest convenience.
-import crypto from "crypto";
 import { mkdir, writeFile } from "fs/promises";
 import { Mischief } from "./Mischief.js";
+import * as exporters from "./exporters/index.js";
 
 const toCapture = [
   {name: "google", url: "https://google.com"},
@@ -31,18 +31,18 @@ const path = "./examples/";
 try {
   await mkdir(path);
 }
-catch(err) {
+catch(_err) {
 }
 
-for (let entry of toCapture) {
-  let {name, url} = entry;
+for (const entry of toCapture) {
+  const {name, url} = entry;
 
   const myCapture = new Mischief(url);
   await myCapture.capture();
 
   const format = "wacz";
   const filename = `${path}${name}.${format}`;
-  const data = await myCapture[`to${format.charAt(0).toUpperCase() + format.slice(1)}`]();
+  const data = await exporters[format](myCapture);
   await writeFile(filename, Buffer.from(data));
 
   console.log(`💾 Saved ${url} as ${filename}`);
