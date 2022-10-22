@@ -6,7 +6,7 @@
  */
 import { chromium } from "playwright";
 
-import { MischiefExchange } from "./MischiefExchange.js";
+import { MischiefExchange } from "./exchanges/MischiefExchange.js";
 import { MischiefLog } from "./MischiefLog.js";
 import { MischiefOptions } from "./MischiefOptions.js";
 

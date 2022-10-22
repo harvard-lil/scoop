@@ -1,8 +1,11 @@
-import { Intercepter } from './intercepter.js';
+import { Intercepter } from './Intercepter.js';
+import { MischiefCDPExchange } from '../exchanges/index.js';
 
 export class CDP extends Intercepter {
 
   #connection
+
+  exchangeClass = MischiefCDPExchange;
 
   async setup(page){
     this.#connection = await page.context().newCDPSession(page);
