@@ -8,8 +8,6 @@ export class Proxy extends Intercepter {
 
   exchanges = [];
 
-  exchangeClass = MischiefProxyExchange;
-
   setup() {
     this.#connection = new ProxyServer({
       intercept: true,
@@ -29,6 +27,20 @@ export class Proxy extends Intercepter {
   get contextOptions() {
     return {proxy: {server: `http://${this.options.proxyHost}:${this.options.proxyPort}`},
             ignoreHTTPSErrors: true};
+  }
+
+  /**
+   * Returns an exchange based on the session id and type ("request" or "response").
+   * If the type is a request and there's already been a response on that same session,
+   * create a new exchange. Otherwise append to continue the exchange.
+   *
+   * @param {string} id
+   * @param {string} type
+   */
+  getOrInitExchange(id, type) {
+    return this.exchanges.findLast((ex) => {
+      return ex.id == id && (type == "response" || !ex.responseRaw);
+    }) || this.exchanges[this.exchanges.push(new MischiefProxyExchange({id: id})) - 1];
   }
 
   /**

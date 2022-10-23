@@ -1,5 +1,4 @@
 import { Mischief } from "../Mischief.js";
-import { MischiefExchange } from "../exchanges/index.js";
 
 export class Intercepter {
 
@@ -8,8 +7,6 @@ export class Intercepter {
   byteLength = 0;
 
   exchanges = [];
-
-  exchangeClass = MischiefExchange;
 
   constructor(capture) {
     this.capture = capture;
@@ -40,19 +37,4 @@ export class Intercepter {
       this.capture.teardown();
     }
   }
-
-  /**
-   * Returns an exchange based on the session id and type ("request" or "response").
-   * If the type is a request and there's already been a response on that same session,
-   * create a new exchange. Otherwise append to continue the exchange.
-   *
-   * @param {string} id
-   * @param {string} type
-   */
-  getOrInitExchange(id, type) {
-    return this.exchanges.findLast((ex) => {
-      return ex.id == id && (type == "response" || !ex.responseRaw);
-    }) || this.exchanges[this.exchanges.push(new this.exchangeClass({id: id})) - 1];
-  }
-
 }

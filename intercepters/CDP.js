@@ -5,13 +5,12 @@ export class CDP extends Intercepter {
 
   #connection
 
-  exchangeClass = MischiefCDPExchange;
-
   async setup(page){
     this.#connection = await page.context().newCDPSession(page);
     await this.#connection.send('Network.enable');
     this.#connection.on('Network.requestWillBeSent', this.interceptRequest.bind(this));
-    this.#connection.on('Network.responseReceived', this.interceptResponse.bind(this));
+    this.#connection.on('Network.responseReceived',  this.interceptResponseHeaders.bind(this));
+    this.#connection.on('Network.loadingFinished',   this.interceptResponseBody.bind(this));
   }
 
   teardown() {
@@ -19,16 +18,23 @@ export class CDP extends Intercepter {
   }
 
   interceptRequest(params) {
-    const ex = this.getOrInitExchange(params.requestId, 'request');
+    const ex = this.getOrInitExchange(params.requestId);
     ex.request = params.request;
   }
 
-  async interceptResponse(params) {
-    const ex = this.getOrInitExchange(params.requestId, 'response');
+  interceptResponseHeaders(params) {
+    const ex = this.getOrInitExchange(params.requestId);
     ex.response = params.response;
-    try {
-      const body = await this.#connection.send('Network.getResponseBody', params);
-      ex._response.body = Buffer.from(body.body, body.base64Encoded ? "base64" : "utf-8");
-    } catch(_) {}
+  }
+
+  async interceptResponseBody(params) {
+    const ex = this.getOrInitExchange(params.requestId);
+    const body = await this.#connection.send('Network.getResponseBody', params);
+    ex._response.body = Buffer.from(body.body, body.base64Encoded ? "base64" : "utf-8");
+  }
+
+  getOrInitExchange(id) {
+    return this.exchanges.find(ex => ex.id == id) ||
+      this.exchanges[this.exchanges.push(new MischiefCDPExchange({id: id})) - 1];
   }
 }
