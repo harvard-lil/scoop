@@ -1,4 +1,4 @@
-import crypto from "crypto"; // warcio needs the crypto utils suite but does not import them.
+import crypto from "crypto"; // warcio needs the crypto utils suite but does not import it.
 global.crypto = crypto;
 
 import { WARCRecord, WARCSerializer } from "warcio";
