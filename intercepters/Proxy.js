@@ -8,14 +8,14 @@ export class Proxy extends Intercepter {
 
   exchanges = [];
 
-  setup() {
+  async setup() {
     this.#connection = new ProxyServer({
       intercept: true,
       verbose: this.options.proxyVerbose,
       injectData: (data, session) => this.intercept("request", data, session),
       injectResponse: (data, session) => this.intercept("response", data, session)
     });
-    this.#connection.listen(this.options.proxyPort, this.options.proxyHost, () => {
+    await this.#connection.listen(this.options.proxyPort, this.options.proxyHost, () => {
       this.capture.addToLogs(`TCP-Proxy-Server started ${JSON.stringify(this.#connection.address())}`);
     });
   }
