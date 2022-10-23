@@ -110,8 +110,8 @@ export class Mischief {
 
     steps.push({
       name: "intercepter",
-      main: (page) => {
-        this.intercepter.setup(page);
+      main: async (page) => {
+        await this.intercepter.setup(page);
       }
     })
 
