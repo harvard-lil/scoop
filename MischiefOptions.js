@@ -41,6 +41,7 @@ export const MischiefOptions = {
   keepPartialResponses: true,
   maxSize: 200 * 1024 * 1024,
   screenshot: true,
+  domSnapshot: true,
   captureWindowX: 1600,
   captureWindowY: 900,
   autoScroll: true,
