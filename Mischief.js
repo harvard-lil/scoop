@@ -180,7 +180,8 @@ export class Mischief {
           this.exchanges.push(new MischiefExchange({
             response: {
               url: "file:///dom-snapshot.html",
-              headers: {"Content-Type": "text/html"},
+              headers: {"Content-Type": "text/html",
+                        "Content-Disposition": "Attachment"},
               versionMajor: 1,
               versionMinor: 1,
               statusCode: 200,
