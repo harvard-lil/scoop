@@ -70,7 +70,6 @@ const hash = (buffer) => 'sha256:' + createHash('sha256').update(buffer).digest(
 const stringify = (obj) => JSON.stringify(obj, null, 2);
 
 const generatePages = (capture) => {
-
   const pages = [];
 
   // Heading
@@ -82,14 +81,15 @@ const generatePages = (capture) => {
 
   // Main page
   pages.push({
-    id: uuidv4(),
+    id: capture.id,
     url: capture.url,
     ts: capture.startedAt.toISOString(),
-    title: `Web archive of ${capture.url}`
+    title: `Web archive of ${capture.url}`,
+    size: capture.totalSize
   });
 
   // Other generated elements
-  for (let exchange of capture.generatedExchanges) {
+  for (const exchange of capture.generatedExchanges) {
     pages.push({
       id: uuidv4(),
       url: exchange.response.url,

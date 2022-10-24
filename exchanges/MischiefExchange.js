@@ -10,12 +10,17 @@
  * Represents an HTTP exchange captured by Mischief, irrespective of how it was captured.
  * To be specialized by interception type (i.e: MischiefProxyExchange).
  */
+import { v4 as uuidv4 } from "uuid";
+
 export class MischiefExchange {
   /** @type {Date} */
   date = new Date();
 
   /** @type {?string} */
-  id;
+  id = uuidv4();
+
+  /** @type {?string} */
+  connectionId;
 
   /** @type {?string} */
   description;

@@ -10,6 +10,8 @@ import fs from "fs";
 import { chromium } from "playwright";
 import youtubedl from "youtube-dl-exec";
 
+import { v4 as uuidv4 } from "uuid";
+
 import { MischiefExchange } from "./exchanges/MischiefExchange.js";
 import { MischiefLog } from "./MischiefLog.js";
 import { MischiefOptions } from "./MischiefOptions.js";
@@ -35,6 +37,8 @@ const TMP_DIR = `./tmp/`;
  * ```
  */
 export class Mischief {
+  id = uuidv4();
+
   /**
    * Enum-like states that the capture occupies.
    * @readonly
