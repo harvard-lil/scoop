@@ -5,7 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "postinstall": "cp ./node_modules/warcio/dist/warcio.js ./node_modules/warcio/dist/warcio.mjs;",
+    "postinstall": "patch-package",
+    "make-patches": "bash make-patches.sh",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -19,10 +20,12 @@
   },
   "homepage": "https://github.com/matteocargnelutti/mischief#readme",
   "dependencies": {
+    "@webrecorder/wabac": "^2.13.4",
     "archiver": "^5.3.1",
     "browsertrix-behaviors": "^0.3.4",
     "http-parser-js": "^0.5.8",
-    "transparent-proxy": "github:harvard-lil/transparent-proxy#handle-colons-in-urls",
+    "patch-package": "^6.4.7",
+    "transparent-proxy": "^1.8.14",
     "uuid": "^9.0.0",
     "warcio": "^1.5.1",
     "wbn": "^0.0.8",

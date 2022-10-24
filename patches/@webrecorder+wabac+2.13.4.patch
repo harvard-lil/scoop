@@ -1,0 +1,102 @@
+diff --git a/node_modules/@webrecorder/wabac/package.json b/node_modules/@webrecorder/wabac/package.json
+index d85a4fc..7ddd83b 100644
+--- a/node_modules/@webrecorder/wabac/package.json
++++ b/node_modules/@webrecorder/wabac/package.json
+@@ -2,6 +2,7 @@
+   "name": "@webrecorder/wabac",
+   "version": "2.13.4",
+   "main": "index.js",
++  "type": "module",
+   "license": "AGPL-3.0-or-later",
+   "dependencies": {
+     "@peculiar/asn1-ecc": "^2.3.0",
+@@ -10,7 +11,7 @@
+     "@webrecorder/wombat": "^3.3.9",
+     "auto-js-ipfs": "^1.3.10",
+     "base64-js": "^1.5.1",
+-    "brotli": "github:foliojs/brotli.js",
++    "brotli": "^1.3.3",
+     "buffer": "^6.0.3",
+     "fast-xml-parser": "^3.19.0",
+     "format-link-header": "^3.1.1",
+diff --git a/node_modules/@webrecorder/wabac/src/response.js b/node_modules/@webrecorder/wabac/src/response.js
+index 741131e..6b0aebd 100644
+--- a/node_modules/@webrecorder/wabac/src/response.js
++++ b/node_modules/@webrecorder/wabac/src/response.js
+@@ -1,5 +1,6 @@
+ import { BaseAsyncIterReader, AsyncIterReader } from "warcio";
+-import { isNullBodyStatus, decodeLatin1, encodeLatin1, MAX_STREAM_CHUNK_SIZE, tsToDate } from "./utils";
++
++import { isNullBodyStatus, decodeLatin1, encodeLatin1, MAX_STREAM_CHUNK_SIZE, tsToDate } from "./utils.js";
+ 
+ const encoder = new TextEncoder();
+ const decoder = new TextDecoder();
+diff --git a/node_modules/@webrecorder/wabac/src/rewrite/decoder.js b/node_modules/@webrecorder/wabac/src/rewrite/decoder.js
+index 592d2a5..bc89aef 100644
+--- a/node_modules/@webrecorder/wabac/src/rewrite/decoder.js
++++ b/node_modules/@webrecorder/wabac/src/rewrite/decoder.js
+@@ -1,12 +1,11 @@
+ "use strict";
+ 
+-import brotliDecode from "brotli/decompress";
++import brotliDecode from "brotli/decompress.js";
+ 
+ import { Inflate } from "pako";
+ 
+ import { AsyncIterReader } from "warcio";
+ 
+-
+ // ===========================================================================
+ async function decodeResponse(response, contentEncoding, transferEncoding, noRW) {
+ 
+diff --git a/node_modules/@webrecorder/wabac/src/rewrite/html.js b/node_modules/@webrecorder/wabac/src/rewrite/html.js
+index 407c01d..62700b0 100644
+--- a/node_modules/@webrecorder/wabac/src/rewrite/html.js
++++ b/node_modules/@webrecorder/wabac/src/rewrite/html.js
+@@ -1,6 +1,6 @@
+ import RewritingStream from "parse5-html-rewriting-stream";
+ 
+-import { startsWithAny, decodeLatin1, encodeLatin1, MAX_STREAM_CHUNK_SIZE, REPLAY_TOP_FRAME_NAME } from "../utils";
++import { startsWithAny, decodeLatin1, encodeLatin1, MAX_STREAM_CHUNK_SIZE, REPLAY_TOP_FRAME_NAME } from "../utils.js";
+ 
+ const encoder = new TextEncoder();
+ const decoder = new TextDecoder();
+diff --git a/node_modules/@webrecorder/wabac/src/rewrite/index.js b/node_modules/@webrecorder/wabac/src/rewrite/index.js
+index 017e216..2d25a63 100644
+--- a/node_modules/@webrecorder/wabac/src/rewrite/index.js
++++ b/node_modules/@webrecorder/wabac/src/rewrite/index.js
+@@ -5,17 +5,17 @@ import formatLinkHeader from "format-link-header";
+ 
+ import { isAjaxRequest } from "../utils.js";
+ 
+-import { decodeResponse } from "./decoder";
+-import { ArchiveResponse } from "../response";
++import { decodeResponse } from "./decoder.js";
++import { ArchiveResponse } from "../response.js";
+ 
+-import { rewriteDASH, rewriteHLS } from "./rewriteVideo";
++import { rewriteDASH, rewriteHLS } from "./rewriteVideo.js";
+ 
+-import { DomainSpecificRuleSet } from "./dsruleset";
++import { DomainSpecificRuleSet } from "./dsruleset.js";
+ 
+-import { RxRewriter } from "./rxrewriter";
+-import { JSRewriter } from "./jsrewriter";
++import { RxRewriter } from "./rxrewriter.js";
++import { JSRewriter } from "./jsrewriter.js";
+ 
+-import { HTMLRewriter } from "./html";
++import { HTMLRewriter } from "./html.js";
+ 
+ 
+ // ===========================================================================
+diff --git a/node_modules/@webrecorder/wabac/src/rewrite/jsrewriter.js b/node_modules/@webrecorder/wabac/src/rewrite/jsrewriter.js
+index 41b64dd..42034c2 100644
+--- a/node_modules/@webrecorder/wabac/src/rewrite/jsrewriter.js
++++ b/node_modules/@webrecorder/wabac/src/rewrite/jsrewriter.js
+@@ -1,4 +1,4 @@
+-import { RxRewriter } from "./rxrewriter";
++import { RxRewriter } from "./rxrewriter.js";
+ 
+ const IMPORT_RX = /^\s*?import\s*?[{"']/;
+ const EXPORT_RX = /^\s*?export\s*?({([\s\w,$\n]+?)}[\s;]*|default|class)\s+/m;
