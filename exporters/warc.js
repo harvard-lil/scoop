@@ -46,13 +46,13 @@ export async function warc(capture, gzip=false, optimizeForPlayback=true) {
     for (const type of ['request', 'response']) {
       if(!exchange[type]) continue;
       try {
-        const statusLine = prepareExchangeStatusLine(exchange, type);
+        const statusLine = prepareExchangeStatusLine(exchange[type], type);
 
         async function* content() {
           let body = exchange[type].body;
 
           if (type === "response" && optimizeForPlayback === true) {
-            body = await optimizeResponseBodyForPlayback(exchange.url, body, exchange[type].headers);
+            body = await optimizeResponseBodyForPlayback(exchange[type].url, body, exchange[type].headers);
           }
 
           yield new Uint8Array(body);
@@ -177,17 +177,17 @@ async function optimizeResponseBodyForPlayback(url, body, httpHeaders) {
  * @param {String} [type="response"] 
  * @returns {String}
  */
-function prepareExchangeStatusLine(exchange, type = "response") {
+function prepareExchangeStatusLine(reqOrResp, type = "response") {
   let statusLine = ``;
 
   switch(type) {
     case "request":
-      statusLine = `${exchange.request.method} ${exchange.url} HTTP/${exchange.request.versionMajor}.${exchange.request.versionMinor}`;
+      statusLine = `${reqOrResp.method} ${reqOrResp.url} HTTP/${reqOrResp.versionMajor}.${reqOrResp.versionMinor}`;
     break;
 
     case "response":
     default:
-      statusLine = `HTTP/${exchange.response.versionMajor}.${exchange.response.versionMinor} ${exchange.response.statusCode} ${exchange.response.statusMessage}`;
+      statusLine = `HTTP/${reqOrResp.versionMajor}.${reqOrResp.versionMinor} ${reqOrResp.statusCode} ${reqOrResp.statusMessage}`;
     break;
   }
 
