@@ -1,3 +1,11 @@
+/**
+ * Mischief
+ * @module exporters.warc
+ * @author The Harvard Library Innovation Lab
+ * @license MIT
+ * @description Mischief to WACZ exporter.
+ */
+
 import { v4 as uuidv4 } from "uuid";
 import { Readable, Writable } from "stream";
 import { createHash } from "crypto";
@@ -8,7 +16,7 @@ import { Mischief } from "../Mischief.js";
 import * as exporters from "../exporters/index.js";
 
 /**
- * Mischief to WACZ converter.
+ * Mischief capture to WARC converter.
  *
  * Note:
  * - Logs are added to capture object via `Mischief.addToLogs()`.
