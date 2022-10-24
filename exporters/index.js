@@ -7,4 +7,5 @@
  */
 import { mischiefToWarc } from "./mischiefToWarc.js";
 import { mischiefToWacz } from "./mischiefToWacz.js";
-export { mischiefToWarc, mischiefToWacz };
+import { raw } from "./raw.js";
+export { mischiefToWarc, mischiefToWacz, raw };
