@@ -1,17 +1,14 @@
 /**
  * Mischief
- * @module MischiefExchange
+ * @module exchanges.MischiefExchange
  * @author The Harvard Library Innovation Lab
  * @license MIT
+ * @description Parent class for HTTP exchanges captured by Mischief.
 */
 
 /**
- * Represents an HTTP exchange to be added to the web archive.
- *
- * Usage:
- * ```javascript
- * const exchange = new MischiefExchange({url: "https://example.com"});
- * ```
+ * Represents an HTTP exchange captured by Mischief, irrespective of how it was captured.
+ * To be specialized by interception type (i.e: MischiefProxyExchange).
  */
 export class MischiefExchange {
   /** @type {Date} */
@@ -20,11 +17,22 @@ export class MischiefExchange {
   /** @type {?string} */
   id;
 
-  constructor(props) {
+  /** @type {?object} */
+  request;
+
+  /** @type {?object} */
+  response;
+
+  /**
+   * @param {{date: Date, id: ?string, request: ?object, response: ?object}} props
+   */
+  constructor(props = {}) {
     const allowed = ["date", "id", "request", "response"];
+
     for(const prop of Object.keys(props).filter(k => allowed.includes(k))) {
       this[prop] = props[prop];
     }
+
     return this;
   }
 }

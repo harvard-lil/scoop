@@ -1,7 +1,18 @@
+/**
+ * Mischief
+ * @module exchanges.MischiefProxyExchange
+ * @author The Harvard Library Innovation Lab
+ * @license MIT
+ * @description 
+*/
 import { MischiefExchange } from "./MischiefExchange.js";
 import { MischiefHTTPParser } from "../parsers/index.js";
 
+/**
+ * Represents an HTTP exchange captured via MischiefProxy.
+ */
 export class MischiefProxyExchange extends MischiefExchange {
+
   /** @type {?Buffer} */
   requestRaw;
 
@@ -20,6 +31,7 @@ export class MischiefProxyExchange extends MischiefExchange {
 
   /** @type {?object} */
   _request;
+
   get request() {
     if (!this._request && this.requestRaw) {
       this._request = MischiefHTTPParser.parseRequest(this.requestRaw);
@@ -37,8 +49,9 @@ export class MischiefProxyExchange extends MischiefExchange {
     this._request = val;
   }
 
-  /** @type {?object} */
+  /** @type {Mis} */
   _response;
+
   get response() {
     if (!this._response && this.responseRaw) {
       this._response = MischiefHTTPParser.parseResponse(this.responseRaw);

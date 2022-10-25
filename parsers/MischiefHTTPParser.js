@@ -84,6 +84,11 @@ export class MischiefHTTPParser {
     };
   }
 
+  /**
+   * 
+   * @param {*} input 
+   * @returns {MischiefHTTPParserResponse}
+   */
   static parseResponse(input) {
     const parser = new _HTTPParser(_HTTPParser.RESPONSE);
     let complete = false;

@@ -23,7 +23,7 @@
     "http-parser-js": "^0.5.8",
     "transparent-proxy": "^1.8.14",
     "uuid": "^9.0.0",
-    "warcio": "^1.5.1",
+    "warcio": "^1.6.1",
     "wbn": "^0.0.8",
     "whatwg-url": "^11.0.0"
   },
