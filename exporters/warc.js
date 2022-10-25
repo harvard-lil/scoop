@@ -85,7 +85,12 @@ export async function warc(capture, optimizeForPlayback=true) {
         }
 
         async function* content() {
-          yield new Uint8Array(body);
+          if (body instanceof Buffer || body instanceof Uint8Array) {
+            yield body;
+          }
+          else {
+            throw new Error(`"body" must be of type "Buffer" (or compatible).`);
+          }
         }
 
         const record = WARCRecord.create(
