@@ -15,9 +15,13 @@ export class Proxy extends Intercepter {
       injectData: (data, session) => this.intercept("request", data, session),
       injectResponse: (data, session) => this.intercept("response", data, session)
     });
+
     await this.#connection.listen(this.options.proxyPort, this.options.proxyHost, () => {
       this.capture.addToLogs(`TCP-Proxy-Server started ${JSON.stringify(this.#connection.address())}`);
     });
+
+    // Arbitrary 250ms wait (fix for observed start up bug)
+    await new Promise(resolve => setTimeout(resolve, 250));
   }
 
   teardown() {

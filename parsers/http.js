@@ -4,7 +4,13 @@ import { HTTPParser as _HTTPParser } from 'http-parser-js';
 export class HTTPParser {
 
   static headersToMap(headers) {
-    return Object.fromEntries(headers.reduce((result, value, index, sourceArray) => index % 2 === 0 ? [...result, sourceArray.slice(index, index + 2)] : result, []))
+    return Object.fromEntries(
+      headers.reduce(
+        (result, value, index, sourceArray) =>
+          index % 2 === 0 ? [...result, sourceArray.slice(index, index + 2)] : result,
+        []
+      )
+    );
   }
 
   static parseRequest(input) {
