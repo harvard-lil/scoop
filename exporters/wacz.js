@@ -82,8 +82,20 @@ const generatePages = (capture) => {
       id: uuidv4(),
       url: capture.url,
       ts: capture.startedAt.toISOString(),
-      size: capture.totalSize
-    }
+      title: `Web Archive for: ${capture.url}`
+    },
+    {
+      id: uuidv4(),
+      url: "file:///screenshot.png",
+      ts: capture.startedAt.toISOString(),
+      title: `Screenshot for: ${capture.url}`
+    },
+    {
+      id: uuidv4(),
+      url: "file:///dom-snapshot.html",
+      ts: capture.startedAt.toISOString(),
+      title: `DOM Snapshot for: ${capture.url}`
+    },
   ].map(JSON.stringify).join('\n'));
 };
 

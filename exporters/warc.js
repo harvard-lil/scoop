@@ -35,7 +35,7 @@ const SOFTWARE = "Mischief @ Harvard Library Innovation Lab - (DEV)";
  * @param {Boolean} [optimizeForPlayback=true] - If `true`, will apply wabac.js' rewrite rules to responses to help with playback of videos and other edge cases. 
  * @returns {Promise<ArrayBuffer>}
  */
-export async function warc(capture, optimizeForPlayback=true) {
+export async function warc(capture) {
   let serializedInfo = null;
   const serializedRecords = [];
   const validStates = [Mischief.states.PARTIAL, Mischief.states.COMPLETE];
@@ -79,8 +79,6 @@ export async function warc(capture, optimizeForPlayback=true) {
           },
           content()
         );
-
-        console.log(prepareExchangeStatusLine(exchange, type));
 
         serializedRecords.push(await WARCSerializer.serialize(record));
       }
