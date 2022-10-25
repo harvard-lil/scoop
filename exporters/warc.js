@@ -15,9 +15,7 @@ import { rewriteDASH, rewriteHLS } from "@webrecorder/wabac/src/rewrite/rewriteV
 import { decodeResponse } from "@webrecorder/wabac/src/rewrite/decoder.js";
 import { ArchiveResponse } from "@webrecorder/wabac/src/response.js";
 
-import { HTTPParser } from "../parsers/http.js";
 import { Mischief } from "../Mischief.js";
-import { MischiefExchange } from "../MischiefExchange.js";
 
 /**
  * WARC version to be used. 
@@ -95,12 +93,12 @@ export async function warc(capture, optimizeForPlayback=true) {
 
         const record = WARCRecord.create(
           {
-            url: exchange.url,
+            url: exchange[type].url,
             date: exchange.date.toISOString(),
             type: type,
             warcVersion: WARC_VERSION,
             statusline: statusLine,
-            httpHeaders: httpHeaders,
+            httpHeaders: exchange[type].headers,
             keepHeadersCase: false,
           },
           content()
@@ -109,7 +107,7 @@ export async function warc(capture, optimizeForPlayback=true) {
         serializedRecords.push(await WARCSerializer.serialize(record));
       }
       catch(err) {
-        capture.addToLogs(`${exchange.url} ${type} could not be added to warc.`, true, err);
+        capture.addToLogs(`${exchange[type].url} ${type} could not be added to warc.`, true, err);
       }
     }
   }
@@ -271,17 +269,17 @@ async function inflateBody(body, httpHeaders, url, contentEncoding, transferEnco
  * @param {String} [type="response"] 
  * @returns {String}
  */
-function prepareExchangeStatusLine(exchange, type = "response") {
+function prepareExchangeStatusLine(reqOrResp, type = "response") {
   let statusLine = ``;
 
   switch(type) {
     case "request":
-      statusLine = `${exchange.request.method} ${exchange.url} HTTP/${exchange.request.versionMajor}.${exchange.request.versionMinor}`;
+      statusLine = `${reqOrResp.method} ${reqOrResp.url} HTTP/${reqOrResp.versionMajor}.${reqOrResp.versionMinor}`;
     break;
 
     case "response":
     default:
-      statusLine = `HTTP/${exchange.response.versionMajor}.${exchange.response.versionMinor} ${exchange.response.statusCode} ${exchange.response.statusMessage}`;
+      statusLine = `HTTP/${reqOrResp.versionMajor}.${reqOrResp.versionMinor} ${reqOrResp.statusCode} ${reqOrResp.statusMessage}`;
     break;
   }
 
