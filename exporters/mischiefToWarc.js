@@ -103,8 +103,8 @@ export async function mischiefToWarc(capture) {
  * - https://github.com/webrecorder/warcio.js/blob/fdb68450e2e011df24129bac19691073ab6b2417/test/testSerializer.js#L212
  * 
  * @param {MischiefExchange} exchange 
- * @param {String} [type="response"] 
- * @returns {String}
+ * @param {string} [type="response"] 
+ * @returns {string}
  */
 function prepareExchangeStatusLine(exchange, type = "response") {
   let statusLine = ``;

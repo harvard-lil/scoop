@@ -1,6 +1,15 @@
-// via: https://github.com/creationix/http-parser-js/blob/master/standalone-example.js
+/**
+ * Mischief
+ * @module parsers.MischiefHTTPParser
+ * @author The Harvard Library Innovation Lab
+ * @license MIT
+ * @description Utility class for parsing intercepted HTTP exchanges. 
+ */
 import { HTTPParser as _HTTPParser } from 'http-parser-js';
 
+/**
+ * Via: https://github.com/creationix/http-parser-js/blob/master/standalone-example.js
+ */
 export class MischiefHTTPParser {
 
   static headersToMap(headers) {

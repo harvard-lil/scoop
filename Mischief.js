@@ -12,6 +12,7 @@ import { MischiefOptions } from "./MischiefOptions.js";
 
 import * as intercepters from "./intercepters/index.js";
 import * as exporters from "./exporters/index.js";
+import { MischiefHTTPParser } from "./parsers/MischiefHTTPParser.js";
 
 /**
  * Experimental single-page web archiving solution using Playwright.
@@ -85,17 +86,20 @@ export class Mischief {
   #browser;
 
   /**
-   * 
+   * Reference to the intercepter chosen for capture.
+   * @type {MischiefHTTPParser}
    */
   intercepter;
 
   /**
-   * 
+   * Url used to store the screenshot in the archive.
+   * @type {string}
    */
   screenshotUrl = "file:///screenshot.png";
 
   /**
-   * 
+   * Url used to store DOM snapshot in the archive.
+   * @type {string}
    */
   domSnapshotUrl = "file:///dom-snapshot.html";
 
@@ -284,8 +288,7 @@ export class Mischief {
   }
 
   /**
-   * Tears down the Playwright and (via event listener) the proxy resources.
-   *
+   * Tears down Playwright and (via event listener) the proxy resources.
    * @returns {Promise<boolean>}
    */
   async teardown(){
@@ -363,16 +366,16 @@ export class Mischief {
   }
 
   /**
-   * 
-   * @returns 
+   * (Shortcut) Export this Mischief capture to WARC.
+   * @returns {Promise<ArrayBuffer>}
    */
   async toWarc() {
     return await exporters.mischiefToWarc(this);
   }
 
   /**
-   * 
-   * @returns 
+   * (Shortcut) Export this Mischief capture to WACZ.
+   * @returns {Promise<ArrayBuffer>}
    */
   async toWacz() {
     return await exporters.mischiefToWacz(this);

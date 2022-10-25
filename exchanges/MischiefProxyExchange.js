@@ -23,9 +23,11 @@ export class MischiefProxyExchange extends MischiefExchange {
   get request() {
     if (!this._request && this.requestRaw) {
       this._request = MischiefHTTPParser.parseRequest(this.requestRaw);
+
       if(this._request.url[0] == "/"){
         this._request.url = `https://${this._request.headers[1]}${this._request.url}`;
       }
+
       this._request.headers = MischiefHTTPParser.headersToMap(this._request.headers);
     }
     return this._request;

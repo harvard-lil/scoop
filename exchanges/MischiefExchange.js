@@ -21,10 +21,7 @@ export class MischiefExchange {
   id;
 
   constructor(props) {
-    const allowed = ["date",
-                     "id",
-                     "request",
-                     "response"];
+    const allowed = ["date", "id", "request", "response"];
     for(const prop of Object.keys(props).filter(k => allowed.includes(k))) {
       this[prop] = props[prop];
     }
