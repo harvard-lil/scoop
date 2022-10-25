@@ -11,6 +11,7 @@ import { MischiefLog } from "./MischiefLog.js";
 import { MischiefOptions } from "./MischiefOptions.js";
 
 import * as intercepters from "./intercepters/index.js";
+import * as exporters from "./exporters/index.js";
 
 /**
  * Experimental single-page web archiving solution using Playwright.
@@ -83,7 +84,20 @@ export class Mischief {
    */
   #browser;
 
+  /**
+   * 
+   */
   intercepter;
+
+  /**
+   * 
+   */
+  screenshotUrl = "file:///screenshot.png";
+
+  /**
+   * 
+   */
+  domSnapshotUrl = "file:///dom-snapshot.html";
 
   /**
    * @param {string} url - Must be a valid HTTP(S) url.
@@ -160,7 +174,7 @@ export class Mischief {
         main: async (page) => {
           this.exchanges.push(new MischiefExchange({
             response: {
-              url: "file:///screenshot.png",
+              url: this.screenshotUrl,
               headers: {"Content-Type": "image/png"},
               versionMajor: 1,
               versionMinor: 1,
@@ -179,7 +193,7 @@ export class Mischief {
         main: async (page) => {
           this.exchanges.push(new MischiefExchange({
             response: {
-              url: "file:///dom-snapshot.html",
+              url: this.domSnapshotUrl,
               headers: {"Content-Type": "text/html",
                         "Content-Disposition": "Attachment"},
               versionMajor: 1,
@@ -346,5 +360,21 @@ export class Mischief {
     }
 
     return options;
+  }
+
+  /**
+   * 
+   * @returns 
+   */
+  async toWarc() {
+    return await exporters.mischiefToWarc(this);
+  }
+
+  /**
+   * 
+   * @returns 
+   */
+  async toWacz() {
+    return await exporters.mischiefToWacz(this);
   }
 }

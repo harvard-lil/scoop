@@ -40,10 +40,24 @@ for (const entry of toCapture) {
   const myCapture = new Mischief(url);
   await myCapture.capture();
 
-  const format = "wacz";
-  const filename = `${path}${name}.${format}`;
-  const data = await exporters[format](myCapture);
-  await writeFile(filename, Buffer.from(data));
+  for (const format of ["warc", "wacz"]) {
+    let data = null;
+    const filename = `${path}${name}.${format}`;
 
-  console.log(`💾 Saved ${url} as ${filename}`);
+    switch(format) {
+      case "wacz":
+        data = await myCapture.toWacz();
+      break;
+  
+      case "warc":
+      default:
+        data = await myCapture.toWarc();
+      break;
+    }
+
+    await writeFile(filename, Buffer.from(data));
+    console.log(`💾 Saved ${url} as ${filename}`);
+  }
+
+
 }

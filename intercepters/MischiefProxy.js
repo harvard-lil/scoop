@@ -1,8 +1,8 @@
-import { Intercepter } from './Intercepter.js';
+import { MischiefIntercepter } from './MischiefIntercepter.js';
 import { MischiefProxyExchange } from '../exchanges/index.js';
 import ProxyServer from "transparent-proxy";
 
-export class Proxy extends Intercepter {
+export class MischiefProxy extends MischiefIntercepter {
 
   #connection
 

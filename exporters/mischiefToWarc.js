@@ -1,6 +1,6 @@
 /**
  * Mischief
- * @module exporters.warc
+ * @module exporters.mischiefToWarc
  * @author The Harvard Library Innovation Lab
  * @license MIT
  * @description Mischief to WARC exporter.
@@ -32,10 +32,9 @@ const SOFTWARE = "Mischief @ Harvard Library Innovation Lab - (DEV)";
  * - Logs are added to capture object via `Mischief.addToLogs()`. 
  * 
  * @param {Mischief} capture
- * @param {Boolean} [optimizeForPlayback=true] - If `true`, will apply wabac.js' rewrite rules to responses to help with playback of videos and other edge cases. 
  * @returns {Promise<ArrayBuffer>}
  */
-export async function warc(capture) {
+export async function mischiefToWarc(capture) {
   let serializedInfo = null;
   const serializedRecords = [];
   const validStates = [Mischief.states.PARTIAL, Mischief.states.COMPLETE];

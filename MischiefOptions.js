@@ -50,5 +50,5 @@ export const MischiefOptions = {
   autoPlayMedia: true,
   grabSecondaryResources: true,
   runSiteSpecificBehaviors: true,
-  intercepter: 'Proxy'
+  intercepter: 'MischiefProxy'
 };

@@ -1,6 +1,6 @@
 import { Mischief } from "../Mischief.js";
 
-export class Intercepter {
+export class MischiefIntercepter {
 
   capture;
 

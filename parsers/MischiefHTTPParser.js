@@ -1,7 +1,7 @@
 // via: https://github.com/creationix/http-parser-js/blob/master/standalone-example.js
 import { HTTPParser as _HTTPParser } from 'http-parser-js';
 
-export class HTTPParser {
+export class MischiefHTTPParser {
 
   static headersToMap(headers) {
     return Object.fromEntries(
