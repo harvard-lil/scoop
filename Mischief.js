@@ -100,18 +100,6 @@ export class Mischief {
   intercepter;
 
   /**
-   * Url used to store the screenshot in the archive.
-   * @type {string}
-   */
-  screenshotUrl = "file:///screenshot.png";
-
-  /**
-   * Url used to store DOM snapshot in the archive.
-   * @type {string}
-   */
-  domSnapshotUrl = "file:///dom-snapshot.html";
-
-  /**
    * @param {string} url - Must be a valid HTTP(S) url.
    * @param {object} [options={}] - See `MischiefOptions` for details.
    */
@@ -214,7 +202,7 @@ export class Mischief {
         main: async (page) => {
           const domSnapshot = new MischiefExchange({
             response: {
-              url: this.domSnapshotUrl,
+              url: "file://dom-snapshot.html",
               headers: {
                 "Content-Type": "text/html",
                 "Content-Disposition": "Attachment",
