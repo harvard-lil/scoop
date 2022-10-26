@@ -12,7 +12,6 @@ import { MischiefOptions } from "./MischiefOptions.js";
 
 import * as intercepters from "./intercepters/index.js";
 import * as exporters from "./exporters/index.js";
-import { MischiefHTTPParser } from "./parsers/MischiefHTTPParser.js";
 
 /**
  * Experimental single-page web archiving solution using Playwright.
@@ -95,7 +94,7 @@ export class Mischief {
 
   /**
    * Reference to the intercepter chosen for capture.
-   * @type {MischiefHTTPParser}
+   * @type {intercepters.MischiefIntercepter}
    */
   intercepter;
 
