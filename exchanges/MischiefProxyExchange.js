@@ -29,9 +29,6 @@ export class MischiefProxyExchange extends MischiefExchange {
     this.responseRaw = val;
   }
 
-  /** @type {?object} */
-  _request;
-
   get request() {
     if (!this._request && this.requestRaw) {
       this._request = MischiefHTTPParser.parseRequest(this.requestRaw);
@@ -48,9 +45,6 @@ export class MischiefProxyExchange extends MischiefExchange {
   set request(val) {
     this._request = val;
   }
-
-  /** @type {Mis} */
-  _response;
 
   get response() {
     if (!this._response && this.responseRaw) {

@@ -29,8 +29,10 @@ export class MischiefProxy extends MischiefIntercepter {
   }
 
   get contextOptions() {
-    return {proxy: {server: `http://${this.options.proxyHost}:${this.options.proxyPort}`},
-            ignoreHTTPSErrors: true};
+    return {
+      proxy: { server: `http://${this.options.proxyHost}:${this.options.proxyPort}` },
+      ignoreHTTPSErrors: true,
+    };
   }
 
   /**
@@ -42,9 +44,12 @@ export class MischiefProxy extends MischiefIntercepter {
    * @param {string} type
    */
   getOrInitExchange(id, type) {
-    return this.exchanges.findLast((ex) => {
-      return ex.id == id && (type == "response" || !ex.responseRaw);
-    }) || this.exchanges[this.exchanges.push(new MischiefProxyExchange({id: id})) - 1];
+    // TODO: For loop-ify for clarity and maintainability?
+    return (
+      this.exchanges.findLast((ex) => {
+        return ex.id == id && (type == "response" || !ex.responseRaw);
+      }) || this.exchanges[this.exchanges.push(new MischiefProxyExchange({ id: id })) - 1]
+    );
   }
 
   /**
@@ -57,10 +62,10 @@ export class MischiefProxy extends MischiefIntercepter {
    */
   intercept(type, data, session) {
     const ex = this.getOrInitExchange(session._id, type);
-    const prop = `${type}Raw`;
+    const prop = `${type}Raw`; // `responseRaw` | `requestRaw`
     ex[prop] = ex[prop] ? Buffer.concat([ex[prop], data], ex[prop].length + data.length) : data;
     this.byteLength += data.byteLength;
-    this.checkAndEnforceSizeLimit();
+    this.checkAndEnforceSizeLimit(); // From parent
     return data;
   }
 }

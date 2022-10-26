@@ -17,11 +17,27 @@ export class MischiefExchange {
   /** @type {?string} */
   id;
 
-  /** @type {?object} */
-  request;
+  /** @type {object} */
+  _request;
+
+  set request(val) {
+    this._request = val;
+  }
+
+  get request() {
+    return this._request;
+  }
 
   /** @type {?object} */
-  response;
+  _response;
+
+  set response(val) {
+    this._response = val;
+  }
+
+  get response() {
+    return this._response;
+  }
 
   /**
    * @param {{date: Date, id: ?string, request: ?object, response: ?object}} props

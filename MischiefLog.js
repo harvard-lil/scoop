@@ -47,7 +47,7 @@ export class MischiefLog {
   print() {
     let level = this.isWarning ? console.warn : console.log;
 
-    level(`[${this.date.toISOString()}]${this.isWarning ? "WARNING" : ""} ${this.message}`);
+    level(`[${this.date.toISOString()}]${this.isWarning ? " WARNING" : ""} ${this.message}`);
 
     if (this.trace) {
       level(this.trace);

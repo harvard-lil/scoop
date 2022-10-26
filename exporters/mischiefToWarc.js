@@ -56,10 +56,18 @@ export async function mischiefToWarc(capture) {
   //
   // Prepare WARC records section
   //
-  for (const exchange of capture.exchanges.filter((ex) => ex.response)) {
+  for (const exchange of capture.exchanges) {
+    // Ignore loose requests
+    if (!exchange.response) {
+      continue;
+    }
+
     for (const type of ['request', 'response']) {
 
-      if(!exchange[type]) continue;
+      // Ignore empty records
+      if (!exchange[type]) {
+        continue;
+      }
 
       try {
         async function* content() {

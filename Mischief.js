@@ -70,6 +70,14 @@ export class Mischief {
    */
   exchanges = [];
 
+  /**
+   * Keeps track of exchanges that were generated during capture.
+   * Example: `file:///screenshot.png` for the full-page screenshot.
+   * 
+   * @type {MischiefExchange[]}
+   */
+  generatedExchanges = [];
+
   /** @type {MischiefLog[]} */
   logs = [];
 
@@ -181,9 +189,9 @@ export class Mischief {
       steps.push({
         name: "screenshot",
         main: async (page) => {
-          this.exchanges.push(new MischiefExchange({
+          const screenshot = new MischiefExchange({
             response: {
-              url: this.screenshotUrl,
+              url: "file:///screenshot.png",
               headers: {"Content-Type": "image/png"},
               versionMajor: 1,
               versionMinor: 1,
@@ -191,7 +199,10 @@ export class Mischief {
               statusMessage: "OK",
               body: await page.screenshot({fullPage: true})
             }
-          }));
+          });
+
+          this.exchanges.push(screenshot);
+          this.generatedExchanges.push(screenshot);
         }
       });
     }
@@ -201,18 +212,23 @@ export class Mischief {
       steps.push({
         name: "DOM snapshot",
         main: async (page) => {
-          this.exchanges.push(new MischiefExchange({
+          const domSnapshot = new MischiefExchange({
             response: {
               url: this.domSnapshotUrl,
-              headers: {"Content-Type": "text/html",
-                        "Content-Disposition": "Attachment"},
+              headers: {
+                "Content-Type": "text/html",
+                "Content-Disposition": "Attachment",
+              },
               versionMajor: 1,
               versionMinor: 1,
               statusCode: 200,
               statusMessage: "OK",
-              body: Buffer.from(await page.content())
-            }
-          }));
+              body: Buffer.from(await page.content()),
+            },
+          });
+
+          this.exchanges.push(domSnapshot);
+          this.generatedExchanges.push(domSnapshot);
         }
       });
     }

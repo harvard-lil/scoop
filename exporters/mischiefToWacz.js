@@ -70,31 +70,34 @@ const hash = (buffer) => 'sha256:' + createHash('sha256').update(buffer).digest(
 const stringify = (obj) => JSON.stringify(obj, null, 2);
 
 const generatePages = (capture) => {
-  return Buffer.from([
-    {
-      format: "json-pages-1.0",
-      id: "pages",
-      title: "All Pages"
-    },
-    {
+
+  const pages = [];
+
+  // Heading
+  pages.push({
+    format: "json-pages-1.0",
+    id: "pages",
+    title: "All Pages"
+  });
+
+  // Main page
+  pages.push({
+    id: uuidv4(),
+    url: capture.url,
+    ts: capture.startedAt.toISOString(),
+    title: `Web Archive for: ${capture.url}`
+  });
+
+  // Other generated elements
+  for (let exchange of capture.generatedExchanges) {
+    pages.push({
       id: uuidv4(),
-      url: capture.url,
-      ts: capture.startedAt.toISOString(),
-      title: `Web Archive for: ${capture.url}`
-    },
-    {
-      id: uuidv4(),
-      url: capture.screenshotUrl,
-      ts: capture.startedAt.toISOString(),
-      title: `Screenshot for: ${capture.url}`
-    },
-    {
-      id: uuidv4(),
-      url: capture.domSnapshotUrl,
-      ts: capture.startedAt.toISOString(),
-      title: `DOM Snapshot for: ${capture.url}`
-    },
-  ].map(JSON.stringify).join('\n'));
+      url: exchange.response.url,
+      ts: capture.startedAt.toISOString()
+    });
+  }
+
+  return Buffer.from(pages.map(JSON.stringify).join('\n'));
 };
 
 const generateDatapackage = function(capture, indexCDX, warc, pages) {
