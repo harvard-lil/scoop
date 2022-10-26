@@ -308,7 +308,7 @@ export class Mischief {
   }
 
   /**
-   * Tears down Playwright and (via event listener) the proxy resources.
+   * Tears down Playwright and intercepter resources.
    * @returns {Promise<boolean>}
    */
   async teardown(){
