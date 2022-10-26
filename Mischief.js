@@ -115,17 +115,18 @@ export class Mischief {
 
   /**
    * Main capture process.
-   * 
-   * Separated in two main phases:
-   * - In-browser capture - during which Mischief will try to intercept as many HTTP exchanges as possible and identify elements it cannot capture that way.
-   * - Fallback out-of-browser capture - during which Mischief runs Fetch requests to capture elements that could not be intercepted earlier.
-   *  
+   *   
    * @returns {Promise<boolean>}
    */
   async capture() {
     const options = this.options;
     const steps = [];
 
+    //
+    // [1] - Prepare capture steps
+    //
+
+    // Push step: Setup interceptor
     steps.push({
       name: "intercepter",
       main: async (page) => {
@@ -133,6 +134,7 @@ export class Mischief {
       }
     })
 
+    // Push step: Initial page load
     steps.push({
       name: "initial load",
       main: async (page) => {
@@ -140,6 +142,7 @@ export class Mischief {
       }
     });
 
+    // Push step: Browser scripts
     if (options.grabSecondaryResources ||
         options.autoPlayMedia ||
         options.runSiteSpecificBehaviors ||
@@ -165,6 +168,7 @@ export class Mischief {
       });
     }
 
+    // Push step: Wait for network idle
     steps.push({
       name: "network idle",
       main: async (page) => {
@@ -172,6 +176,7 @@ export class Mischief {
       }
     });
 
+    // Push step: Screenshot
     if (options.screenshot) {
       steps.push({
         name: "screenshot",
@@ -191,6 +196,7 @@ export class Mischief {
       });
     }
 
+    // Push step: DOM Snap shot
     if (options.domSnapshot) {
       steps.push({
         name: "DOM snapshot",
@@ -211,6 +217,7 @@ export class Mischief {
       });
     }
 
+    // Push step: Teardown
     steps.push({
       name: "teardown",
       main: async () => {
@@ -219,32 +226,41 @@ export class Mischief {
       }
     })
 
+    //
+    // [2] - Initialize capture
+    //
     let page;
     try {
       page = await this.setup();
       this.addToLogs(`Starting capture of ${this.url} with options: ${JSON.stringify(options)}`);
       this.state = Mischief.states.CAPTURE;
-    } catch(e) {
-      this.addToLogs('An error ocurred during capture setup', true, e);
+    } 
+    catch (e) {
+      this.addToLogs("An error ocurred during capture setup", true, e);
       this.state = Mischief.states.FAILED;
       return; // exit early if the browser and proxy couldn't be launched
     }
 
+    // Call `setup()` method of steps that have one
     for (const step of steps.filter((step) => step.setup)) {
       await step.setup(page);
     }
 
+    //
+    // [3] - Run capture steps
+    //
     let i = -1;
-    while(i++ < steps.length-1 &&
-          this.state == Mischief.states.CAPTURE) {
+    while(i++ < steps.length-1 && this.state == Mischief.states.CAPTURE) {
       const step = steps[i];
       try {
         this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name}`);
         await step.main(page);
-      } catch(err) {
+      } 
+      catch(err) {
         if(this.state == Mischief.states.CAPTURE){
           this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name} - failed`, true, err);
-        } else {
+        } 
+        else {
           this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name} - ended due to max time or size reached`, true);
         }
       }
