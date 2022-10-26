@@ -85,7 +85,7 @@ const generatePages = (capture) => {
     id: uuidv4(),
     url: capture.url,
     ts: capture.startedAt.toISOString(),
-    title: `Web Archive for: ${capture.url}`
+    title: `Web archive of ${capture.url}`
   });
 
   // Other generated elements
@@ -93,7 +93,8 @@ const generatePages = (capture) => {
     pages.push({
       id: uuidv4(),
       url: exchange.response.url,
-      ts: capture.startedAt.toISOString()
+      ts: exchange.date.toISOString(),
+      title: exchange.description
     });
   }
 
