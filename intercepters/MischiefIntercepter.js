@@ -1,6 +1,6 @@
 import { Mischief } from "../Mischief.js";
 
-export class Intercepter {
+export class MischiefIntercepter {
 
   capture;
 
@@ -31,7 +31,7 @@ export class Intercepter {
   }
 
   checkAndEnforceSizeLimit() {
-    if(this.byteLength >= this.options.maxSize && this.capture.state == Mischief.states.CAPTURE){
+    if(this.byteLength >= this.options.maxSize && this.capture.state == Mischief.states.CAPTURE) {
       this.capture.addToLogs(`Max size ${this.options.maxSize} reached. Ending interception.`);
       this.capture.state = Mischief.states.PARTIAL;
       this.capture.teardown();

@@ -1,7 +1,18 @@
+/**
+ * Mischief
+ * @module exchanges.MischiefProxyExchange
+ * @author The Harvard Library Innovation Lab
+ * @license MIT
+ * @description 
+*/
 import { MischiefExchange } from "./MischiefExchange.js";
-import { HTTPParser } from "../parsers/http.js";
+import { MischiefHTTPParser } from "../parsers/index.js";
 
+/**
+ * Represents an HTTP exchange captured via MischiefProxy.
+ */
 export class MischiefProxyExchange extends MischiefExchange {
+
   /** @type {?Buffer} */
   requestRaw;
 
@@ -18,15 +29,15 @@ export class MischiefProxyExchange extends MischiefExchange {
     this.responseRaw = val;
   }
 
-  /** @type {?object} */
-  _request;
   get request() {
     if (!this._request && this.requestRaw) {
-      this._request = HTTPParser.parseRequest(this.requestRaw);
+      this._request = MischiefHTTPParser.parseRequest(this.requestRaw);
+
       if(this._request.url[0] == "/"){
         this._request.url = `https://${this._request.headers[1]}${this._request.url}`;
       }
-      this._request.headers = HTTPParser.headersToMap(this._request.headers);
+
+      this._request.headers = MischiefHTTPParser.headersToMap(this._request.headers);
     }
     return this._request;
   }
@@ -35,12 +46,10 @@ export class MischiefProxyExchange extends MischiefExchange {
     this._request = val;
   }
 
-  /** @type {?object} */
-  _response;
   get response() {
     if (!this._response && this.responseRaw) {
-      this._response = HTTPParser.parseResponse(this.responseRaw);
-      this._response.headers = HTTPParser.headersToMap(this._response.headers);
+      this._response = MischiefHTTPParser.parseResponse(this.responseRaw);
+      this._response.headers = MischiefHTTPParser.headersToMap(this._response.headers);
       this._response.url = this.request.url
     }
     return this._response;

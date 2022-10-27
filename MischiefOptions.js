@@ -21,12 +21,14 @@
  * @property {boolean} keepPartialResponses - Should Mischief keep partially downloaded resources? Defaults to `true`.
  * @property {number} maxSize - Maximum size, in bytes, for the exchanges list. Defaults to 200Mb.
  * @property {boolean} screenshot - Should Mischief try to make a screenshot? Defaults to `true`. Screenshot will be added as `file:///screenshot.png` in the exchanges list.
+ * @property {boolean} domSnapshot - Should Mischief save a snapshot of the rendered DOM? Defaults to `true`. Added as `file:///dom-snapshot.html` in the exchanges list.
  * @property {number} captureWindowX - Browser window resolution in pixels: X axis. Defaults to 1600.
  * @property {number} captureWindowY - Browser window resolution in pixels: Y axis. Defaults to 900.
  * @property {boolean} autoScroll - Should Mischief try to scroll through the page? Defaults to `true`.
  * @property {boolean} autoPlayMedia - Should Mischief try to autoplay `<audio>` and `<video>` tags? Defaults to `true`.
  * @property {boolean} grabSecondaryResources - Should Mischief try to download img srcsets and secondary stylesheets? Defaults to `true`.
  * @property {boolean} runSiteSpecificBehaviors - Should Mischief run behaviors tailored to specific sites (ex: Twitter) in an attempt to better grab the page? Defaults to `true`.
+ * @property {string} intercepter - Network interception method to be used. Available at the moment: "Proxy".
  */
 export const MischiefOptions = {
   verbose: true,
@@ -41,11 +43,12 @@ export const MischiefOptions = {
   keepPartialResponses: true,
   maxSize: 200 * 1024 * 1024,
   screenshot: true,
+  domSnapshot: true,
   captureWindowX: 1600,
   captureWindowY: 900,
   autoScroll: true,
   autoPlayMedia: true,
   grabSecondaryResources: true,
   runSiteSpecificBehaviors: true,
-  intercepter: 'Proxy'
+  intercepter: 'MischiefProxy'
 };

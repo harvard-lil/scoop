@@ -11,6 +11,7 @@ import { MischiefLog } from "./MischiefLog.js";
 import { MischiefOptions } from "./MischiefOptions.js";
 
 import * as intercepters from "./intercepters/index.js";
+import * as exporters from "./exporters/index.js";
 
 /**
  * Experimental single-page web archiving solution using Playwright.
@@ -68,6 +69,14 @@ export class Mischief {
    */
   exchanges = [];
 
+  /**
+   * Keeps track of exchanges that were generated during capture.
+   * Example: `file:///screenshot.png` for the full-page screenshot.
+   * 
+   * @type {MischiefExchange[]}
+   */
+  generatedExchanges = [];
+
   /** @type {MischiefLog[]} */
   logs = [];
 
@@ -83,6 +92,10 @@ export class Mischief {
    */
   #browser;
 
+  /**
+   * Reference to the intercepter chosen for capture.
+   * @type {intercepters.MischiefIntercepter}
+   */
   intercepter;
 
   /**
@@ -97,17 +110,18 @@ export class Mischief {
 
   /**
    * Main capture process.
-   * 
-   * Separated in two main phases:
-   * - In-browser capture - during which Mischief will try to intercept as many HTTP exchanges as possible and identify elements it cannot capture that way.
-   * - Fallback out-of-browser capture - during which Mischief runs Fetch requests to capture elements that could not be intercepted earlier.
-   *  
+   *   
    * @returns {Promise<boolean>}
    */
   async capture() {
     const options = this.options;
     const steps = [];
 
+    //
+    // [1] - Prepare capture steps
+    //
+
+    // Push step: Setup interceptor
     steps.push({
       name: "intercepter",
       main: async (page) => {
@@ -115,6 +129,7 @@ export class Mischief {
       }
     })
 
+    // Push step: Initial page load
     steps.push({
       name: "initial load",
       main: async (page) => {
@@ -122,6 +137,7 @@ export class Mischief {
       }
     });
 
+    // Push step: Browser scripts
     if (options.grabSecondaryResources ||
         options.autoPlayMedia ||
         options.runSiteSpecificBehaviors ||
@@ -147,6 +163,7 @@ export class Mischief {
       });
     }
 
+    // Push step: Wait for network idle
     steps.push({
       name: "network idle",
       main: async (page) => {
@@ -154,11 +171,12 @@ export class Mischief {
       }
     });
 
+    // Push step: Screenshot
     if (options.screenshot) {
       steps.push({
         name: "screenshot",
         main: async (page) => {
-          this.exchanges.push(new MischiefExchange({
+          const screenshot = new MischiefExchange({
             response: {
               url: "file:///screenshot.png",
               headers: {"Content-Type": "image/png"},
@@ -168,11 +186,41 @@ export class Mischief {
               statusMessage: "OK",
               body: await page.screenshot({fullPage: true})
             }
-          }));
+          });
+
+          this.exchanges.push(screenshot);
+          this.generatedExchanges.push(screenshot);
         }
       });
     }
 
+    // Push step: DOM Snap shot
+    if (options.domSnapshot) {
+      steps.push({
+        name: "DOM snapshot",
+        main: async (page) => {
+          const domSnapshot = new MischiefExchange({
+            response: {
+              url: "file://dom-snapshot.html",
+              headers: {
+                "Content-Type": "text/html",
+                "Content-Disposition": "Attachment",
+              },
+              versionMajor: 1,
+              versionMinor: 1,
+              statusCode: 200,
+              statusMessage: "OK",
+              body: Buffer.from(await page.content()),
+            },
+          });
+
+          this.exchanges.push(domSnapshot);
+          this.generatedExchanges.push(domSnapshot);
+        }
+      });
+    }
+
+    // Push step: Teardown
     steps.push({
       name: "teardown",
       main: async () => {
@@ -181,32 +229,41 @@ export class Mischief {
       }
     })
 
+    //
+    // [2] - Initialize capture
+    //
     let page;
     try {
       page = await this.setup();
       this.addToLogs(`Starting capture of ${this.url} with options: ${JSON.stringify(options)}`);
       this.state = Mischief.states.CAPTURE;
-    } catch(e) {
-      this.addToLogs('An error ocurred during capture setup', true, e);
+    } 
+    catch (e) {
+      this.addToLogs("An error ocurred during capture setup", true, e);
       this.state = Mischief.states.FAILED;
       return; // exit early if the browser and proxy couldn't be launched
     }
 
+    // Call `setup()` method of steps that have one
     for (const step of steps.filter((step) => step.setup)) {
       await step.setup(page);
     }
 
+    //
+    // [3] - Run capture steps
+    //
     let i = -1;
-    while(i++ < steps.length-1 &&
-          this.state == Mischief.states.CAPTURE) {
+    while(i++ < steps.length-1 && this.state == Mischief.states.CAPTURE) {
       const step = steps[i];
       try {
         this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name}`);
         await step.main(page);
-      } catch(err) {
+      } 
+      catch(err) {
         if(this.state == Mischief.states.CAPTURE){
           this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name} - failed`, true, err);
-        } else {
+        } 
+        else {
           this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name} - ended due to max time or size reached`, true);
         }
       }
@@ -250,8 +307,7 @@ export class Mischief {
   }
 
   /**
-   * Tears down the Playwright and (via event listener) the proxy resources.
-   *
+   * Tears down Playwright and intercepter resources.
    * @returns {Promise<boolean>}
    */
   async teardown(){
@@ -326,5 +382,21 @@ export class Mischief {
     }
 
     return options;
+  }
+
+  /**
+   * (Shortcut) Export this Mischief capture to WARC.
+   * @returns {Promise<ArrayBuffer>}
+   */
+  async toWarc() {
+    return await exporters.mischiefToWarc(this);
+  }
+
+  /**
+   * (Shortcut) Export this Mischief capture to WACZ.
+   * @returns {Promise<ArrayBuffer>}
+   */
+  async toWacz() {
+    return await exporters.mischiefToWacz(this);
   }
 }

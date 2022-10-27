@@ -1,6 +1,6 @@
 /**
  * Mischief
- * @module exporters.warc
+ * @module exporters.mischiefToWacz
  * @author The Harvard Library Innovation Lab
  * @license MIT
  * @description Mischief to WACZ exporter.
@@ -13,7 +13,14 @@ import { CDXIndexer } from "warcio";
 import Archiver from "archiver";
 
 import { Mischief } from "../Mischief.js";
-import * as exporters from "../exporters/index.js";
+
+const FILES = {
+  pages: {name: 'pages.jsonl', path: 'pages/pages.jsonl'},
+  warc: {name: 'archive.warc', path: 'archive/archive.warc'},
+  indexCDX: {name: 'index.cdx', path: 'indexes/index.cdx'},
+  datapackage: {path: 'datapackage.json'},
+  datapackageDigest: {path: 'datapackage-digest.json'}
+};
 
 /**
  * Mischief capture to WARC converter.
@@ -24,16 +31,7 @@ import * as exporters from "../exporters/index.js";
  * @param {Mischief} capture
  * @returns {Promise<ArrayBuffer>}
  */
-
-const FILES = {
-  pages: {name: 'pages.jsonl', path: 'pages/pages.jsonl'},
-  warc: {name: 'archive.warc', path: 'archive/archive.warc'},
-  indexCDX: {name: 'index.cdx', path: 'indexes/index.cdx'},
-  datapackage: {path: 'datapackage.json'},
-  datapackageDigest: {path: 'datapackage-digest.json'}
-};
-
-export async function wacz(capture) {
+export async function mischiefToWacz(capture) {
   const validStates = [Mischief.states.PARTIAL, Mischief.states.COMPLETE];
   if (!(capture instanceof Mischief) || !validStates.includes(capture.state)) {
     throw new Error("`capture` must be a partial or complete Mischief object.");
@@ -49,7 +47,7 @@ export async function wacz(capture) {
   }
   archive.pipe(converter);
 
-  const warc = Buffer.from(await exporters.warc(capture));
+  const warc = Buffer.from(await capture.toWarc());
   archive.append(warc, {name: FILES.warc.path});
 
   const pages = generatePages(capture);
@@ -72,19 +70,34 @@ const hash = (buffer) => 'sha256:' + createHash('sha256').update(buffer).digest(
 const stringify = (obj) => JSON.stringify(obj, null, 2);
 
 const generatePages = (capture) => {
-  return Buffer.from([
-    {
-      format: "json-pages-1.0",
-      id: "pages",
-      title: "All Pages"
-    },
-    {
+
+  const pages = [];
+
+  // Heading
+  pages.push({
+    format: "json-pages-1.0",
+    id: "pages",
+    title: "All Pages"
+  });
+
+  // Main page
+  pages.push({
+    id: uuidv4(),
+    url: capture.url,
+    ts: capture.startedAt.toISOString(),
+    title: `Web Archive for: ${capture.url}`
+  });
+
+  // Other generated elements
+  for (let exchange of capture.generatedExchanges) {
+    pages.push({
       id: uuidv4(),
-      url: capture.url,
-      ts: capture.startedAt.toISOString(),
-      size: capture.totalSize
-    }
-  ].map(JSON.stringify).join('\n'));
+      url: exchange.response.url,
+      ts: capture.startedAt.toISOString()
+    });
+  }
+
+  return Buffer.from(pages.map(JSON.stringify).join('\n'));
 };
 
 const generateDatapackage = function(capture, indexCDX, warc, pages) {

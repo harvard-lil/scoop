@@ -5,7 +5,7 @@
  * @license MIT
  * @description Entry point for the scribes module.
  */
-import { Proxy } from "./Proxy.js";
-export {
-  Proxy
-};
+import { MischiefIntercepter } from "./MischiefIntercepter.js";
+import { MischiefProxy } from "./MischiefProxy.js";
+
+export { MischiefIntercepter, MischiefProxy };
