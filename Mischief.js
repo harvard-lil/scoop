@@ -107,11 +107,11 @@ export class Mischief {
 
   /**
    * @param {string} url - Must be a valid HTTP(S) url.
-   * @param {object} [options={}] - See `MischiefOptions` for details.
+   * @param {object} [options={}] - See `MischiefOptions.defaults` for details.
    */
   constructor(url, options = {}) {
     this.url = this.filterUrl(url);
-    this.options = this.filterOptions(options);
+    this.options = MischiefOptions.filterOptions(options);
     this.intercepter = new intercepters[this.options.intercepter](this);
   }
 
@@ -450,37 +450,6 @@ export class Mischief {
     catch(err) {
       throw new Error(`Invalid url provided.\n${err}`);
     }
-  }
-
-  /**
-   * Filters an options object by comparing it with `MischiefOptions`.
-   * Will use defaults for missing properties.
-   * 
-   * @param {object} newOptions 
-   */
-  filterOptions(newOptions) {
-    const options = {};
-
-    for (const key of Object.keys(MischiefOptions)) {
-      options[key] = key in newOptions ? newOptions[key] : MischiefOptions[key];
-
-      // Apply basic type casting based on type of defaults (MischiefOptions)
-      switch (typeof MischiefOptions[key]) {
-        case "boolean":
-          options[key] = Boolean(options[key]);
-        break;
-
-        case "number":
-          options[key] = Number(options[key]);
-        break;
-
-        case "string":
-          options[key] = String(options[key]);
-        break;
-      }
-    }
-
-    return options;
   }
 
   /**
