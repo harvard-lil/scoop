@@ -7,6 +7,7 @@
  */
 
 import { v4 as uuidv4 } from "uuid";
+import path from "path";
 import { Readable, Writable } from "stream";
 import { createHash } from "crypto";
 import { CDXIndexer } from "warcio";
@@ -31,39 +32,41 @@ const FILES = {
  * @param {Mischief} capture
  * @returns {Promise<ArrayBuffer>}
  */
-export async function mischiefToWacz(capture) {
+
+export async function mischiefToWacz(capture, files = []) {
   const validStates = [Mischief.states.PARTIAL, Mischief.states.COMPLETE];
   if (!(capture instanceof Mischief) || !validStates.includes(capture.state)) {
     throw new Error("`capture` must be a partial or complete Mischief object.");
   }
 
-  const archive = new Archiver('zip', {store: true});
+  const warcFile = {
+    path: 'archive/data.warc',
+    data: Buffer.from(await exporters.warc(capture))
+  };
+  files.push(warcFile);
 
-  const buffers = [];
-  const converter = new Writable();
-  converter._write = (chunk, _encoding, cb) => {
-    buffers.push(chunk);
-    process.nextTick(cb);
-  }
-  archive.pipe(converter);
+  files.push({
+    path: 'pages/pages.jsonl',
+    data: generatePages(capture)
+  });
 
-  const warc = Buffer.from(await capture.toWarc());
-  archive.append(warc, {name: FILES.warc.path});
+  files.push({
+    path: 'indexes/index.cdx',
+    data:  await generateIndexCDX(warcFile)
+  });
 
-  const pages = generatePages(capture);
-  archive.append(pages, {name: FILES.pages.path});
+  const datapackageFile = {
+    path: 'datapackage.json',
+    data: generateDatapackage(capture, files)
+  };
+  files.push(datapackageFile);
 
-  const indexCDX = await generateIndexCDX(warc)
-  archive.append(indexCDX, {name: FILES.indexCDX.path});
+  files.push({
+    path: 'datapackage-digest.json',
+    data: generateDatapackageDigest(datapackageFile)
+  });
 
-  const datapackage = generateDatapackage(capture, indexCDX, warc, pages);
-  archive.append(datapackage, {name: FILES.datapackage.path});
-
-  const datapackageDigest = generateDatapackageDigest(datapackage);
-  archive.append(datapackageDigest, {name: FILES.datapackageDigest.path});
-
-  await archive.finalize();
-  return Buffer.concat(buffers);
+  return await zip(files);
 };
 
 const hash = (buffer) => 'sha256:' + createHash('sha256').update(buffer).digest('hex');
@@ -101,7 +104,7 @@ const generatePages = (capture) => {
   return Buffer.from(pages.map(JSON.stringify).join('\n'));
 };
 
-const generateDatapackage = function(capture, indexCDX, warc, pages) {
+const generateDatapackage = function(capture, files) {
   return stringify({
     profile: "data-package",
     software: "mischief",
@@ -109,24 +112,25 @@ const generateDatapackage = function(capture, indexCDX, warc, pages) {
     created: (new Date()).toISOString(),
     mainPageUrl: capture.url,
     mainPageDate: capture.startedAt.toISOString(),
-    resources: [indexCDX, warc, pages].map((data, i) => {
+    resources: files.map((file) => {
       return {
-        ...FILES[['indexCDX', 'warc', 'pages'][i]],
-        hash: hash(data),
-        bytes: data.byteLength
+        name: path.basename(file.path),
+        path: file.path,
+        hash: hash(file.data),
+        bytes: file.data.byteLength
       }
     })
   });
 };
 
-const generateDatapackageDigest = (datapackage) => {
+const generateDatapackageDigest = (datapackageFile) => {
   return stringify({
-    path: FILES.datapackage.path,
-    hash: hash(datapackage)
+    path: datapackageFile.path,
+    hash: hash(datapackageFile.data)
   });
 };
 
-const generateIndexCDX = async (warcBuffer) => {
+const generateIndexCDX = async (warcFile) => {
   const buffers = [];
   const converter = new Writable();
   converter._write = (chunk, _encoding, cb) => {
@@ -136,7 +140,24 @@ const generateIndexCDX = async (warcBuffer) => {
 
   // CDXIndexer expects an array of files of the format {filename: string, reader: stream}
   await new CDXIndexer({format: 'cdxj'}, converter)
-    .run([{filename: FILES.warc.name, reader: Readable.from(warcBuffer)}]);
+    .run([{filename: path.basename(warcFile.path), reader: Readable.from(warcFile.data)}]);
 
+  return Buffer.concat(buffers);
+}
+
+const zip = async (files) => {
+  const archive = new Archiver('zip', {store: true});
+
+  const buffers = [];
+  const converter = new Writable();
+  converter._write = (chunk, _encoding, cb) => {
+    buffers.push(chunk);
+    process.nextTick(cb);
+  }
+  archive.pipe(converter);
+
+  files.forEach(f => archive.append(f.data, {name: f.path}))
+
+  await archive.finalize();
   return Buffer.concat(buffers);
 }
