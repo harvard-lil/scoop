@@ -21,6 +21,8 @@
     "archiver": "^5.3.1",
     "browsertrix-behaviors": "^0.3.4",
     "http-parser-js": "^0.5.8",
+    "node-stream-zip": "^1.15.0",
+    "patch-package": "^6.4.7",
     "transparent-proxy": "^1.8.14",
     "uuid": "^9.0.0",
     "warcio": "^1.6.1",
