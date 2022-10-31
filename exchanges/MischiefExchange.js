@@ -13,11 +13,11 @@
 import { v4 as uuidv4 } from "uuid";
 
 export class MischiefExchange {
-  /** @type {Date} */
-  date = new Date();
-
   /** @type {?string} */
   id = uuidv4();
+
+  /** @type {Date} */
+  date = new Date();
 
   /** @type {?string} */
   connectionId;
@@ -56,7 +56,7 @@ export class MischiefExchange {
    *  response: ?object}} props
    */
   constructor(props = {}) {
-    const allowed = ["date", "id", "description", "request", "response"];
+    const allowed = ["id", "date", "description", "request", "response"];
 
     for(const prop of Object.keys(props).filter(k => allowed.includes(k))) {
       this[prop] = props[prop];
