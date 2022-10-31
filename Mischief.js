@@ -4,7 +4,11 @@
  * @author The Harvard Library Innovation Lab
  * @license MIT
  */
+import { v4 as uuidv4 } from "uuid";
+import fs from "fs";
+
 import { chromium } from "playwright";
+import youtubedl from "youtube-dl-exec";
 
 import { MischiefExchange } from "./exchanges/MischiefExchange.js";
 import { MischiefLog } from "./MischiefLog.js";
@@ -12,6 +16,8 @@ import { MischiefOptions } from "./MischiefOptions.js";
 
 import * as intercepters from "./intercepters/index.js";
 import * as exporters from "./exporters/index.js";
+
+const TMP_DIR = `./tmp/`;
 
 /**
  * Experimental single-page web archiving solution using Playwright.
@@ -100,11 +106,11 @@ export class Mischief {
 
   /**
    * @param {string} url - Must be a valid HTTP(S) url.
-   * @param {object} [options={}] - See `MischiefOptions` for details.
+   * @param {object} [options={}] - See `MischiefOptions.defaults` for details.
    */
   constructor(url, options = {}) {
     this.url = this.filterUrl(url);
-    this.options = this.filterOptions(options);
+    this.options = MischiefOptions.filterOptions(options);
     this.intercepter = new intercepters[this.options.intercepter](this);
   }
 
@@ -176,20 +182,12 @@ export class Mischief {
       steps.push({
         name: "screenshot",
         main: async (page) => {
-          const screenshot = new MischiefExchange({
-            response: {
-              url: "file:///screenshot.png",
-              headers: {"Content-Type": "image/png"},
-              versionMajor: 1,
-              versionMinor: 1,
-              statusCode: 200,
-              statusMessage: "OK",
-              body: await page.screenshot({fullPage: true})
-            }
-          });
-
-          this.exchanges.push(screenshot);
-          this.generatedExchanges.push(screenshot);
+          this.addGeneratedExchange(
+            "file:///screenshot.png",
+            { "Content-Type": "image/png" },
+            await page.screenshot({ fullPage: true }),
+            `Full-page screenshot of ${this.url}`
+          );
         }
       });
     }
@@ -199,23 +197,81 @@ export class Mischief {
       steps.push({
         name: "DOM snapshot",
         main: async (page) => {
-          const domSnapshot = new MischiefExchange({
-            response: {
-              url: "file://dom-snapshot.html",
-              headers: {
-                "Content-Type": "text/html",
-                "Content-Disposition": "Attachment",
-              },
-              versionMajor: 1,
-              versionMinor: 1,
-              statusCode: 200,
-              statusMessage: "OK",
-              body: Buffer.from(await page.content()),
+          this.addGeneratedExchange(
+            "file:///dom-snapshot.html",
+            {
+              "Content-Type": "text/html",
+              "Content-Disposition": "Attachment",
             },
-          });
+            Buffer.from(await page.content()),
+            `DOM snapshot of: ${this.url}`
+          );
+        }
+      });
+    }
 
-          this.exchanges.push(domSnapshot);
-          this.generatedExchanges.push(domSnapshot);
+    // Push step: Capture of in-page videos as attachment
+    if (options.captureVideoAsAttachment) {
+      steps.push({
+        name: "out-of-browser capture of video as attachment",
+        main: async () => {
+          const videoFilename = `${TMP_DIR}${uuidv4()}.mp4`;
+          let metadata = null;
+
+          try {
+            await Promise.race([
+              // Try to pull video and associated meta data ...
+              new Promise(async(resolve, reject) => {
+                try {
+                  metadata = await youtubedl(this.url, {
+                    dumpSingleJson: true,
+                    noWarnings: true,
+                    preferFreeFormats: true,
+                  });
+
+                  await youtubedl(this.url, {
+                    noWarnings: true,
+                    preferFreeFormats: true,
+                    output: videoFilename,
+                  });
+                }
+                catch(err) {
+                  reject(err);
+                }
+
+                return resolve();
+              }),
+              // ... for a maximum of `options.captureVideoAsAttachmentTimeout`
+              new Promise(resolve => setTimeout(resolve, options.captureVideoAsAttachmentTimeout))
+            ]);
+
+          }
+          catch(err) {
+            // "I know what I'm doing"
+          } 
+
+          if (!metadata) {
+            return;
+          }
+
+          this.addToLogs(`Embedded video detected for: ${this.url}`);
+
+          this.addGeneratedExchange(
+            "file:///video-extracted-metadata.json",
+            {"Content-Type": "application/json"},
+            Buffer.from(JSON.stringify(metadata, null, 2)),
+            `Metadata of the video extracted from: ${this.url}`
+          );
+
+          this.addGeneratedExchange(
+            "file:///video-extracted.mp4",
+            {"Content-Type": "video/mp4"},
+            fs.readFileSync(videoFilename),
+            `Video extracted from: ${this.url}`
+          );
+
+          fs.unlinkSync(videoFilename);
+          this.addToLogs(`Embedded video captured as attachment for: ${this.url}`);
         }
       });
     }
@@ -227,7 +283,7 @@ export class Mischief {
         this.state = Mischief.states.COMPLETE;
         await this.teardown();
       }
-    })
+    });
 
     //
     // [2] - Initialize capture
@@ -275,7 +331,7 @@ export class Mischief {
    *
    * @returns {Promise<boolean>}
    */
-  async setup(){
+  async setup() {
     this.startedAt = new Date();
     this.state = Mischief.states.SETUP;
     const options = this.options;
@@ -310,11 +366,54 @@ export class Mischief {
    * Tears down Playwright and intercepter resources.
    * @returns {Promise<boolean>}
    */
-  async teardown(){
+  async teardown() {
     this.addToLogs("Closing browser and intercepter.");
     await this.intercepter.teardown();
     await this.#browser.close();
     this.exchanges = this.intercepter.exchanges.concat(this.exchanges);
+  }
+
+  /**
+   * Generates a MischiefExchange for generated content and adds it to `exchanges` and `generatedExchanges` unless time limit was reached.
+   * @param {string} url 
+   * @param {object} httpHeaders 
+   * @param {Buffer} body 
+   * @param {string} description 
+   * @returns 
+   */
+  async addGeneratedExchange(url, httpHeaders, body, description = "") {
+    let canBeAdded = true;
+    let remainingSpace = this.options.maxSize - this.intercepter.byteLength;
+
+    if(this.state != Mischief.states.CAPTURE) {
+      canBeAdded = false;
+    }
+
+    if (body.byteLength >= remainingSpace) {
+      canBeAdded = false;
+    }
+
+    if (canBeAdded === false) {
+      this.state = Mischief.states.PARTIAL;
+      this.addToLogs(`Generated exchange ${url} could not be saved (size limit reached).`);
+      return;
+    }
+
+    const exchange = new MischiefExchange({
+      description: description,
+      response: {
+        url: url,
+        headers: httpHeaders,
+        versionMajor: 1,
+        versionMinor: 1,
+        statusCode: 200,
+        statusMessage: "OK",
+        body: body,
+      },
+    });
+
+    this.exchanges.push(exchange);
+    this.generatedExchanges.push(exchange);
   }
 
   /**
@@ -351,37 +450,6 @@ export class Mischief {
     catch(err) {
       throw new Error(`Invalid url provided.\n${err}`);
     }
-  }
-
-  /**
-   * Filters an options object by comparing it with `MischiefOptions`.
-   * Will use defaults for missing properties.
-   * 
-   * @param {object} newOptions 
-   */
-  filterOptions(newOptions) {
-    const options = {};
-
-    for (const key of Object.keys(MischiefOptions)) {
-      options[key] = key in newOptions ? newOptions[key] : MischiefOptions[key];
-
-      // Apply basic type casting based on type of defaults (MischiefOptions)
-      switch (typeof MischiefOptions[key]) {
-        case "boolean":
-          options[key] = Boolean(options[key]);
-        break;
-
-        case "number":
-          options[key] = Number(options[key]);
-        break;
-
-        case "string":
-          options[key] = String(options[key]);
-        break;
-      }
-    }
-
-    return options;
   }
 
   /**

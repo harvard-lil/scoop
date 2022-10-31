@@ -25,7 +25,8 @@
     "uuid": "^9.0.0",
     "warcio": "^1.6.1",
     "wbn": "^0.0.8",
-    "whatwg-url": "^11.0.0"
+    "whatwg-url": "^11.0.0",
+    "youtube-dl-exec": "^2.1.6"
   },
   "devDependencies": {
     "@types/node": "^18.11.0",
