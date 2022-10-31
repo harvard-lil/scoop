@@ -395,6 +395,7 @@ export class Mischief {
     }
 
     if (canBeAdded === false) {
+      this.state = Mischief.states.PARTIAL;
       this.addToLogs(`Generated exchange ${url} could not be saved (size limit reached).`);
       return;
     }
