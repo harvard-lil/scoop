@@ -17,9 +17,6 @@ export class MischiefExchange {
   /** @type {?string} */
   id;
 
-  /** @type {?string} */
-  description;
-
   /** @type {object} */
   _request;
 
@@ -43,20 +40,13 @@ export class MischiefExchange {
   }
 
   /**
-   * @param {{
-   *  date: Date, 
-   *  id: ?string, 
-   *  description: ?string, 
-   *  request: ?object, 
-   *  response: ?object}} props
+   * @param {object} props - Object containing any of the properties of `this`.
    */
   constructor(props = {}) {
-    const allowed = ["date", "id", "description", "request", "response"];
-
-    for(const prop of Object.keys(props).filter(k => allowed.includes(k))) {
-      this[prop] = props[prop];
+    for (const [key, value] of Object.entries(props)) {
+      if (key in this) {
+        this[key] = value;
+      }
     }
-
-    return this;
   }
 }

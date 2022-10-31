@@ -23,7 +23,7 @@ const WARC_VERSION = "WARC/1.1";
  * Software version to be 
  * @constant
  */
-const SOFTWARE = "Mischief @ Harvard Library Innovation Lab - (DEV)";
+const SOFTWARE = `Mischief @ Harvard Library Innovation Lab`;
 
 /**
  * Mischief capture to WARC converter.

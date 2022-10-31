@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Extracted video for {{url}}</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <style>
+    * {
+      padding: 0px;
+      margin: 0px;
+      box-sizing: border-box;
+      font-family: monospace;
+    }
+
+    html {
+      font-size: 18px;
+    }
+
+    video {
+      max-width: 100%;
+    }
+
+    main {
+      width: 100%;
+      padding: 1rem;
+      margin: auto;
+      max-width: 90ch;
+    }
+
+    section {
+      margin-bottom: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid gray;
+    }
+
+    h1, h2 {
+      margin-bottom: 0.5rem;
+    }
+
+    p {
+      font-size: 1rem;
+      line-height: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    p span {
+      display: inline-block;
+      background-color: antiquewhite;
+      padding: 0.2rem;
+      padding-left: 0.35rem;
+      padding-right: 0.35rem;
+      border-radius: 0.25rem;
+    }
+
+    ul {
+      list-style-position: inside;
+    }
+
+    table {
+      table-layout: fixed;
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    table * {
+      word-break: break-word;
+    }
+
+    table tr {
+      border-bottom: 1px solid lightgray;
+      display: block;
+      padding: 0.5rem;
+      padding-left: 0rem;
+    }
+
+    table tr:last-of-type {
+      border-bottom: 0px;
+    }
+
+    table tr td:first-of-type {
+      width: 20ch;
+    }
+
+    table tr td:last-of-type {
+    }
+
+    video {
+      display: block;
+      max-width: 100%;
+      max-height: 70vh;
+      margin: auto;
+    }
+    </style>
+
+  </head>
+
+  <body>
+    
+    <main>
+
+      <header>
+        <h1>Extracted Video</h1>
+        <p>The following video was extracted by Mischief using yt-dlp during the capture of {{ url }}.</p>
+        <p>This summary was generated on {{ now }}.</p>
+      </header>
+
+      <section>
+        <h2>Video</h2>
+
+        {% if videoSaved %}
+        <video src="video-extracted.mp4" controls>
+          {% if subtitlesSaved and subtitlesFormat == 'vtt' %}
+            {% for locale in subtitlesAvailableLocales %}
+            <track 
+              kind="captions" 
+              srclang="{{ locale }}" 
+              src="video-extracted-subtitles-{{ locale }}.vtt"
+              {% if loop.first %} default {% endif %}>
+            {% endfor %}
+          {% endif %}
+        </video>
+        {% endif %}
+      </section>
+        
+      <section>
+        <h2>Metadata summary</h2>
+
+        <p>At the time of capture.</p>
+
+        <table>
+          {% if metadataSaved and metadataParsed.title %}
+          <tr>
+            <td>Video title:</td>
+            <td>{{ metadataParsed.title }}</td>
+          </tr>
+          {% endif %}
+
+          {% if metadataSaved and metadataParsed.description %}
+          <tr>
+            <td>Video description:</td>
+            <td>{{ metadataParsed.description }}</td>
+          </tr>
+          {% endif %}
+
+          {% if metadataSaved and metadataParsed.uploader %}
+          <tr>
+            <td>Video uploader:</td>
+            <td>{{ metadataParsed.uploader }}</td>
+          </tr>
+          {% endif %}
+
+          {% if metadataSaved and metadataParsed.uploader_url %}
+          <tr>
+            <td>Uploader url:</td>
+            <td>{{ metadataParsed.uploader_url }}</td>
+          </tr>
+          {% endif %}
+
+          {% if metadataSaved and metadataParsed.comment_count %}
+          <tr>
+            <td>Comments:</td>
+            <td>{{ metadataParsed.comment_count }}</td>
+          </tr>
+          {% endif %}
+
+          {% if metadataSaved and metadataParsed.like_count %}
+          <tr>
+            <td>Likes:</td>
+            <td>{{ metadataParsed.like_count }}</td>
+          </tr>
+          {% endif %}
+
+          {% if metadataSaved and metadataParsed.repost_count %}
+          <tr>
+            <td>Reposts:</td>
+            <td>{{ metadataParsed.repost_count }}</td>
+          </tr>
+          {% endif %}
+
+          {% if metadataSaved and metadataParsed.timestamp %}
+          <tr>
+            <td>Publication time:</td>
+            <td class="publication-timestamp"></td>
+            <script>
+            const publication = new Date({{ metadataParsed.timestamp }} * 1000);
+            document.querySelector(".publication-timestamp").innerText = publication.toISOString();
+            </script>
+          </tr>
+          {% endif %}
+        </table>
+
+      </section>
+
+      <section>
+        <h2>Individual assets</h2>
+
+        <ul>
+        {% if videoSaved %}
+        <li>
+          <a href="video-extracted.mp4">Video file</a>
+        </li>
+        {% endif %}
+
+        {% if metadataSaved %}
+        <li>
+          <a href="video-extracted-metadata.json">Video metadata</a>
+        </li>
+        {% endif %}
+
+        {% if subtitlesSaved %}
+          {% for locale in subtitlesAvailableLocales %}
+          <li>
+          <a href="video-extracted-subtitles-{{ locale }}.{{ subtitlesFormat }}">Video subtitles ({{locale}})</a>
+          </li>
+          {% endfor %}
+        {% endif %}
+        </ul>
+      </section>
+    </main>
+
+  </body>
+
+</html>
+
