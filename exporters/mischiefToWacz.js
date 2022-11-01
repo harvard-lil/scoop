@@ -79,8 +79,7 @@ const generatePages = (capture) => {
     id: capture.id,
     url: capture.url,
     ts: capture.startedAt.toISOString(),
-    title: `Web archive of ${capture.url}`,
-    size: capture.totalSize
+    title: `Web archive of ${capture.url}`
   });
 
   // Other generated elements
