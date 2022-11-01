@@ -1,6 +1,6 @@
 import * as exporters from "../exporters/index.js";
 
-export async function raw(capture) {
+export async function mischiefToHDWacz(capture) {
   const files = capture.exchanges.map((exchange) => {
     return ['request', 'response'].map((type) => {
       return {
