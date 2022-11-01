@@ -41,18 +41,18 @@ const getExchanges = async (zip, entries) => {
   );
 
   const exchanges =
-    // sort based on id to order responses next to their requests
-  props.sort(({id}, {id: id2}) => id.localeCompare(id2))
-  // combine requests and responses
-    .reduce((accumulator, curr) => {
-      const prev = accumulator[accumulator.length - 1];
-      if(prev && prev.id == curr.id){
-        Object.assign(prev, curr);
-      } else {
-        accumulator.push(new MischiefProxyExchange(curr));
-      }
-      return accumulator;
-    }, [])
+        // sort based on id to order responses next to their requests
+        props.sort(({id}, {id: id2}) => id.localeCompare(id2))
+        // combine requests and responses
+        .reduce((accumulator, curr) => {
+          const prev = accumulator[accumulator.length - 1];
+          if(prev && prev.id == curr.id){
+            Object.assign(prev, curr);
+          } else {
+            accumulator.push(new MischiefProxyExchange(curr));
+          }
+          return accumulator;
+        }, [])
 
   return exchanges;
 }
