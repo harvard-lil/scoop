@@ -15,14 +15,6 @@ import Archiver from "archiver";
 
 import { Mischief } from "../Mischief.js";
 
-const FILES = {
-  pages: {name: 'pages.jsonl', path: 'pages/pages.jsonl'},
-  warc: {name: 'archive.warc', path: 'archive/archive.warc'},
-  indexCDX: {name: 'index.cdx', path: 'indexes/index.cdx'},
-  datapackage: {path: 'datapackage.json'},
-  datapackageDigest: {path: 'datapackage-digest.json'}
-};
-
 /**
  * Mischief capture to WARC converter.
  *
@@ -41,7 +33,7 @@ export async function mischiefToWacz(capture, files = []) {
 
   const warcFile = {
     path: 'archive/data.warc',
-    data: Buffer.from(await exporters.warc(capture))
+    data: Buffer.from(await capture.toWarc())
   };
   files.push(warcFile);
 

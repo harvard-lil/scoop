@@ -10,8 +10,6 @@ import fs from "fs";
 import { chromium } from "playwright";
 import youtubedl from "youtube-dl-exec";
 
-import { v4 as uuidv4 } from "uuid";
-
 import { MischiefExchange } from "./exchanges/MischiefExchange.js";
 import { MischiefLog } from "./MischiefLog.js";
 import { MischiefOptions } from "./MischiefOptions.js";
@@ -470,5 +468,13 @@ export class Mischief {
    */
   async toWacz() {
     return await exporters.mischiefToWacz(this);
+  }
+
+  /**
+   * (Shortcut) Export this Mischief capture to HD WACZ.
+   * @returns {Promise<ArrayBuffer>}
+   */
+  async toHDWacz() {
+    return await exporters.mischiefToHDWacz(this);
   }
 }

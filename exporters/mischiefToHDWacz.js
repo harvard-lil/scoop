@@ -1,14 +1,18 @@
 import * as exporters from "../exporters/index.js";
 
 export async function mischiefToHDWacz(capture) {
-  const files = capture.exchanges.map((exchange) => {
-    return ['request', 'response'].map((type) => {
-      return {
-        path: `raw/${type}_${exchange.date.toISOString()}_${exchange.id}`,
-        data: exchange[`${type}Raw`]
+  const files = capture.exchanges.reduce((accumulator, exchange) => {
+    ['request', 'response'].forEach((type) => {
+      const data = exchange[`${type}Raw`];
+      if(data){
+        accumulator.push({
+          path: `raw/${type}_${exchange.date.toISOString()}_${exchange.id}`,
+          data: data
+        })
       }
     })
-  }).flat().filter(ex => ex.data);
+    return accumulator;
+  }, [])
 
-  return await exporters.wacz(capture, files);
+  return await exporters.mischiefToWacz(capture, files);
 }

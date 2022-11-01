@@ -56,7 +56,7 @@ export class MischiefExchange {
    *  response: ?object}} props
    */
   constructor(props = {}) {
-    const allowed = ["id", "date", "description", "request", "response"];
+    const allowed = ["id", "date", "connectionId", "description", "request", "response"];
 
     for(const prop of Object.keys(props).filter(k => allowed.includes(k))) {
       this[prop] = props[prop];

@@ -40,14 +40,18 @@ for (const entry of toCapture) {
   const myCapture = new Mischief(url);
   await myCapture.capture();
 
-  for (const format of ["warc", "wacz"]) {
+  for (const format of ["warc", "wacz", "HDwacz"]) {
     let data = null;
     const filename = `${path}${name}.${format}`;
 
     switch(format) {
       case "wacz":
         data = await myCapture.toWacz();
-      break;
+        break;
+
+      case "HDwacz":
+        data = await myCapture.toHDWacz();
+        break;
   
       case "warc":
       default:

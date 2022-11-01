@@ -43,11 +43,12 @@ export class MischiefProxy extends MischiefIntercepter {
    * @param {string} id
    * @param {string} type
    */
-  getOrInitExchange(id, type) {
+  getOrInitExchange(connectionId, type) {
     // TODO: For loop-ify for clarity and maintainability?
-    return this.exchanges.findLast((ex) => {
-      return ex.connectionId == id && (type == "response" || !ex.responseRaw);
-    }) || this.exchanges[this.exchanges.push(new MischiefProxyExchange({connectionId: id})) - 1];
+    return (
+      this.exchanges.findLast(ex => ex.connectionId == connectionId && (type == "response" || !ex.responseRaw))
+        || this.exchanges[this.exchanges.push(new MischiefProxyExchange({connectionId})) - 1]
+    );
   }
 
   /**
