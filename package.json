@@ -25,11 +25,11 @@
     "nunjucks": "^3.2.3",
     "transparent-proxy": "^1.8.14",
     "uuid": "^9.0.0",
-    "warcio": "^1.6.1"
+    "warcio": "^1.6.1",
+    "playwright": "^1.27.1"
   },
   "devDependencies": {
     "@types/node": "^18.11.0",
-    "playwright": "^1.27.1",
     "prettier": "^2.7.1"
   }
 }
