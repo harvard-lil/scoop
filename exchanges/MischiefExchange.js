@@ -47,19 +47,12 @@ export class MischiefExchange {
     return this._response;
   }
 
-  /**
-   * @param {{
-   *  date: Date, 
-   *  id: ?string, 
-   *  description: ?string, 
-   *  request: ?object, 
-   *  response: ?object}} props
-   */
   constructor(props = {}) {
-    const allowed = ["id", "date", "connectionId", "description", "request", "response"];
-
-    for(const prop of Object.keys(props).filter(k => allowed.includes(k))) {
-      this[prop] = props[prop];
+    // Only accept props that reflect a defined property of `this`
+    for (const [key, value] of Object.entries(props)) {
+      if (key in this) {
+        this[key] = value;
+      }
     }
 
     return this;
