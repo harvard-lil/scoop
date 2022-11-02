@@ -411,7 +411,7 @@ export class Mischief {
       const url = "file:///video-extracted.mp4";
       const httpHeaders = { "Content-Type": "video/mp4" };
       const body = fs.readFileSync(videoFilename);
-      const isEntryPoint = false;
+      const isEntryPoint = false; // TODO: Reconsider whether this should be an entry point.
 
       this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint);
       videoSaved = true;
