@@ -85,16 +85,21 @@ const generatePages = (capture) => {
     id: uuidv4(),
     url: capture.url,
     ts: capture.startedAt.toISOString(),
-    title: `Web archive of ${capture.url}`
+    title: `High Fidelity Web Capture of ${capture.url}`
   });
 
-  // Other generated elements
+  // Generated exchanges (entry points only)
   for (let exchange of capture.generatedExchanges) {
+
+    if (!exchange?.isEntryPoint) {
+      continue;
+    }
+
     pages.push({
       id: uuidv4(),
       url: exchange.response.url,
       ts: exchange.date.toISOString(),
-      title: exchange.description
+      title: exchange?.description
     });
   }
 

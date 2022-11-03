@@ -58,4 +58,17 @@ export class MischiefProxyExchange extends MischiefExchange {
   set response(val) {
     this._response = val;
   }
+
+  /**
+   * @param {object} props - Object containing any of the properties of `this`.
+   */
+  constructor(props = {}) {
+    super(props);
+
+    for (const [key, value] of Object.entries(props)) {
+      if (key in this) {
+        this[key] = value;
+      }
+    }
+  }
 }

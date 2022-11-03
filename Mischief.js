@@ -6,32 +6,41 @@
  */
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
+import { spawnSync } from "child_process";
 
 import { chromium } from "playwright";
-import youtubedl from "youtube-dl-exec";
+import nunjucks from "nunjucks";
 
-import { MischiefExchange } from "./exchanges/MischiefExchange.js";
+import { MischiefExchange, MischiefGeneratedExchange } from "./exchanges/index.js";
 import { MischiefLog } from "./MischiefLog.js";
 import { MischiefOptions } from "./MischiefOptions.js";
 
 import * as intercepters from "./intercepters/index.js";
 import * as exporters from "./exporters/index.js";
 
-const TMP_DIR = `./tmp/`;
+/**
+ * Path to "tmp" folder. 
+ * @constant
+ */
+export const TMP_DIR = `./tmp/`;
 
 /**
- * Experimental single-page web archiving solution using Playwright.
- * - Uses a proxy to allow for comprehensive and raw network interception.
+ * Path to "assets" folder. 
+ * @constant
+ */
+export const ASSETS_DIR = `./assets/`;
+
+/**
+ * Experimental single-page web archiving library using Playwright.
+ * Uses a proxy to allow for comprehensive and raw network interception.
  * 
  * Usage:
  * ```javascript
  * import { Mischief } from "mischief";
  * 
- * const myCapture = new Mischief(url, options);
+ * const myCapture = new Mischief("https://example.com");
  * await myCapture.capture();
- * if (myCapture.success === true) {
- *   const warc = await myCapture.toWarc(); // Returns an ArrayBuffer
- * }
+ * const myArchive = await myCapture.toWarc();
  * ```
  */
 export class Mischief {
@@ -79,7 +88,7 @@ export class Mischief {
    * Keeps track of exchanges that were generated during capture.
    * Example: `file:///screenshot.png` for the full-page screenshot.
    * 
-   * @type {MischiefExchange[]}
+   * @type {MischiefGeneratedExchange[]}
    */
   generatedExchanges = [];
 
@@ -182,12 +191,13 @@ export class Mischief {
       steps.push({
         name: "screenshot",
         main: async (page) => {
-          this.addGeneratedExchange(
-            "file:///screenshot.png",
-            { "Content-Type": "image/png" },
-            await page.screenshot({ fullPage: true }),
-            `Full-page screenshot of ${this.url}`
-          );
+          const url = "file:///screenshot.png";
+          const httpHeaders = { "Content-Type": "image/png" };
+          const body = await page.screenshot({ fullPage: true });
+          const isEntryPoint = true;
+          const description = `Capture Time Screenshot of ${this.url}`;
+
+          this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description);
         }
       });
     }
@@ -197,15 +207,16 @@ export class Mischief {
       steps.push({
         name: "DOM snapshot",
         main: async (page) => {
-          this.addGeneratedExchange(
-            "file:///dom-snapshot.html",
-            {
-              "Content-Type": "text/html",
-              "Content-Disposition": "Attachment",
-            },
-            Buffer.from(await page.content()),
-            `DOM snapshot of: ${this.url}`
-          );
+          const url = "file:///dom-snapshot.html";
+          const httpHeaders = {
+            "Content-Type": "text/html",
+            "Content-Disposition": "Attachment",
+          };
+          const body = Buffer.from(await page.content());
+          const isEntryPoint = true;
+          const description = `Capture Time DOM Snapshot of ${this.url}`;
+
+          this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description);
         }
       });
     }
@@ -215,63 +226,7 @@ export class Mischief {
       steps.push({
         name: "out-of-browser capture of video as attachment",
         main: async () => {
-          const videoFilename = `${TMP_DIR}${uuidv4()}.mp4`;
-          let metadata = null;
-
-          try {
-            await Promise.race([
-              // Try to pull video and associated meta data ...
-              new Promise(async(resolve, reject) => {
-                try {
-                  metadata = await youtubedl(this.url, {
-                    dumpSingleJson: true,
-                    noWarnings: true,
-                    preferFreeFormats: true,
-                  });
-
-                  await youtubedl(this.url, {
-                    noWarnings: true,
-                    preferFreeFormats: true,
-                    output: videoFilename,
-                  });
-                }
-                catch(err) {
-                  reject(err);
-                }
-
-                return resolve();
-              }),
-              // ... for a maximum of `options.captureVideoAsAttachmentTimeout`
-              new Promise(resolve => setTimeout(resolve, options.captureVideoAsAttachmentTimeout))
-            ]);
-
-          }
-          catch(err) {
-            // "I know what I'm doing"
-          } 
-
-          if (!metadata) {
-            return;
-          }
-
-          this.addToLogs(`Embedded video detected for: ${this.url}`);
-
-          this.addGeneratedExchange(
-            "file:///video-extracted-metadata.json",
-            {"Content-Type": "application/json"},
-            Buffer.from(JSON.stringify(metadata, null, 2)),
-            `Metadata of the video extracted from: ${this.url}`
-          );
-
-          this.addGeneratedExchange(
-            "file:///video-extracted.mp4",
-            {"Content-Type": "video/mp4"},
-            fs.readFileSync(videoFilename),
-            `Video extracted from: ${this.url}`
-          );
-
-          fs.unlinkSync(videoFilename);
-          this.addToLogs(`Embedded video captured as attachment for: ${this.url}`);
+          await this.captureVideoAsAttachment();
         }
       });
     }
@@ -374,14 +329,208 @@ export class Mischief {
   }
 
   /**
-   * Generates a MischiefExchange for generated content and adds it to `exchanges` and `generatedExchanges` unless time limit was reached.
+   * Runs `yt-dlp` on the current url to try and capture:
+   * - The "main" video of the current page (`file:///video-extracted.mp4`)
+   * - Associated subtitles (`file:///video-extracted-LOCALE.EXT`)
+   * - Associated meta data (`file:///video-extracted-metadata.json`)
+   * 
+   * These elements are added as "attachments" to the archive, for context / playback fallback purposes. 
+   * A summary file and entry point, `file:///video-extracted-summary.html`, will be generated in the process.
+   */
+  async captureVideoAsAttachment() {
+    const id = `${uuidv4()}`;
+    const videoFilename = `${TMP_DIR}${id}.mp4`;
+    const dlpExecutable = `./node_modules/yt-dlp/yt-dlp`;
+
+    let metadataRaw = null;
+    let metadataParsed = null;
+
+    const subtitlesAvailableLocales = [];
+    let subtitlesFormat = 'vtt';
+    let videoSaved = false;
+    let metadataSaved = false;
+    let subtitlesSaved = false;
+
+    //
+    // yt-dlp health check
+    //
+    try {
+      const result = spawnSync(dlpExecutable, ["--version"], {encoding: "utf8"});
+
+      if (result.status !== 0) {
+        throw new Error(result.stderr);
+      }
+
+      const version = result.stdout.trim();
+
+      if (!version.match(/^[0-9]{4}\.[0-9]{2}\.[0-9]{2}$/)) {
+        throw new Error(`Unknown version: ${version}`);
+      }
+    }
+    catch(err) {
+      throw new Error(`"yt-dlp" executable is not available or cannot be executed. ${err}`);
+    }
+
+    //
+    // Try and pull video and video meta data from url
+    //
+    try {
+      const dlpOptions = [
+        "--dump-json", // Will return JSON meta data via stdout
+        "--no-simulate", // Forces download despites `--dump-json`
+        "--no-warnings", // Prevents pollution of stdout
+        "--no-progress", // (Same as above)
+        "--write-subs", // Try to pull subs
+        "--sub-langs", "all", 
+        "--format", "mp4", // Forces .mp4 format
+        "--output", videoFilename,
+        this.url
+      ];
+
+      const spawnOptions = {
+        timeout: this.options.captureVideoAsAttachmentTimeout,
+        encoding: "utf8",
+      };
+
+      const result = spawnSync(dlpExecutable, dlpOptions, spawnOptions);
+
+      if (result.status !== 0) {
+        throw new Error(result.stderr);
+      }
+
+      metadataRaw = result.stdout;
+    }
+    catch(err) {
+      throw new Error(`No video found in ${this.url}.`); 
+    }
+
+    //
+    // Try to add video to exchanges
+    //
+    try {
+      const url = "file:///video-extracted.mp4";
+      const httpHeaders = { "Content-Type": "video/mp4" };
+      const body = fs.readFileSync(videoFilename);
+      const isEntryPoint = false; // TODO: Reconsider whether this should be an entry point.
+
+      this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint);
+      videoSaved = true;
+    }
+    catch(err) {
+      throw new Error(`Error while creating exchange for file:///video-extracted.mp4. ${err}`);
+    }
+    // Clean up .mp4 file for this capture.
+    finally {
+      if (fs.existsSync(videoFilename)) {
+        fs.unlinkSync(videoFilename);
+      }
+    }
+
+    //
+    // Try to add metadata to exchanges
+    //
+    try {
+      metadataParsed = JSON.parse(metadataRaw); // May throw
+
+      const url = "file:///video-extracted-metadata.json";
+      const httpHeaders = { "Content-Type": "application/json" };
+      const body = Buffer.from(JSON.stringify(metadataParsed, null, 2));
+      const isEntryPoint = false;
+
+      this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint);
+      metadataSaved = true;
+    }
+    catch(err) {
+      throw new Error(`Error while creating exchange for file:///video-extracted-medatadata.json. ${err}`);
+    }
+
+    //
+    // Pull subtitles, if any.
+    //
+    try {
+      for (let file of fs.readdirSync(TMP_DIR)) {
+
+        if (!file.startsWith(id)) {
+          continue;
+        }
+        
+        if (!file.endsWith(".vtt") && !file.endsWith(".srt")) {
+          continue;
+        }
+  
+        let locale = null;
+        subtitlesFormat = "vtt";
+        [, locale, subtitlesFormat] = file.split(".");
+
+        // Example of valid locales: "en", "en-US"
+        if (!locale.match(/^[a-z]{2}$/) && !locale.match(/[a-z]{2}\-[A-Z]{2}/)) {
+          continue;
+        }
+
+        const url = `file:///video-extracted-subtitles-${locale}.${subtitlesFormat}`;
+        const httpHeaders = { 
+          "Content-Type": subtitlesFormat === "vtt" ? "text/vtt" : "text/plain"
+        };
+        const body = fs.readFileSync(`${TMP_DIR}${file}`);
+        const isEntryPoint = false;
+
+        this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint);
+        subtitlesAvailableLocales.push(locale); // Keep track of available locales
+        subtitlesSaved = true;
+      }
+    }
+    catch(err) {
+      // Ignore subtitles-related errors.
+      //console.log(err);
+    }
+
+    //
+    // Clean up files generated for this capture.
+    //
+    for (let file of fs.readdirSync(TMP_DIR)) {
+      if (file.startsWith(id)) {
+        fs.unlinkSync(`${TMP_DIR}${file}`);
+      }
+    }
+
+    //
+    // Generate summary page
+    //
+    try {
+      const html = nunjucks.render(`${ASSETS_DIR}video-extracted-summary.njk`, {
+        url: this.url,
+        now: new Date().toISOString(),
+        videoSaved,
+        metadataSaved,
+        subtitlesSaved,
+        subtitlesAvailableLocales,
+        subtitlesFormat,
+        metadataParsed,
+      });
+
+      const url = `file:///video-extracted-summary.html`;
+      const httpHeaders = { "Content-Type": "text/html" };
+      const body = Buffer.from(html);
+      const isEntryPoint = true;
+      const description = `Extracted Video from: ${this.url}`;
+
+      this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description);
+    }
+    catch(err) {
+      throw new Error(`Error while creating exchange for file:///video-extracted-summary.html. ${err}`);
+    }
+  }
+
+  /**
+   * Generates a MischiefGeneratedExchange for generated content and adds it to `exchanges` and `generatedExchanges` unless time limit was reached.
    * @param {string} url 
    * @param {object} httpHeaders 
    * @param {Buffer} body 
+   * @param {boolean} isEntryPoint
    * @param {string} description 
    * @returns 
    */
-  async addGeneratedExchange(url, httpHeaders, body, description = "") {
+  async addGeneratedExchange(url, httpHeaders, body, isEntryPoint = false, description = "") {
     let canBeAdded = true;
     let remainingSpace = this.options.maxSize - this.intercepter.byteLength;
 
@@ -399,8 +548,9 @@ export class Mischief {
       return;
     }
 
-    const exchange = new MischiefExchange({
+    const exchange = new MischiefGeneratedExchange({
       description: description,
+      isEntryPoint: Boolean(isEntryPoint),
       response: {
         url: url,
         headers: httpHeaders,
