@@ -11,19 +11,8 @@ global.crypto = crypto;
 
 import { WARCRecord, WARCSerializer } from "warcio";
 
-import { Mischief } from "../Mischief.js";
-
-/**
- * WARC version to be used. 
- * @constant
- */
-const WARC_VERSION = "WARC/1.1";
-
-/**
- * Software version to be 
- * @constant
- */
-const SOFTWARE = "Mischief @ Harvard Library Innovation Lab - (DEV)";
+import CONSTANTS from "../constants.js";
+import { Mischief } from "../Mischief.js";;
 
 /**
  * Mischief capture to WARC converter.
@@ -48,8 +37,8 @@ export async function mischiefToWarc(capture) {
   // Prepare WARC info section
   //
   const info = WARCRecord.createWARCInfo(
-    { filename: "archive.warc", warcVersion: WARC_VERSION },
-    { software: SOFTWARE }
+    { filename: "archive.warc", warcVersion: `WARC/${CONSTANTS.WARC_VERSION}` },
+    { software: CONSTANTS.SOFTWARE }
   );
   serializedInfo = await WARCSerializer.serialize(info);
   
@@ -79,7 +68,7 @@ export async function mischiefToWarc(capture) {
             url: exchange[type].url,
             date: exchange.date.toISOString(),
             type: type,
-            warcVersion: WARC_VERSION,
+            warcVersion: `WARC/${CONSTANTS.WARC_VERSION}`,
             statusline: prepareExchangeStatusLine(exchange, type),
             httpHeaders: exchange[type].headers,
             keepHeadersCase: false,

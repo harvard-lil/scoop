@@ -475,6 +475,6 @@ export class Mischief {
    * @returns {Promise<ArrayBuffer>}
    */
   async toHDWacz() {
-    return await exporters.mischiefToHDWacz(this);
+    return await exporters.mischiefToWacz(this, true);
   }
 }
