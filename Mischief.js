@@ -44,6 +44,8 @@ export const ASSETS_DIR = `./assets/`;
  * ```
  */
 export class Mischief {
+  id = uuidv4();
+
   /**
    * Enum-like states that the capture occupies.
    * @readonly
@@ -338,7 +340,7 @@ export class Mischief {
    * A summary file and entry point, `file:///video-extracted-summary.html`, will be generated in the process.
    */
   async captureVideoAsAttachment() {
-    const id = `${uuidv4()}`;
+    const id = this.id;
     const videoFilename = `${TMP_DIR}${id}.mp4`;
     const dlpExecutable = `./node_modules/yt-dlp/yt-dlp`;
 
@@ -612,9 +614,10 @@ export class Mischief {
 
   /**
    * (Shortcut) Export this Mischief capture to WACZ.
+   * @param {boolean} [includeRaw=true] - Include a copy of RAW Http exchanges to the wacz (under `/raw`)?
    * @returns {Promise<ArrayBuffer>}
    */
-  async toWacz() {
-    return await exporters.mischiefToWacz(this);
+  async toWacz(includeRaw=false) {
+    return await exporters.mischiefToWacz(this, includeRaw);
   }
 }

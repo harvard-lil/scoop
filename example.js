@@ -47,7 +47,7 @@ for (const entry of toCapture) {
     switch(format) {
       case "wacz":
         data = await myCapture.toWacz();
-      break;
+        break;
   
       case "warc":
       default:

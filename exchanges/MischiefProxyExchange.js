@@ -14,19 +14,27 @@ import { MischiefHTTPParser } from "../parsers/index.js";
 export class MischiefProxyExchange extends MischiefExchange {
 
   /** @type {?Buffer} */
-  requestRaw;
+  _requestRaw;
+
+  get requestRaw() {
+    return this._requestRaw;
+  }
 
   set requestRaw(val) {
     this._request = null;
-    this.requestRaw = val;
+    this._requestRaw = val;
   }
 
   /** @type {?Buffer} */
-  responseRaw;
+  _responseRaw;
+
+  get responseRaw() {
+    return this._responseRaw;
+  }
 
   set responseRaw(val) {
     this._response = null;
-    this.responseRaw = val;
+    this._responseRaw = val;
   }
 
   get request() {

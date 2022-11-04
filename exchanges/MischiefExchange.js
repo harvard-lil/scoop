@@ -10,12 +10,17 @@
  * Represents an HTTP exchange captured by Mischief, irrespective of how it was captured.
  * To be specialized by interception type (i.e: MischiefProxyExchange).
  */
+import { v4 as uuidv4 } from "uuid";
+
 export class MischiefExchange {
+  /** @type {?string} */
+  id = uuidv4();
+
   /** @type {Date} */
   date = new Date();
 
   /** @type {?string} */
-  id;
+  connectionId;
 
   /** @type {object} */
   _request;
@@ -39,10 +44,8 @@ export class MischiefExchange {
     return this._response;
   }
 
-  /**
-   * @param {object} props - Object containing any of the properties of `this`.
-   */
   constructor(props = {}) {
+    // Only accept props that reflect a defined property of `this`
     for (const [key, value] of Object.entries(props)) {
       if (key in this) {
         this[key] = value;
