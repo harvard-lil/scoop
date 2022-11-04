@@ -123,6 +123,8 @@ export class WACZ {
 
   /**
    * Use a Proxy to validate any entries added to the `files` property
+   *
+   * @param {any} obj - an object whose keys are the file paths and values are the file data
    */
   set files(obj) {
     // validate all properties on initial assignment
@@ -146,7 +148,8 @@ export class WACZ {
    * allows multiple indexes, this function can be used
    * to generate against any set of files
    *
-   * @param {Object} files - an object whose keys are the file paths and values are the file data
+   * @param {any} [files=this.files] - an object whose keys are the file paths and values are the file data
+   * @returns {Promise<Buffer>} - a buffer with the contents of the CDXJ Index
    */
   async generateIndexCDX(files = this.files) {
     const buffers = [];
@@ -169,6 +172,12 @@ export class WACZ {
     return Buffer.concat(buffers);
   }
 
+
+  /**
+   * Generates a JSON-Lines formatted list of pages
+   *
+   * @returns {Buffer} - a buffer with the contents of the pages files
+   */
   generatePages() {
     const jsonStr = [{
       format: "json-pages-1.0",
@@ -181,6 +190,11 @@ export class WACZ {
     return Buffer.from(jsonStr);
   }
 
+/**
+ * Generates a datapackage JSON based on all files in the WACZ
+ *
+ * @returns {string} - a string with the contents of the datapackage
+ */
   generateDatapackage() {
     return stringify({
       ...this.datapackage,
@@ -199,6 +213,11 @@ export class WACZ {
     })
   }
 
+  /**
+   * Generates a datapackage-digest based on the datapackage JSON
+   *
+   * @returns {string} - a string with the contents of the datapackage-digest
+   */
   generateDatapackageDigest() {
     if(!this.files["datapackage.json"]){
       throw "datapackage.json must be present to generate datapackage-digest.json"
@@ -210,6 +229,13 @@ export class WACZ {
     });
   }
 
+  /**
+   * Validates that the requirements for a WACZ are met and generates
+   * a datapackage, datapackage-digest, and (optionally) CDXJ index
+   *
+   * @param {boolean} [autoindex=true] - automatically create a CDXJ index
+   * @returns {Promise<Buffer>} - a buffer with the zipped contents of the WACZ
+   */
   async finalize(autoindex = true) {
     if(dirEmpty(this.files, "archive")){
       throw "at least one WARC must be present in the archive directory";
@@ -235,6 +261,11 @@ export class WACZ {
     return await zip.create(this.files);
   }
 
+  /**
+   * Assign properties on instance creation
+   *
+   * @returns {WACZ}
+   */
   constructor(props = {}) {
     // Only accept props that reflect a defined property of `this`
     for (const [key, value] of Object.entries(props)) {
@@ -249,17 +280,44 @@ export class WACZ {
 
 // Internal helpers
 
+/**
+ * Checks whether any files have been added to
+ * the specified directory
+ *
+ * @param {object} files - an object whose keys are the file paths and values are the file data
+ * @param {string} dir - the directory to check
+ * @returns {boolean} -
+ */
 const dirEmpty = (files, dir) => {
   const regex = new RegExp(`^${dir}\/.+`);
   return !Object.entries(files).find(([fpath]) => regex.test(fpath));
 }
 
+/**
+ * Hashes a buffer to conform to the WACZ spec
+ *
+ * @param {Buffer} buffer
+ * @returns {string} - a sha256 hash prefixed with "sha256:"
+ */
 const hash = (buffer) => 'sha256:' + createHash('sha256').update(buffer).digest('hex');
 
+/**
+ * Converts an object to a string using standarized spacing
+ *
+ * @param {any} obj - an JS object
+ * @returns {string} - a JSON string
+ */
 const stringify = (obj) => JSON.stringify(obj, null, 2);
 
 // Mischief helpers
 
+/**
+ * Format a MischiefExchange as needed for
+ * the pages JSON-Lines
+ *
+ * @param {MischiefExchange} exchange -
+ * @returns {object} -
+ */
 export function mischiefExchangeToPageLine(exchange) {
   return {
     id: exchange.id,
