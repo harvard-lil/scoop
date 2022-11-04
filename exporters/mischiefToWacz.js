@@ -10,15 +10,15 @@ import { Mischief } from "../Mischief.js";
 import { WACZ, mischiefExchangeToPageLine } from "../utils/WACZ.js";
 
 /**
- * Mischief capture to WARC converter.
+ * Mischief capture to WACZ converter.
  *
  * Note:
  * - Logs are added to capture object via `Mischief.addToLogs()`.
  *
  * @param {Mischief} capture
+ * @param {boolean} includeRaw - if true, includes the raw http exchanges in the WACZ
  * @returns {Promise<ArrayBuffer>}
  */
-
 export async function mischiefToWacz(capture, includeRaw = false) {
   const validStates = [Mischief.states.PARTIAL, Mischief.states.COMPLETE];
   if (!(capture instanceof Mischief) || !validStates.includes(capture.state)) {
@@ -40,6 +40,7 @@ export async function mischiefToWacz(capture, includeRaw = false) {
   }
 
   wacz.pages = [
+    // the first exchange is our entrypoint url for the entire crawl
     capture.exchanges[0],
     ...capture.generatedExchanges
   ].map(mischiefExchangeToPageLine)
