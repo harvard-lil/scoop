@@ -40,9 +40,11 @@ export async function mischiefToWacz(capture, includeRaw = false) {
   }
 
   // Filter entry points (exchanges added to `pages.jsonl`).
-  let entryPoints = [
-    capture.exchanges[0], // the first exchange is our entrypoint url for the entire crawl
-  ];
+  let entryPoints = []
+
+  if (capture.exchanges.length > 0) {
+    entryPoints.push(capture.exchanges[0]); // the first exchange is our entrypoint url for the entire crawl
+  }
 
   for (let exchange of capture.generatedExchanges) {
     if (exchange?.isEntryPoint && exchange.isEntryPoint === true) {

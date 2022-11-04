@@ -617,7 +617,7 @@ export class Mischief {
    * @param {boolean} [includeRaw=true] - Include a copy of RAW Http exchanges to the wacz (under `/raw`)?
    * @returns {Promise<ArrayBuffer>}
    */
-  async toWacz(includeRaw=false) {
+  async toWacz(includeRaw=true) {
     return await exporters.mischiefToWacz(this, includeRaw);
   }
 }
