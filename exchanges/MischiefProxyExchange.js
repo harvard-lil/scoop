@@ -67,14 +67,16 @@ export class MischiefProxyExchange extends MischiefExchange {
     this._response = val;
   }
 
-  constructor(props) {
+  /**
+   * @param {object} props - Object containing any of the properties of `this`.
+   */
+  constructor(props = {}) {
     super(props);
 
-    const allowed = ["requestRaw",
-                     "responseRaw"];
-    for(const prop of Object.keys(props).filter(k => allowed.includes(k))) {
-      this[prop] = props[prop];
+    for (const [key, value] of Object.entries(props)) {
+      if (key in this) {
+        this[key] = value;
+      }
     }
-    return this;
   }
 }

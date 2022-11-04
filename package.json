@@ -1,18 +1,19 @@
 {
   "name": "mischief",
   "version": "1.0.0",
-  "description": "Experimental single-page web archiving solution using Playwright.",
+  "description": "",
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "postinstall": "bash postinstall.sh",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/matteocargnelutti/mischief.git"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Harvard Library Innovation Lab",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/matteocargnelutti/mischief/issues"
   },
@@ -22,16 +23,14 @@
     "browsertrix-behaviors": "^0.3.4",
     "http-parser-js": "^0.5.8",
     "node-stream-zip": "^1.15.0",
+    "nunjucks": "^3.2.3",
     "transparent-proxy": "^1.8.14",
     "uuid": "^9.0.0",
     "warcio": "^1.6.1",
-    "wbn": "^0.0.8",
-    "whatwg-url": "^11.0.0",
-    "youtube-dl-exec": "^2.1.6"
+    "playwright": "^1.27.1"
   },
   "devDependencies": {
     "@types/node": "^18.11.0",
-    "playwright": "^1.26.0",
     "prettier": "^2.7.1"
   }
 }

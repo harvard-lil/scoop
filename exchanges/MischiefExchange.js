@@ -22,9 +22,6 @@ export class MischiefExchange {
   /** @type {?string} */
   connectionId;
 
-  /** @type {?string} */
-  description;
-
   /** @type {object} */
   _request;
 
@@ -54,7 +51,5 @@ export class MischiefExchange {
         this[key] = value;
       }
     }
-
-    return this;
   }
 }
