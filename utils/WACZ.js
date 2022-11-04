@@ -21,14 +21,30 @@ export class WACZ {
     [/^pages\//, [this.assertPages]]
   ]
 
-/**
- * Checks to see if a buffer contains WARC data
- * using simple sniff tests that are imperfect but
- * helpful nonetheless.
- *
- * @param {string} fpath
- * @param {Buffer} fdata
- */
+  /**
+   * Assign properties on instance creation
+   *
+   * @returns {WACZ}
+   */
+  constructor(props = {}) {
+    // Only accept props that reflect a defined property of `this`
+    for (const [key, value] of Object.entries(props)) {
+      if (key in this) {
+        this[key] = value;
+      }
+    }
+
+    return this;
+  }
+
+  /**
+   * Checks to see if a buffer contains WARC data
+   * using simple sniff tests that are imperfect but
+   * helpful nonetheless.
+   *
+   * @param {string} fpath
+   * @param {Buffer} fdata
+   */
   assertWarc(fpath, fdata) {
     buf = Buffer.from(fdata);
 
@@ -51,14 +67,14 @@ export class WACZ {
     throw `${fpath}: must be a valid WARC file`;
   }
 
-/**
- * Checks to see if a buffer contains CDXJ data
- * using simple sniff tests that are imperfect but
- * helpful nonetheless.
- *
- * @param {string} fpath
- * @param {Buffer} fdata
- */
+  /**
+   * Checks to see if a buffer contains CDXJ data
+   * using simple sniff tests that are imperfect but
+   * helpful nonetheless.
+   *
+   * @param {string} fpath
+   * @param {Buffer} fdata
+   */
   assertIndex(fpath, fdata) {
     // CDXJ's are newline delineated
     const lines = Buffer.from(fdata).toString().split('\n');
@@ -70,14 +86,14 @@ export class WACZ {
     }
   }
 
-/**
- * Checks to see if a buffer contains Pages data
- * in JSON-Lines format using simple sniff tests
- * that are imperfect but helpful nonetheless.
- *
- * @param {string} fpath
- * @param {Buffer} fdata
- */
+  /**
+   * Checks to see if a buffer contains Pages data
+   * in JSON-Lines format using simple sniff tests
+   * that are imperfect but helpful nonetheless.
+   *
+   * @param {string} fpath
+   * @param {Buffer} fdata
+   */
   assertPages(fpath, fdata) {
     // Parse the lines of JSON data
     const lines = Buffer.from(fdata).toString().split('\n').map(JSON.parse);
@@ -91,13 +107,13 @@ export class WACZ {
     }
   }
 
-/**
- * Given a file path, find validations that should apply
- * and run then against the data
- *
- * @param {string} fpath
- * @param {Buffer} fdata
- */
+  /**
+   * Given a file path, find validations that should apply
+   * and run then against the data
+   *
+   * @param {string} fpath
+   * @param {Buffer} fdata
+   */
   validateFile(fpath, fdata) {
     this.validations
         .filter(([regex]) => regex.test(fpath))
@@ -190,11 +206,11 @@ export class WACZ {
     return Buffer.from(jsonStr);
   }
 
-/**
- * Generates a datapackage JSON based on all files in the WACZ
- *
- * @returns {string} - a string with the contents of the datapackage
- */
+  /**
+   * Generates a datapackage JSON based on all files in the WACZ
+   *
+   * @returns {string} - a string with the contents of the datapackage
+   */
   generateDatapackage() {
     return stringify({
       ...this.datapackage,
@@ -261,21 +277,6 @@ export class WACZ {
     return await zip.create(this.files);
   }
 
-  /**
-   * Assign properties on instance creation
-   *
-   * @returns {WACZ}
-   */
-  constructor(props = {}) {
-    // Only accept props that reflect a defined property of `this`
-    for (const [key, value] of Object.entries(props)) {
-      if (key in this) {
-        this[key] = value;
-      }
-    }
-
-    return this;
-  }
 }
 
 // Internal helpers
@@ -316,13 +317,13 @@ const stringify = (obj) => JSON.stringify(obj, null, 2);
  * the pages JSON-Lines
  *
  * @param {MischiefExchange} exchange -
- * @returns {object} -
+ * @returns {object}
  */
 export function mischiefExchangeToPageLine(exchange) {
   return {
     id: exchange.id,
     url: exchange.response.url,
     ts: exchange.date.toISOString(),
-    title: exchange.description || `Web archive of ${exchange.response.url}`
+    title: exchange?.description || `High-Fidelity Web Capture of ${exchange.response.url}`
   }
 }

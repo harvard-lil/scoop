@@ -39,11 +39,18 @@ export async function mischiefToWacz(capture, includeRaw = false) {
     })
   }
 
-  wacz.pages = [
-    // the first exchange is our entrypoint url for the entire crawl
-    capture.exchanges[0],
-    ...capture.generatedExchanges
-  ].map(mischiefExchangeToPageLine)
+  // Filter entry points (exchanges added to `pages.jsonl`).
+  let entryPoints = [
+    capture.exchanges[0], // the first exchange is our entrypoint url for the entire crawl
+  ];
+
+  for (let exchange of capture.generatedExchanges) {
+    if (exchange?.isEntryPoint && exchange.isEntryPoint === true) {
+      entryPoints.push(exchange);
+    }
+  }
+
+  wacz.pages = entryPoints.map(mischiefExchangeToPageLine)
 
   return await wacz.finalize();
 }

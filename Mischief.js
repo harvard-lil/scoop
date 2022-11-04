@@ -614,17 +614,10 @@ export class Mischief {
 
   /**
    * (Shortcut) Export this Mischief capture to WACZ.
+   * @param {boolean} [includeRaw=true] - Include a copy of RAW Http exchanges to the wacz (under `/raw`)?
    * @returns {Promise<ArrayBuffer>}
    */
-  async toWacz() {
-    return await exporters.mischiefToWacz(this);
-  }
-
-  /**
-   * (Shortcut) Export this Mischief capture to HD WACZ.
-   * @returns {Promise<ArrayBuffer>}
-   */
-  async toHDWacz() {
-    return await exporters.mischiefToWacz(this, true);
+  async toWacz(includeRaw=false) {
+    return await exporters.mischiefToWacz(this, includeRaw);
   }
 }
