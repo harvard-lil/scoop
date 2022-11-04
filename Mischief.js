@@ -340,7 +340,7 @@ export class Mischief {
    * A summary file and entry point, `file:///video-extracted-summary.html`, will be generated in the process.
    */
   async captureVideoAsAttachment() {
-    const id = `${uuidv4()}`;
+    const id = this.id;
     const videoFilename = `${TMP_DIR}${id}.mp4`;
     const dlpExecutable = `./node_modules/yt-dlp/yt-dlp`;
 
