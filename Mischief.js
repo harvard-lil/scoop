@@ -17,6 +17,7 @@ import { MischiefOptions } from "./MischiefOptions.js";
 
 import * as intercepters from "./intercepters/index.js";
 import * as exporters from "./exporters/index.js";
+import { throws } from "assert";
 
 /**
  * Path to "tmp" folder. 
@@ -240,17 +241,48 @@ export class Mischief {
         main: async (page) => {
           await page.emulateMedia({media: 'screen'});
 
-          const pdf = await page.pdf({
-            printBackground: true,
-            width: options.captureWindowX,
-            height: await page.evaluate(() => {
-              return Math.max(document.body.scrollHeight, window.outerHeight) + 50;
-            }),
+          // Generate PDF
+          const dimensions = await page.evaluate(() =>  {
+            const width = Math.max(document.body.scrollWidth, window.outerWidth);
+            const height = Math.max(document.body.scrollHeight, window.outerHeight) + 50;
+            return {width, height};
           });
+
+          let pdf = await page.pdf({
+            printBackground: true,
+            width: dimensions.width,
+            height: dimensions.height
+          });
+
+          // Try to apply compression if Ghostscript is available
+          const tmpFilenameIn = `${TMP_DIR}${this.id}-raw.pdf`;
+          const tmpFilenameOut = `${TMP_DIR}${this.id}-compressed.pdf`
+          try {
+            fs.writeFileSync(tmpFilenameIn, pdf);
+
+            spawnSync("gs", [
+              "-sDEVICE=pdfwrite",
+              "-dNOPAUSE",
+              "-dBATCH",
+              "-dJPEGQ=90",
+              "-r150",
+              `-sOutputFile=${tmpFilenameOut}`,
+              `${tmpFilenameIn}`,
+            ]);
+
+            pdf = fs.readFileSync(tmpFilenameOut);
+          }
+          catch(err) {
+            this.addToLogs("gs command (Ghostscript) is not available. The PDF Snapshot will be stored uncompressed.", true, err);
+          }
+          finally {
+            fs.unlink(tmpFilenameIn, () => {});
+            fs.unlink(tmpFilenameOut, () => {});
+          }
 
           const url = "file:///pdf-snapshot.pdf";
           const httpHeaders = {"Content-Type": "application/pdf"};
-          const body = Buffer.from(pdf);
+          const body = pdf;
           const isEntryPoint = true;
           const description = `Capture Time PDF Snapshot of ${this.url}`;
 
