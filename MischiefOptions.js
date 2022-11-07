@@ -23,6 +23,7 @@ export class MischiefOptions {
    * @property {number} maxSize - Maximum size, in bytes, for the exchanges list. Defaults to 200Mb.
    * @property {boolean} screenshot - Should Mischief try to make a screenshot? Defaults to `true`. Screenshot will be added as `file:///screenshot.png` in the exchanges list.
    * @property {boolean} domSnapshot - Should Mischief save a snapshot of the rendered DOM? Defaults to `true`. Added as `file:///dom-snapshot.html` in the exchanges list.
+   * @property {boolean} pdfSnapshot - Should Mischief save a PDF of the rendered page? Defaults to `false`. Added as `file:///pdf-snapshot.pedf` in the exchanges list.
    * @property {boolean} captureVideoAsAttachment - If `true`, will try to capture the main video that may be present in this page as `file:///video-extracted.mp4`. Will also save associated meta data as `file:///video-extracted-metadata.json`. This capture happens out of the browser. Defaults to `true`.
    * @property {number} captureVideoAsAttachmentTimeout - How long should Mischief wait for `captureVideoAsAttachment` to finish. Defaults to 30s.
    * @property {number} captureWindowX - Browser window resolution in pixels: X axis. Defaults to 1600.
@@ -47,6 +48,7 @@ export class MischiefOptions {
     maxSize: 200 * 1024 * 1024,
     screenshot: true,
     domSnapshot: true,
+    pdfSnapshot: false,
     captureVideoAsAttachment: true,
     captureVideoAsAttachmentTimeout: 30 * 1000,
     captureWindowX: 1600,

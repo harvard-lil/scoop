@@ -135,7 +135,7 @@ export class Mischief {
     const steps = [];
 
     //
-    // [1] - Prepare capture steps
+    // Prepare capture steps
     //
 
     // Push step: Setup interceptor
@@ -155,14 +155,18 @@ export class Mischief {
     });
 
     // Push step: Browser scripts
-    if (options.grabSecondaryResources ||
-        options.autoPlayMedia ||
-        options.runSiteSpecificBehaviors ||
-        options.autoScroll){
+    if (
+      options.grabSecondaryResources ||
+      options.autoPlayMedia ||
+      options.runSiteSpecificBehaviors ||
+      options.autoScroll
+    ) {
       steps.push({
         name: "browser scripts",
         setup: async (page) => {
-          await page.addInitScript({ path: './node_modules/browsertrix-behaviors/dist/behaviors.js' });
+          await page.addInitScript({
+            path: "./node_modules/browsertrix-behaviors/dist/behaviors.js",
+          });
           await page.addInitScript({
             content: `
               self.__bx_behaviors.init({
@@ -171,12 +175,14 @@ export class Mischief {
                 autoscroll: ${options.autoScroll},
                 siteSpecific: ${options.runSiteSpecificBehaviors},
                 timeout: ${options.behaviorsTimeout}
-              });`
+              });`,
           });
         },
         main: async (page) => {
-          await Promise.allSettled(page.frames().map(frame => frame.evaluate("self.__bx_behaviors.run()")));
-        }
+          await Promise.allSettled(
+            page.frames().map((frame) => frame.evaluate("self.__bx_behaviors.run()"))
+          );
+        },
       });
     }
 
@@ -198,13 +204,12 @@ export class Mischief {
           const body = await page.screenshot({ fullPage: true });
           const isEntryPoint = true;
           const description = `Capture Time Screenshot of ${this.url}`;
-
           this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description);
         }
       });
     }
 
-    // Push step: DOM Snap shot
+    // Push step: DOM Snapshot
     if (options.domSnapshot) {
       steps.push({
         name: "DOM snapshot",
@@ -217,6 +222,36 @@ export class Mischief {
           const body = Buffer.from(await page.content());
           const isEntryPoint = true;
           const description = `Capture Time DOM Snapshot of ${this.url}`;
+
+          this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description);
+        }
+      });
+    }
+
+    // Push step: PDF Snapshot
+    if (options.pdfSnapshot) {
+
+      if (!options.headless) {
+        throw new Error("Could not generate PDF snapshot: only available in headless mode.");
+      }
+
+      steps.push({
+        name: "PDF snapshot",
+        main: async (page) => {
+          await page.emulateMedia({media: 'screen'});
+
+          const pdf = await page.pdf({
+            width: options.captureWindowX,
+            height: await page.evaluate(() => {
+              return Math.max(document.body.scrollHeight, window.outerHeight) + 50;
+            }),
+          });
+
+          const url = "file:///pdf-snapshot.pdf";
+          const httpHeaders = {"Content-Type": "application/pdf"};
+          const body = Buffer.from(pdf);
+          const isEntryPoint = true;
+          const description = `Capture Time PDF Snapshot of ${this.url}`;
 
           this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description);
         }
@@ -243,7 +278,7 @@ export class Mischief {
     });
 
     //
-    // [2] - Initialize capture
+    // Initialize capture
     //
     let page;
     try {
@@ -263,7 +298,7 @@ export class Mischief {
     }
 
     //
-    // [3] - Run capture steps
+    // Run capture steps
     //
     let i = -1;
     while(i++ < steps.length-1 && this.state == Mischief.states.CAPTURE) {
