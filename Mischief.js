@@ -241,6 +241,7 @@ export class Mischief {
           await page.emulateMedia({media: 'screen'});
 
           const pdf = await page.pdf({
+            printBackground: true,
             width: options.captureWindowX,
             height: await page.evaluate(() => {
               return Math.max(document.body.scrollHeight, window.outerHeight) + 50;
