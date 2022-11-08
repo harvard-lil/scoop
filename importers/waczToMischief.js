@@ -44,7 +44,7 @@ const getPageJSON = async (zip) => {
  * @param {StreamZipAsync} zip
  * @returns {MischiefProxyExchange[]} - an array of reconstructed MischiefProxyExchanges
  */
-const getExchanges = async (zip, entries) => {
+const getExchanges = async (zip) => {
   const entries = await zip.entries();
   const props = await Promise.all(
     Object.values(entries)
