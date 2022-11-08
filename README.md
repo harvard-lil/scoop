@@ -20,3 +20,11 @@ const myArchive = await myCapture.toWarc();
 - At the moment `Mischief` can only operate in Unix-like environment _(Linux, Mac OS, Windows' WSL ...)_
 - Install dependencies: `npm install`
 - Get started by having a look and running `example.js`
+
+## Testing
+
+``` javascript
+node --test
+```
+
+`
