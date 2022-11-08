@@ -355,7 +355,7 @@ export class Mischief {
     this.startedAt = new Date();
     this.state = Mischief.states.SETUP;
     const options = this.options;
-    const userAgent = (await this.getDefaultUserAgent()) + options.userAgentSuffix;
+    const userAgent = chromium._playwright.devices["Desktop Chrome"].userAgent + options.userAgentSuffix;
 
     this.addToLogs(`User Agent used for capture: ${userAgent}`);
 
@@ -674,22 +674,6 @@ export class Mischief {
     catch(err) {
       throw new Error(`Invalid url provided.\n${err}`);
     }
-  }
-
-  /**
-   * Spins up a temporary browser to extract and return the default user agent.
-   * @return {string}
-   */
-  async getDefaultUserAgent() {
-    const browser = await chromium.launch({headless: true, channel: "chrome"});
-    const page = await browser.newPage();
-
-    const userAgent = await page.evaluate(() => window.navigator.userAgent);
-
-    await page.close();
-    await browser.close();
-    
-    return userAgent;
   }
   
   /**
