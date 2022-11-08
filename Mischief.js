@@ -355,13 +355,20 @@ export class Mischief {
     this.startedAt = new Date();
     this.state = Mischief.states.SETUP;
     const options = this.options;
+    const userAgent = (await this.getDefaultUserAgent()) + options.userAgentSuffix;
+
+    this.addToLogs(`User Agent used for capture: ${userAgent}`);
 
     this.#browser = await chromium.launch({
       headless: options.headless,
       channel: "chrome"
     })
 
-    const context = await this.#browser.newContext(this.intercepter.contextOptions);
+    const context = await this.#browser.newContext({ 
+      ...this.intercepter.contextOptions, 
+      userAgent
+    });
+
     const page = await context.newPage();
 
     page.setViewportSize({
@@ -669,6 +676,22 @@ export class Mischief {
     }
   }
 
+  /**
+   * Spins up a temporary browser to extract and return the default user agent.
+   * @return {string}
+   */
+  async getDefaultUserAgent() {
+    const browser = await chromium.launch({headless: true, channel: "chrome"});
+    const page = await browser.newPage();
+
+    const userAgent = await page.evaluate(() => window.navigator.userAgent);
+
+    await page.close();
+    await browser.close();
+    
+    return userAgent;
+  }
+  
   /**
    * (Shortcut) Export this Mischief capture to WARC.
    * @returns {Promise<ArrayBuffer>}

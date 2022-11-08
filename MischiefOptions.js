@@ -33,6 +33,7 @@ export class MischiefOptions {
    * @property {boolean} grabSecondaryResources - Should Mischief try to download img srcsets and secondary stylesheets? Defaults to `true`.
    * @property {boolean} runSiteSpecificBehaviors - Should Mischief run behaviors tailored to specific sites (ex: Twitter) in an attempt to better grab the page? Defaults to `true`.
    * @property {string} intercepter - Network interception method to be used. Available at the moment: "Proxy".
+   * @property {string} userAgentSuffix - String to append to the user agent. Defaults to an empty string. 
    */
   static defaults = {
     verbose: true,
@@ -57,7 +58,8 @@ export class MischiefOptions {
     autoPlayMedia: true,
     grabSecondaryResources: true,
     runSiteSpecificBehaviors: true,
-    intercepter: 'MischiefProxy'
+    intercepter: "MischiefProxy",
+    userAgentSuffix: ""
   };
 
   /**
