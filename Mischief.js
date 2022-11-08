@@ -312,13 +312,20 @@ export class Mischief {
     this.startedAt = new Date();
     this.state = Mischief.states.SETUP;
     const options = this.options;
+    const userAgent = chromium._playwright.devices["Desktop Chrome"].userAgent + options.userAgentSuffix;
+
+    this.addToLogs(`User Agent used for capture: ${userAgent}`);
 
     this.#browser = await chromium.launch({
       headless: options.headless,
       channel: "chrome"
     })
 
-    const context = await this.#browser.newContext(this.intercepter.contextOptions);
+    const context = await this.#browser.newContext({ 
+      ...this.intercepter.contextOptions, 
+      userAgent
+    });
+
     const page = await context.newPage();
 
     page.setViewportSize({
@@ -688,7 +695,7 @@ export class Mischief {
       throw new Error(`Invalid url provided.\n${err}`);
     }
   }
-
+  
   /**
    * (Shortcut) Export this Mischief capture to WARC.
    * @returns {Promise<ArrayBuffer>}
