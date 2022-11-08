@@ -132,7 +132,9 @@ export class Mischief {
    */
   async capture() {
     const options = this.options;
-    const steps = [];
+
+    /** @type {{name: String, setup: ?function, main: function}[]} */
+    const steps = []; 
 
     //
     // Prepare capture steps
@@ -230,58 +232,10 @@ export class Mischief {
 
     // Push step: PDF Snapshot
     if (options.pdfSnapshot) {
-
       steps.push({
         name: "PDF snapshot",
         main: async (page) => {
-          await page.emulateMedia({media: 'screen'});
-
-          // Generate PDF
-          const dimensions = await page.evaluate(() =>  {
-            const width = Math.max(document.body.scrollWidth, window.outerWidth);
-            const height = Math.max(document.body.scrollHeight, window.outerHeight) + 50;
-            return {width, height};
-          });
-
-          let pdf = await page.pdf({
-            printBackground: true,
-            width: dimensions.width,
-            height: dimensions.height
-          });
-
-          // Try to apply compression if Ghostscript is available
-          const tmpFilenameIn = `${TMP_DIR}${this.id}-raw.pdf`;
-          const tmpFilenameOut = `${TMP_DIR}${this.id}-compressed.pdf`
-          try {
-            fs.writeFileSync(tmpFilenameIn, pdf);
-
-            spawnSync("gs", [
-              "-sDEVICE=pdfwrite",
-              "-dNOPAUSE",
-              "-dBATCH",
-              "-dJPEGQ=90",
-              "-r150",
-              `-sOutputFile=${tmpFilenameOut}`,
-              `${tmpFilenameIn}`,
-            ]);
-
-            pdf = fs.readFileSync(tmpFilenameOut);
-          }
-          catch(err) {
-            this.addToLogs("gs command (Ghostscript) is not available. The PDF Snapshot will be stored uncompressed.", true, err);
-          }
-          finally {
-            fs.unlink(tmpFilenameIn, () => {});
-            fs.unlink(tmpFilenameOut, () => {});
-          }
-
-          const url = "file:///pdf-snapshot.pdf";
-          const httpHeaders = {"Content-Type": "application/pdf"};
-          const body = pdf;
-          const isEntryPoint = true;
-          const description = `Capture Time PDF Snapshot of ${this.url}`;
-
-          this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description);
+          await this.#takePdfSnapshot(page);
         }
       });
     }
@@ -309,6 +263,7 @@ export class Mischief {
     // Initialize capture
     //
     let page;
+
     try {
       page = await this.setup();
       this.addToLogs(`Starting capture of ${this.url} with options: ${JSON.stringify(options)}`);
@@ -320,7 +275,9 @@ export class Mischief {
       return; // exit early if the browser and proxy couldn't be launched
     }
 
+    //
     // Call `setup()` method of steps that have one
+    //
     for (const step of steps.filter((step) => step.setup)) {
       await step.setup(page);
     }
@@ -586,6 +543,69 @@ export class Mischief {
     catch(err) {
       throw new Error(`Error while creating exchange for file:///video-extracted-summary.html. ${err}`);
     }
+  }
+
+  /**
+   * Tries to generate a PDF snapshot from Playwright and add it as a generated exchange (`file:///pdf-snapshot.pdf`).
+   * If `ghostscript` is available, will try to compress the resulting PDF.
+   * Dimensions of the PDF are based on current document width and height.
+   * 
+   * @param {object} page - Playwright "Page" object
+   * @private
+   */
+  async #takePdfSnapshot(page) {
+    let pdf = null;
+    let dimensions = null;
+    const tmpFilenameIn = `${TMP_DIR}${this.id}-raw.pdf`;
+    const tmpFilenameOut = `${TMP_DIR}${this.id}-compressed.pdf`
+
+    await page.emulateMedia({media: 'screen'});
+
+    // Pull dimensions from live browser
+    dimensions = await page.evaluate(() =>  {
+      const width = Math.max(document.body.scrollWidth, window.outerWidth);
+      const height = Math.max(document.body.scrollHeight, window.outerHeight) + 50;
+      return {width, height};
+    });
+
+    // Generate PDF
+    pdf = await page.pdf({
+      printBackground: true,
+      width: dimensions.width,
+      height: dimensions.height
+    });
+
+    // Try to apply compression if Ghostscript is available
+    try {
+      fs.writeFileSync(tmpFilenameIn, pdf);
+
+      spawnSync("gs", [
+        "-sDEVICE=pdfwrite",
+        "-dNOPAUSE",
+        "-dBATCH",
+        "-dJPEGQ=90",
+        "-r150",
+        `-sOutputFile=${tmpFilenameOut}`,
+        `${tmpFilenameIn}`,
+      ]);
+
+      pdf = fs.readFileSync(tmpFilenameOut);
+    }
+    catch(err) {
+      this.addToLogs("gs command (Ghostscript) is not available. The PDF Snapshot will be stored uncompressed.", true, err);
+    }
+    finally {
+      fs.unlink(tmpFilenameIn, () => {});
+      fs.unlink(tmpFilenameOut, () => {});
+    }
+
+    const url = "file:///pdf-snapshot.pdf";
+    const httpHeaders = {"Content-Type": "application/pdf"};
+    const body = pdf;
+    const isEntryPoint = true;
+    const description = `Capture Time PDF Snapshot of ${this.url}`;
+
+    this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description);
   }
 
   /**
