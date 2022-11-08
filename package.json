@@ -24,10 +24,10 @@
     "http-parser-js": "^0.5.8",
     "node-stream-zip": "^1.15.0",
     "nunjucks": "^3.2.3",
+    "playwright": "^1.27.1",
     "transparent-proxy": "^1.8.14",
     "uuid": "^9.0.0",
-    "warcio": "^1.6.1",
-    "playwright": "^1.27.1"
+    "warcio": "^1.6.1"
   },
   "devDependencies": {
     "@types/node": "^18.11.0",

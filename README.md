@@ -21,10 +21,10 @@ const myArchive = await myCapture.toWarc();
 - Install dependencies: `npm install`
 - Get started by having a look and running `example.js`
 
-## Testing
+## Optional dependencies
+- [Ghostscript](https://www.ghostscript.com/) for PDF compression.
 
+## Testing
 ``` javascript
 node --test
 ```
-
-`
