@@ -23,7 +23,7 @@ export class MischiefOptions {
    * @property {number} maxSize - Maximum size, in bytes, for the exchanges list. Defaults to 200Mb.
    * @property {boolean} screenshot - Should Mischief try to make a screenshot? Defaults to `true`. Screenshot will be added as `file:///screenshot.png` in the exchanges list.
    * @property {boolean} domSnapshot - Should Mischief save a snapshot of the rendered DOM? Defaults to `true`. Added as `file:///dom-snapshot.html` in the exchanges list.
-   * @property {boolean} pdfSnapshot - Should Mischief save a PDF of the rendered page? Defaults to `false`. Added as `file:///pdf-snapshot.pedf` in the exchanges list.
+   * @property {boolean} pdfSnapshot - Should Mischief save a PDF of the rendered page? Defaults to `false`. Only available in headless mode. Added as `file:///pdf-snapshot.pedf` in the exchanges list.
    * @property {boolean} captureVideoAsAttachment - If `true`, will try to capture the main video that may be present in this page as `file:///video-extracted.mp4`. Will also save associated meta data as `file:///video-extracted-metadata.json`. This capture happens out of the browser. Defaults to `true`.
    * @property {number} captureVideoAsAttachmentTimeout - How long should Mischief wait for `captureVideoAsAttachment` to finish. Defaults to 30s.
    * @property {number} captureWindowX - Browser window resolution in pixels: X axis. Defaults to 1600.
@@ -70,10 +70,12 @@ export class MischiefOptions {
     const options = {};
     const defaults = MischiefOptions.defaults;
 
+    // Create new option object from `newOptions` and `defaults`:
+    // - Only pull entries from `newOptions` that are defined in `defaults`
+    // - Apply basic type casting based on type of defaults
     for (const key of Object.keys(defaults)) {
       options[key] = key in newOptions ? newOptions[key] : defaults[key];
 
-      // Apply basic type casting based on type of defaults (MischiefOptions)
       switch (typeof defaults[key]) {
         case "boolean":
           options[key] = Boolean(options[key]);
@@ -87,6 +89,11 @@ export class MischiefOptions {
           options[key] = String(options[key]);
         break;
       }
+    }
+
+    // Check for invalid combinations
+    if (options.pdfSnapshot && !options.headless) {
+      throw new Error(`"pdfSnapshot" option is only available in "headless" mode. Both options need to be "true".`);
     }
 
     return options;

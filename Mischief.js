@@ -231,10 +231,6 @@ export class Mischief {
     // Push step: PDF Snapshot
     if (options.pdfSnapshot) {
 
-      if (!options.headless) {
-        throw new Error("Could not generate PDF snapshot: only available in headless mode.");
-      }
-
       steps.push({
         name: "PDF snapshot",
         main: async (page) => {
@@ -295,7 +291,7 @@ export class Mischief {
       steps.push({
         name: "out-of-browser capture of video as attachment",
         main: async () => {
-          await this.captureVideoAsAttachment();
+          await this.#captureVideoAsAttachment();
         }
       });
     }
@@ -405,8 +401,10 @@ export class Mischief {
    * 
    * These elements are added as "attachments" to the archive, for context / playback fallback purposes. 
    * A summary file and entry point, `file:///video-extracted-summary.html`, will be generated in the process.
+   * 
+   * @private
    */
-  async captureVideoAsAttachment() {
+  async #captureVideoAsAttachment() {
     const id = this.id;
     const videoFilename = `${TMP_DIR}${id}.mp4`;
     const dlpExecutable = `./node_modules/yt-dlp/yt-dlp`;
