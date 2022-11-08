@@ -17,7 +17,6 @@ import { MischiefOptions } from "./MischiefOptions.js";
 
 import * as intercepters from "./intercepters/index.js";
 import * as exporters from "./exporters/index.js";
-import { throws } from "assert";
 
 /**
  * Path to "tmp" folder. 
