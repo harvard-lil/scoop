@@ -678,7 +678,7 @@ export class Mischief {
       osName: osInfo.name,
       osVersion: osInfo.version,
       cpuArchitecture: os.machine(),
-      options: structuredClone(this.options)
+      mischiefOptions: structuredClone(this.options)
     }
 
     // Generate summary page

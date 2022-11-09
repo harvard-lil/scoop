@@ -33,7 +33,7 @@ export async function mischiefToWacz(capture, includeRaw = false) {
 
   // Append extra `datapackage.json` info:
   if (capture.options.provenanceSummary && capture.provenanceInfo) {
-    wacz.datapackageExtras = {"mischiefCaptureProvenance": capture.provenanceInfo};
+    wacz.datapackageExtras = {"provenanceInfo": capture.provenanceInfo};
   }
 
   // Append raw exchanges
