@@ -55,7 +55,7 @@ export async function mischiefToWacz(capture, includeRaw = false) {
     entryPoints.push(capture.exchanges[0]); // the first exchange is our entrypoint url for the entire crawl
   }
 
-  for (let exchange of capture.generatedExchanges) {
+  for (let exchange of Object.values(capture.generatedExchanges)) {
     if (exchange?.isEntryPoint && exchange.isEntryPoint === true) {
       entryPoints.push(exchange);
     }

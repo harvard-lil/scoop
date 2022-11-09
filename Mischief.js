@@ -94,9 +94,11 @@ export class Mischief {
    * Keeps track of exchanges that were generated during capture.
    * Example: `file:///screenshot.png` for the full-page screenshot.
    * 
-   * @type {MischiefGeneratedExchange[]}
+   * Indexed by url
+   * 
+   * @type {Object.<string, MischiefGeneratedExchange>}
    */
-  generatedExchanges = [];
+  generatedExchanges = {};
 
   /** @type {MischiefLog[]} */
   logs = [];
@@ -744,7 +746,7 @@ export class Mischief {
     });
 
     this.exchanges.push(exchange);
-    this.generatedExchanges.push(exchange);
+    this.generatedExchanges[url] = exchange;
   }
 
   /**
