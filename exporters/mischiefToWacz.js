@@ -21,6 +21,7 @@ import { WACZ, mischiefExchangeToPageLine } from "../utils/WACZ.js";
  */
 export async function mischiefToWacz(capture, includeRaw = false) {
   const validStates = [Mischief.states.PARTIAL, Mischief.states.COMPLETE];
+
   if (!(capture instanceof Mischief) || !validStates.includes(capture.state)) {
     throw new Error("`capture` must be a partial or complete Mischief object.");
   }
@@ -32,7 +33,7 @@ export async function mischiefToWacz(capture, includeRaw = false) {
     capture.exchanges.forEach((exchange) => {
       ['request', 'response'].forEach((type) => {
         const data = exchange[`${type}Raw`];
-        if(data){
+        if (data) {
           wacz.files[`raw/${type}_${exchange.date.toISOString()}_${exchange.id}`] = data;
         }
       })

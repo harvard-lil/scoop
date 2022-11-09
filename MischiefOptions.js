@@ -37,7 +37,7 @@ export class MischiefOptions {
    */
   static defaults = {
     verbose: true,
-    headless: false,
+    headless: true,
     proxyHost: "localhost",
     proxyPort: 9000,
     proxyVerbose: false,
@@ -49,7 +49,7 @@ export class MischiefOptions {
     maxSize: 200 * 1024 * 1024,
     screenshot: true,
     domSnapshot: true,
-    pdfSnapshot: false,
+    pdfSnapshot: true,
     captureVideoAsAttachment: true,
     captureVideoAsAttachmentTimeout: 30 * 1000,
     captureWindowX: 1600,

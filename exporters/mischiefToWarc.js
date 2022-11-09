@@ -38,7 +38,7 @@ export async function mischiefToWarc(capture) {
   //
   const info = WARCRecord.createWARCInfo(
     { filename: "archive.warc", warcVersion: `WARC/${CONSTANTS.WARC_VERSION}` },
-    { software: CONSTANTS.SOFTWARE }
+    { software: `${CONSTANTS.SOFTWARE} ${CONSTANTS.VERSION}` }
   );
   serializedInfo = await WARCSerializer.serialize(info);
   
