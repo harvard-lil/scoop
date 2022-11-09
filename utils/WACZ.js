@@ -26,6 +26,13 @@ export class WACZ {
 
   datapackage = {};
 
+  /**
+   * Additional information to be be added to `datapackage.json`.
+   * Will be saved under "extras" if provided.
+   * @type {?object}
+   */
+  datapackageExtras = null;
+
   _filesProxy;
 
   get files() {
@@ -196,15 +203,16 @@ export class WACZ {
    * @returns {Buffer} - a buffer with the contents of the pages files
    */
   generatePages() {
-    const jsonStr = [{
-      format: "json-pages-1.0",
-      id: "pages",
-      title: "All Pages"
-    }].concat(this.pages)
-      .map(JSON.stringify)
-      .join('\n')
+    const pages = [
+      {
+        format: "json-pages-1.0",
+        id: "pages",
+        title: "All Pages",
+      },
+      ...this.pages,
+    ];
 
-    return Buffer.from(jsonStr);
+    return Buffer.from(pages.map(JSON.stringify).join("\n"));
   }
 
   /**
@@ -213,13 +221,13 @@ export class WACZ {
    * @returns {string} - a string with the contents of the datapackage
    */
   generateDatapackage() {
-    const dataPackage = {... this.datapackage};
-    dataPackage.profile = "data-package";
-    dataPackage.wacz_version = CONSTANTS.WACZ_VERSION;
-    dataPackage.software = `${CONSTANTS.SOFTWARE} ${CONSTANTS.VERSION}`;
-    dataPackage.created = (new Date()).toISOString();
+    const datapackage = {... this.datapackage};
+    datapackage.profile = "data-package";
+    datapackage.wacz_version = CONSTANTS.WACZ_VERSION;
+    datapackage.software = `${CONSTANTS.SOFTWARE} ${CONSTANTS.VERSION}`;
+    datapackage.created = (new Date()).toISOString();
 
-    dataPackage.resources = Object.entries(this.files).map(([fpath, fdata]) => {
+    datapackage.resources = Object.entries(this.files).map(([fpath, fdata]) => {
       return {
         name: path.basename(fpath),
         path: fpath,
@@ -232,14 +240,19 @@ export class WACZ {
     if (this.pages) {
       for (let page of this.pages) {
         if (page?.url && page.url.startsWith("http")) {
-          dataPackage.mainPageUrl = page.url;
-          dataPackage.mainPageDate = page.ts;
+          datapackage.mainPageUrl = page.url;
+          datapackage.mainPageDate = page.ts;
           break;
         }
       }
     }
 
-    return stringify(dataPackage);
+    // Append additional data under "extras" if provided
+    if (this.datapackageExtras) {
+      datapackage.extras = this.datapackageExtras;
+    }
+
+    return stringify(datapackage);
   }
 
   /**
@@ -331,7 +344,7 @@ const stringify = (obj) => JSON.stringify(obj, null, 2);
  * Format a MischiefExchange as needed for
  * the pages JSON-Lines
  *
- * @param {MischiefExchange} exchange -
+ * @param {MischiefExchange} exchange
  * @returns {object}
  */
 export function mischiefExchangeToPageLine(exchange) {
