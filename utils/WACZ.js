@@ -237,14 +237,10 @@ export class WACZ {
     });
 
     // Set `mainPageUrl` and `mainPageDate`: pick first entry in `this.pages` that starts with "http"
-    if (this.pages) {
-      for (let page of this.pages) {
-        if (page?.url && page.url.startsWith("http")) {
-          datapackage.mainPageUrl = page.url;
-          datapackage.mainPageDate = page.ts;
-          break;
-        }
-      }
+    const mainPage = this.pages.find(page => page.url.startsWith("http"))
+    if (mainPage) { 
+      datapackage.mainPageUrl = mainPage.url;
+      datapackage.mainPageDate = mainPage.ts;
     }
 
     // Append additional data under "extras" if provided
