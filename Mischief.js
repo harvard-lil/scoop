@@ -6,14 +6,18 @@
  */
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
+import os from "os";
 import { spawnSync } from "child_process";
 
 import { chromium } from "playwright";
 import nunjucks from "nunjucks";
+import ipAddressValidator from "ip-address-validator";
+import { getOSInfo } from "get-os-info";
 
 import { MischiefExchange, MischiefGeneratedExchange } from "./exchanges/index.js";
 import { MischiefLog } from "./MischiefLog.js";
 import { MischiefOptions } from "./MischiefOptions.js";
+import CONSTANTS from "./constants.js";
 
 import * as intercepters from "./intercepters/index.js";
 import * as exporters from "./exporters/index.js";
@@ -90,9 +94,11 @@ export class Mischief {
    * Keeps track of exchanges that were generated during capture.
    * Example: `file:///screenshot.png` for the full-page screenshot.
    * 
-   * @type {MischiefGeneratedExchange[]}
+   * Indexed by url
+   * 
+   * @type {Object.<string, MischiefGeneratedExchange>}
    */
-  generatedExchanges = [];
+  generatedExchanges = {};
 
   /** @type {MischiefLog[]} */
   logs = [];
@@ -114,6 +120,12 @@ export class Mischief {
    * @type {intercepters.MischiefIntercepter}
    */
   intercepter;
+
+  /**
+   * Will only be populated is `options.provenanceSummary` is `true`.
+   * @type {object}
+   */
+  provenanceInfo = {};
 
   /**
    * @param {string} url - Must be a valid HTTP(S) url.
@@ -250,6 +262,16 @@ export class Mischief {
       });
     }
 
+    // Push step: Provenance summary
+    if (options.provenanceSummary) {
+      steps.push({
+        name: "provenance summary",
+        main: async (page) => {
+          await this.#captureProvenanceInfo(page);
+        }
+      });
+    }
+
     // Push step: Teardown
     steps.push({
       name: "teardown",
@@ -323,7 +345,7 @@ export class Mischief {
 
     const context = await this.#browser.newContext({ 
       ...this.intercepter.contextOptions, 
-      userAgent
+      userAgent: userAgent
     });
 
     const page = await context.newPage();
@@ -616,6 +638,73 @@ export class Mischief {
   }
 
   /**
+   * Populates `this.provenanceInfo`, which is then used to generate a `file:///provenance-summary.html` exchange and entry point.
+   * That property is also be used by `mischiefToWacz()` to populate the `extras` field of `datapackage.json`.
+   * 
+   * Provenance info collected:
+   * - Capture client IP, resolved using the endpoint provided in `MischiefOptions.publicIpResolverEndpoint`.
+   * - Operating system details (type, name, major version, CPU architecture)
+   * - Mischief version
+   * - Mischief options object used during capture
+   *
+   * @param {object} page - Playwright "Page" object
+   * @private
+   */
+  async #captureProvenanceInfo(page) {
+    let captureIp = "UNKNOWN";
+    const osInfo = await getOSInfo();
+    const userAgent = await page.evaluate(() => window.navigator.userAgent); // Source user agent from the browser in case it was altered during capture
+
+    // Grab public IP address
+    try {
+      const response = await fetch(this.options.publicIpResolverEndpoint);
+      const ip = await response.text();
+
+      if (!ipAddressValidator.isIPAddress(ip)) {
+        throw new Error(`${ip} is not a valid IP address.`);
+      }
+
+      captureIp = ip;
+    }
+    catch(err) {
+      this.addToLogs("Public IP address could not be found.", true, err);
+    }
+
+    // Gather provenance info
+    this.provenanceInfo = {
+      captureIp,
+      userAgent,
+      software: CONSTANTS.SOFTWARE,
+      version: CONSTANTS.VERSION,
+      osType: os.type(),
+      osName: osInfo.name,
+      osVersion: osInfo.version,
+      cpuArchitecture: os.machine(),
+      mischiefOptions: structuredClone(this.options)
+    }
+
+    // Generate summary page
+    try {
+      const html = nunjucks.render(`${ASSETS_DIR}provenance-summary.njk`, {
+        ...this.provenanceInfo,
+        date: this.startedAt.toISOString(),
+        url: this.url,
+      });
+
+      const url = `file:///provenance-summary.html`;
+      const httpHeaders = { "Content-Type": "text/html" };
+      const body = Buffer.from(html);
+      const isEntryPoint = true;
+      const description = `Provenance Summary`;
+
+      this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description);
+    }
+    catch(err) {
+      throw new Error(`Error while creating exchange for file:///provenance-summary.html. ${err}`);
+    }
+  }
+
+  /**
    * Generates a MischiefGeneratedExchange for generated content and adds it to `exchanges` and `generatedExchanges` unless time limit was reached.
    * @param {string} url 
    * @param {object} httpHeaders 
@@ -657,7 +746,7 @@ export class Mischief {
     });
 
     this.exchanges.push(exchange);
-    this.generatedExchanges.push(exchange);
+    this.generatedExchanges[url] = exchange;
   }
 
   /**

@@ -34,10 +34,12 @@ export class MischiefOptions {
    * @property {boolean} runSiteSpecificBehaviors - Should Mischief run behaviors tailored to specific sites (ex: Twitter) in an attempt to better grab the page? Defaults to `true`.
    * @property {string} intercepter - Network interception method to be used. Available at the moment: "Proxy".
    * @property {string} userAgentSuffix - String to append to the user agent. Defaults to an empty string. 
+   * @property {boolean} provenanceSummary - If `true`, information about the capture process (public IP address, User Agent, software version ...) will be gathered and summarized under `file:///provenance-summary.html`. WACZ exports will also hold that information at `datapackage.json` level, under `mischief_extra`.
+   * @property {string} publicIpResolverEndpoint - URL to be used to retrieve the client's public IP address. Endpoint requirements: must simply return a IPv4 or IPv6 address as text. Defaults to "https://myip.lil.tools".
    */
   static defaults = {
     verbose: true,
-    headless: false,
+    headless: true,
     proxyHost: "localhost",
     proxyPort: 9000,
     proxyVerbose: false,
@@ -49,7 +51,7 @@ export class MischiefOptions {
     maxSize: 200 * 1024 * 1024,
     screenshot: true,
     domSnapshot: true,
-    pdfSnapshot: false,
+    pdfSnapshot: true,
     captureVideoAsAttachment: true,
     captureVideoAsAttachmentTimeout: 30 * 1000,
     captureWindowX: 1600,
@@ -59,7 +61,9 @@ export class MischiefOptions {
     grabSecondaryResources: true,
     runSiteSpecificBehaviors: true,
     intercepter: "MischiefProxy",
-    userAgentSuffix: ""
+    userAgentSuffix: "",
+    provenanceSummary: true,
+    publicIpResolverEndpoint: "https://myip.lil.tools"
   };
 
   /**

@@ -15,11 +15,55 @@ import CONSTANTS from "../constants.js";
 import * as zip from "../utils/zip.js";
 
 export class WACZ {
+
   validations = [
     [/^archives\//, [this.assertWarc]],
     [/^indexes\//, [this.assertIndex]],
     [/^pages\//, [this.assertPages]]
   ]
+
+  pages = [];
+
+  datapackage = {};
+
+  /**
+   * Additional information to be be added to `datapackage.json`.
+   * Will be saved under "extras" if provided.
+   * @type {?object}
+   */
+  datapackageExtras = null;
+
+  _filesProxy;
+
+  get files() {
+    if(!this._filesProxy){
+      // initialize the proxy on first access
+      // if it hasn't already been created
+      this.files = {}
+    }
+    return this._filesProxy;
+  }
+
+  /**
+   * Use a Proxy to validate any entries added to the `files` property
+   *
+   * @param {any} obj - an object whose keys are the file paths and values are the file data
+   */
+  set files(obj) {
+    // validate all properties on initial assignment
+    Object.entries(obj).forEach(([fpath, fdata]) => {
+      return this.validateFile(fpath, fdata);
+    })
+
+    // create a new proxy to handle additional assignments to `files`
+    this._filesProxy = new Proxy(obj, {
+      set: (target, fpath, fdata) => {
+        this.validateFile(fpath, fdata);
+        target[fpath] = fdata;
+        return true;
+      }
+    });
+  }
 
   /**
    * Assign properties on instance creation
@@ -122,42 +166,6 @@ export class WACZ {
         });
   }
 
-  pages = [];
-
-  datapackage = {};
-
-  _filesProxy;
-
-  get files() {
-    if(!this._filesProxy){
-      // initialize the proxy on first access
-      // if it hasn't already been created
-      this.files = {}
-    }
-    return this._filesProxy;
-  }
-
-  /**
-   * Use a Proxy to validate any entries added to the `files` property
-   *
-   * @param {any} obj - an object whose keys are the file paths and values are the file data
-   */
-  set files(obj) {
-    // validate all properties on initial assignment
-    Object.entries(obj).forEach(([fpath, fdata]) => {
-      return this.validateFile(fpath, fdata);
-    })
-
-    // create a new proxy to handle additional assignments to `files`
-    this._filesProxy = new Proxy(obj, {
-      set: (target, fpath, fdata) => {
-        this.validateFile(fpath, fdata);
-        target[fpath] = fdata;
-        return true;
-      }
-    });
-  }
-
   /**
    * Generate a CDXJ index based on a list of files.
    * Defaults to using `this.files` but since the spec
@@ -195,15 +203,16 @@ export class WACZ {
    * @returns {Buffer} - a buffer with the contents of the pages files
    */
   generatePages() {
-    const jsonStr = [{
-      format: "json-pages-1.0",
-      id: "pages",
-      title: "All Pages"
-    }].concat(this.pages)
-      .map(JSON.stringify)
-      .join('\n')
+    const pages = [
+      {
+        format: "json-pages-1.0",
+        id: "pages",
+        title: "All Pages",
+      },
+      ...this.pages,
+    ];
 
-    return Buffer.from(jsonStr);
+    return Buffer.from(pages.map(JSON.stringify).join("\n"));
   }
 
   /**
@@ -212,21 +221,34 @@ export class WACZ {
    * @returns {string} - a string with the contents of the datapackage
    */
   generateDatapackage() {
-    return stringify({
-      ...this.datapackage,
-      profile: "data-package",
-      wacz_version: CONSTANTS.WACZ_VERSION,
-      software: CONSTANTS.SOFTWARE,
-      created: (new Date()).toISOString(),
-      resources: Object.entries(this.files).map(([fpath, fdata]) => {
-        return {
-          name: path.basename(fpath),
-          path: fpath,
-          hash: hash(fdata),
-          bytes: fdata.byteLength
-        }
-      })
-    })
+    const datapackage = {... this.datapackage};
+    datapackage.profile = "data-package";
+    datapackage.wacz_version = CONSTANTS.WACZ_VERSION;
+    datapackage.software = `${CONSTANTS.SOFTWARE} ${CONSTANTS.VERSION}`;
+    datapackage.created = (new Date()).toISOString();
+
+    datapackage.resources = Object.entries(this.files).map(([fpath, fdata]) => {
+      return {
+        name: path.basename(fpath),
+        path: fpath,
+        hash: hash(fdata),
+        bytes: fdata.byteLength
+      }
+    });
+
+    // Set `mainPageUrl` and `mainPageDate`: pick first entry in `this.pages` that starts with "http"
+    const mainPage = this.pages.find(page => page.url.startsWith("http"))
+    if (mainPage) { 
+      datapackage.mainPageUrl = mainPage.url;
+      datapackage.mainPageDate = mainPage.ts;
+    }
+
+    // Append additional data under "extras" if provided
+    if (this.datapackageExtras) {
+      datapackage.extras = this.datapackageExtras;
+    }
+
+    return stringify(datapackage);
   }
 
   /**
@@ -257,16 +279,18 @@ export class WACZ {
       throw "at least one WARC must be present in the archive directory";
     }
 
-    if(autoindex) {
+    if (autoindex) {
       const index = await this.generateIndexCDX();
       this.files["indexes/index.cdx"] = index;
-    } else if(dirEmpty(this.files, "indexes")){
+    } 
+    else if (dirEmpty(this.files, "indexes")) {
       throw "at least one CDXJ index must be present in the indexes directory";
     }
 
-    if(this.pages.length) {
-      this.files['pages/pages.jsonl'] = this.generatePages();
-    } else {
+    if (this.pages.length) {
+      this.files["pages/pages.jsonl"] = this.generatePages();
+    } 
+    else {
       throw "at least one page must be present";
     }
 
@@ -316,7 +340,7 @@ const stringify = (obj) => JSON.stringify(obj, null, 2);
  * Format a MischiefExchange as needed for
  * the pages JSON-Lines
  *
- * @param {MischiefExchange} exchange -
+ * @param {MischiefExchange} exchange
  * @returns {object}
  */
 export function mischiefExchangeToPageLine(exchange) {
