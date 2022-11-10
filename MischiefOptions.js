@@ -23,7 +23,7 @@ export class MischiefOptions {
    * @property {number} maxSize - Maximum size, in bytes, for the exchanges list. Defaults to 200Mb.
    * @property {boolean} screenshot - Should Mischief try to make a screenshot? Defaults to `true`. Screenshot will be added as `file:///screenshot.png` in the exchanges list.
    * @property {boolean} domSnapshot - Should Mischief save a snapshot of the rendered DOM? Defaults to `true`. Added as `file:///dom-snapshot.html` in the exchanges list.
-   * @property {boolean} pdfSnapshot - Should Mischief save a PDF of the rendered page? Defaults to `false`. Only available in headless mode. Added as `file:///pdf-snapshot.pedf` in the exchanges list.
+   * @property {boolean} pdfSnapshot - Should Mischief save a PDF of the rendered page? Defaults to `false`. Only available in headless mode. Added as `file:///pdf-snapshot.pedf` in the exchanges list. Defaults to `true`.
    * @property {boolean} captureVideoAsAttachment - If `true`, will try to capture the main video that may be present in this page as `file:///video-extracted.mp4`. Will also save associated meta data as `file:///video-extracted-metadata.json`. This capture happens out of the browser. Defaults to `true`.
    * @property {number} captureVideoAsAttachmentTimeout - How long should Mischief wait for `captureVideoAsAttachment` to finish. Defaults to 30s.
    * @property {number} captureWindowX - Browser window resolution in pixels: X axis. Defaults to 1600.
@@ -32,10 +32,10 @@ export class MischiefOptions {
    * @property {boolean} autoPlayMedia - Should Mischief try to autoplay `<audio>` and `<video>` tags? Defaults to `true`.
    * @property {boolean} grabSecondaryResources - Should Mischief try to download img srcsets and secondary stylesheets? Defaults to `true`.
    * @property {boolean} runSiteSpecificBehaviors - Should Mischief run behaviors tailored to specific sites (ex: Twitter) in an attempt to better grab the page? Defaults to `true`.
-   * @property {string} intercepter - Network interception method to be used. Available at the moment: "Proxy".
+   * @property {string} intercepter - Network interception method to be used. Available at the moment: "MischiefProxy".
    * @property {string} userAgentSuffix - String to append to the user agent. Defaults to an empty string. 
-   * @property {boolean} provenanceSummary - If `true`, information about the capture process (public IP address, User Agent, software version ...) will be gathered and summarized under `file:///provenance-summary.html`. WACZ exports will also hold that information at `datapackage.json` level, under `mischief_extra`.
-   * @property {string} publicIpResolverEndpoint - URL to be used to retrieve the client's public IP address. Endpoint requirements: must simply return a IPv4 or IPv6 address as text. Defaults to "https://myip.lil.tools".
+   * @property {boolean} provenanceSummary - If `true`, information about the capture process (public IP address, User Agent, software version ...) will be gathered and summarized under `file:///provenance-summary.html`. WACZ exports will also hold that information at `datapackage.json` level, under `extras`. Defaults to `true`.
+   * @property {string} publicIpResolverEndpoint - URL to be used to retrieve the client's public IP address for `provenanceSummary`. Endpoint requirements: must simply return a IPv4 or IPv6 address as text. Defaults to "https://myip.lil.tools".
    */
   static defaults = {
     verbose: true,
