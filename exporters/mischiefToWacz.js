@@ -60,7 +60,9 @@ export async function mischiefToWacz(capture, includeRaw = false) {
           // if the WARC contains identical body data, remove it from this raw exchange
           // to avoid data bloat and add the digest to the end of the file name for later retrieval
           if(warcPayloadDigests.includes(digest)){
+            // identify the offset where the body begins based on the CRLF delimiter
             const headerBodyCRLF = data.indexOf("\r\n\r\n")+4;
+            // add only the headers along with trailing CRLF
             wacz.files[`${fpath}_${digest}`] = data.subarray(0, headerBodyCRLF);
           }
           else {
