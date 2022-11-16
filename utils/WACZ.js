@@ -319,14 +319,6 @@ const dirEmpty = (files, dir) => {
 }
 
 /**
- * Hashes a buffer to conform to the WACZ spec
- *
- * @param {Buffer} buffer
- * @returns {string} - a sha256 hash prefixed with "sha256:"
- */
-const hash = (buffer) => 'sha256:' + createHash('sha256').update(buffer).digest('hex');
-
-/**
  * Converts an object to a string using standarized spacing
  *
  * @param {any} obj - an JS object
@@ -334,7 +326,15 @@ const hash = (buffer) => 'sha256:' + createHash('sha256').update(buffer).digest(
  */
 const stringify = (obj) => JSON.stringify(obj, null, 2);
 
-// Mischief helpers
+/**
+ * Hashes a buffer to conform to the WACZ spec
+ *
+ * @param {Buffer} buffer
+ * @returns {string} - a sha256 hash prefixed with "sha256:"
+ */
+export function hash(buffer){
+  return 'sha256:' + createHash('sha256').update(buffer).digest('hex');
+}
 
 /**
  * Format a MischiefExchange as needed for
