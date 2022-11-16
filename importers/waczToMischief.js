@@ -1,7 +1,9 @@
 import path from "path";
 import StreamZip from "node-stream-zip";
+import { Readable } from "stream";
 import { Mischief } from "../Mischief.js";
 import { MischiefProxyExchange } from "../exchanges/MischiefProxyExchange.js";
+import { WARCParser } from "warcio";
 
 /**
  * Reconstructs a Mischief capture from a WACZ
@@ -45,18 +47,43 @@ const getPageJSON = async (zip) => {
  * @returns {MischiefProxyExchange[]} - an array of reconstructed MischiefProxyExchanges
  */
 const getExchanges = async (zip) => {
-  const entries = await zip.entries();
+  const entries = Object.values(await zip.entries());
+
+  // warc records will be mapped to their payload digests as keys
+  const warcEntries = {};
+  // we want all of the warcs in the archive directory.
+  // TODO: does the warc parser need any special handling for GZIPed warcs?
+  const archiveEntries = entries.filter(({name}) => name.match(/^archive\//));
+
+  for (const {name} of archiveEntries) {
+    const zipData = await zip.entryData(name);
+    const warc = new WARCParser(Readable.from(zipData));
+    for await (const record of warc) {
+      // while it would be better to read the payload later,
+      // at the point that it's actually matched with a raw entry that needs hydrating,
+      // this breaks the way warcio reads records and results in an emtpy result
+      warcEntries[record.warcHeader('WARC-Payload-Digest')] = await record.readFully(false);
+    }
+  }
+
   const props = await Promise.all(
-    Object.values(entries)
+    entries
     // only entries in the raw folder
       .filter(({name}) => path.dirname(name) == 'raw')
     // get the data from the zip and shape it for exchange initialization
       .map(async ({name}) => {
-        const [type, date, id] = path.basename(name).split('_');
+        const [type, date, id, warcPayloadDigest] = path.basename(name).split('_');
+        const buffers = [await zip.entryData(name)];
+        // if the file name contains a warc payload digest and there's a matching
+        // record from the warc file, append it to the headers
+        if(warcEntries[warcPayloadDigest]) {
+          buffers.push(warcEntries[warcPayloadDigest]);
+        }
+
         return {
           id,
           date: new Date(date),
-          [`${type}Raw`]: await zip.entryData(name)
+          [`${type}Raw`]: Buffer.concat(buffers)
         };
       })
   );
