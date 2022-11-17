@@ -147,3 +147,27 @@ export class MischiefHTTPParser {
     };
   }
 }
+
+
+/**
+ * Locates the beginning of an HTTP response body
+ *
+ * The HTTP spec requires an empty line
+ * with a CRLF (\r\n) before the body starts, but apparently
+ * some poorly configured servers only use LF (\n) so we
+ * look for the first pair we can find.
+ *
+ * Ref: https://stackoverflow.com/a/11254057
+ *
+ * @param {any} buffer -
+ * @returns {integer} -
+ */
+const CRLFx2 = "\r\n\r\n";
+const LFx2 = "\n\n";
+export function bodyStartIndex(buffer) {
+  return [CRLFx2, LFx2].reduce((prevEnd, delimiter) => {
+    const start = buffer.indexOf(delimiter);
+    const end = start + delimiter.length;
+    return (start != -1 && (prevEnd == -1 || end < prevEnd)) ? end : prevEnd;
+  }, -1)
+}

@@ -60,7 +60,7 @@ export async function mischiefToWarc(capture) {
 
       try {
         async function* content() {
-          yield exchange[type].body;
+          yield (exchange[`${type}RawBody`] || exchange[type].body);
         }
 
         const record = WARCRecord.create(

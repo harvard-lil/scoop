@@ -5,6 +5,8 @@
  * @license MIT
  * @description 
 */
+import { bodyStartIndex } from "../parsers/MischiefHTTPParser.js";
+
 import { MischiefExchange } from "./MischiefExchange.js";
 import { MischiefHTTPParser } from "../parsers/index.js";
 
@@ -25,6 +27,14 @@ export class MischiefProxyExchange extends MischiefExchange {
     this._requestRaw = val;
   }
 
+  get requestRawHeaders() {
+    return this.requestRaw.subarray(0, bodyStartIndex(this.requestRaw));
+  }
+
+  get requestRawBody() {
+    return this.requestRaw.subarray(bodyStartIndex(this.requestRaw));
+  }
+
   /** @type {?Buffer} */
   _responseRaw;
 
@@ -35,6 +45,14 @@ export class MischiefProxyExchange extends MischiefExchange {
   set responseRaw(val) {
     this._response = null;
     this._responseRaw = val;
+  }
+
+  get responseRawHeaders() {
+    return this.responseRaw.subarray(0, bodyStartIndex(this.responseRaw));
+  }
+
+  get responseRawBody() {
+    return this.responseRaw.subarray(bodyStartIndex(this.responseRaw));
   }
 
   get request() {
