@@ -23,6 +23,7 @@ import CONSTANTS from "./constants.js";
 
 import * as intercepters from "./intercepters/index.js";
 import * as exporters from "./exporters/index.js";
+import * as importers from "./importers/index.js";
 
 /**
  * Path to "tmp" folder. 
@@ -795,5 +796,9 @@ export class Mischief {
    */
   async toWacz(includeRaw=true) {
     return await exporters.mischiefToWacz(this, includeRaw);
+  }
+
+  static async fromWacz(zipPath) {
+    return await importers.waczToMischief(zipPath);
   }
 }
