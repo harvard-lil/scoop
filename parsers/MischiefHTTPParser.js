@@ -159,7 +159,7 @@ export class MischiefHTTPParser {
  *
  * Ref: https://stackoverflow.com/a/11254057
  *
- * @param {any} buffer -
+ * @param {Buffer} buffer -
  * @returns {integer} -
  */
 const CRLFx2 = "\r\n\r\n";
@@ -170,4 +170,15 @@ export function bodyStartIndex(buffer) {
     const end = start + delimiter.length;
     return (start != -1 && (prevEnd == -1 || end < prevEnd)) ? end : prevEnd;
   }, -1)
+}
+
+
+/**
+ * Extracts the protocol version from an HTTP status line
+ *
+ * @param {string} statusLine -
+ * @returns {array} -
+ */
+export function versionFromStatusLine(statusLine) {
+  return statusLine.match(/\/([\d\.]+) /)[1].split('.').map(parseInt);
 }

@@ -72,6 +72,9 @@ export async function mischiefToWarc(capture) {
             statusline: prepareExchangeStatusLine(exchange, type),
             httpHeaders: exchange[type].headers,
             keepHeadersCase: false,
+            warcHeaders: exchange.description ? {
+              description: exchange.description
+            } : {}
           },
           content()
         );
