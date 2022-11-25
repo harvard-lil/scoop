@@ -16,7 +16,7 @@ const myArchive = await myCapture.toWarc();
 ---
 
 ## Local setup
-- Requires [Node 18+](https://nodejs.org/en/) and [Python 3](https://www.python.org/). 
+- Requires [Node 18.9.0+](https://nodejs.org/en/) and [Python 3](https://www.python.org/). 
 - At the moment `Mischief` can only operate in Unix-like environment _(Linux, Mac OS, Windows' WSL ...)_
 - Install dependencies: `npm install`
 - Get started by having a look and running `example.js`
