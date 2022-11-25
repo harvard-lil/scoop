@@ -5,16 +5,18 @@
  * @license MIT
  */
 import { v4 as uuidv4 } from "uuid";
-import fs from "fs";
+import { readFile, writeFile, rm, readdir } from "fs/promises";
 import os from "os";
-import { spawnSync } from "child_process";
+import util from 'util';
+import { exec as execCB } from "child_process";
+const exec = util.promisify(execCB);
 
 import { chromium } from "playwright";
 import nunjucks from "nunjucks";
 import ipAddressValidator from "ip-address-validator";
 import { getOSInfo } from "get-os-info";
 
-import { MischiefExchange, MischiefGeneratedExchange } from "./exchanges/index.js";
+import { MischiefGeneratedExchange } from "./exchanges/index.js";
 import { MischiefLog } from "./MischiefLog.js";
 import { MischiefOptions } from "./MischiefOptions.js";
 import CONSTANTS from "./constants.js";
@@ -408,12 +410,7 @@ export class Mischief {
     // yt-dlp health check
     //
     try {
-      const result = spawnSync(dlpExecutable, ["--version"], {encoding: "utf8"});
-
-      if (result.status !== 0) {
-        throw new Error(result.stderr);
-      }
-
+      const result = await exec(`${dlpExecutable} --version`);
       const version = result.stdout.trim();
 
       if (!version.match(/^[0-9]{4}\.[0-9]{2}\.[0-9]{2}$/)) {
@@ -442,10 +439,9 @@ export class Mischief {
 
       const spawnOptions = {
         timeout: this.options.captureVideoAsAttachmentTimeout,
-        encoding: "utf8",
       };
 
-      const result = spawnSync(dlpExecutable, dlpOptions, spawnOptions);
+      const result = await exec(`${dlpExecutable} ${dlpOptions.join(' ')}`, spawnOptions);
 
       if (result.status !== 0) {
         throw new Error(result.stderr);
@@ -453,7 +449,7 @@ export class Mischief {
 
       metadataRaw = result.stdout;
     }
-    catch(err) {
+    catch(_err) {
       throw new Error(`No video found in ${this.url}.`); 
     }
 
@@ -463,7 +459,7 @@ export class Mischief {
     try {
       const url = "file:///video-extracted.mp4";
       const httpHeaders = { "Content-Type": "video/mp4" };
-      const body = fs.readFileSync(videoFilename);
+      const body = await readFile(videoFilename);
       const isEntryPoint = false; // TODO: Reconsider whether this should be an entry point.
 
       this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint);
@@ -474,9 +470,7 @@ export class Mischief {
     }
     // Clean up .mp4 file for this capture.
     finally {
-      if (fs.existsSync(videoFilename)) {
-        fs.unlinkSync(videoFilename);
-      }
+      await rm(videoFilename, {force: true});
     }
 
     //
@@ -501,7 +495,7 @@ export class Mischief {
     // Pull subtitles, if any.
     //
     try {
-      for (let file of fs.readdirSync(TMP_DIR)) {
+      for (const file of await readdir(TMP_DIR)) {
 
         if (!file.startsWith(id)) {
           continue;
@@ -524,7 +518,7 @@ export class Mischief {
         const httpHeaders = { 
           "Content-Type": subtitlesFormat === "vtt" ? "text/vtt" : "text/plain"
         };
-        const body = fs.readFileSync(`${TMP_DIR}${file}`);
+        const body = await readFile(`${TMP_DIR}${file}`);
         const isEntryPoint = false;
 
         this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint);
@@ -540,9 +534,9 @@ export class Mischief {
     //
     // Clean up files generated for this capture.
     //
-    for (let file of fs.readdirSync(TMP_DIR)) {
+    for (const file of await readdir(TMP_DIR)) {
       if (file.startsWith(id)) {
-        fs.unlinkSync(`${TMP_DIR}${file}`);
+        await rm(`${TMP_DIR}${file}`);
       }
     }
 
@@ -606,9 +600,10 @@ export class Mischief {
 
     // Try to apply compression if Ghostscript is available
     try {
-      fs.writeFileSync(tmpFilenameIn, pdf);
+      await writeFile(tmpFilenameIn, pdf);
 
-      spawnSync("gs", [
+      await exec([
+        "gs",
         "-sDEVICE=pdfwrite",
         "-dNOPAUSE",
         "-dBATCH",
@@ -616,16 +611,16 @@ export class Mischief {
         "-r150",
         `-sOutputFile=${tmpFilenameOut}`,
         `${tmpFilenameIn}`,
-      ]);
+      ].join(' '));
 
-      pdf = fs.readFileSync(tmpFilenameOut);
+      pdf = await readFile(tmpFilenameOut);
     }
     catch(err) {
-      this.addToLogs("gs command (Ghostscript) is not available. The PDF Snapshot will be stored uncompressed.", true, err);
+      this.addToLogs("gs command (Ghostscript) is not available or failed. The PDF Snapshot will be stored uncompressed.", true, err);
     }
     finally {
-      fs.unlink(tmpFilenameIn, () => {});
-      fs.unlink(tmpFilenameOut, () => {});
+      await rm(tmpFilenameIn, {force: true});
+      await rm(tmpFilenameOut, {force: true});
     }
 
     const url = "file:///pdf-snapshot.pdf";
