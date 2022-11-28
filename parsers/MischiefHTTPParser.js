@@ -180,5 +180,5 @@ export function bodyStartIndex(buffer) {
  * @returns {array} -
  */
 export function versionFromStatusLine(statusLine) {
-  return statusLine.match(/\/([\d\.]+) /)[1].split('.').map(parseInt);
+  return statusLine.match(/\/([\d\.]+)/)[1].split('.').map(n => parseInt(n));
 }
