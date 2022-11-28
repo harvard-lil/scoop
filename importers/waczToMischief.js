@@ -16,12 +16,14 @@ import { versionFromStatusLine } from "../parsers/MischiefHTTPParser.js"
  */
 export async function waczToMischief(zipPath) {
   const zip = new StreamZip.async({ file: zipPath });
-  const pageJSON = await getPageJSON(zip);
+  const pageJSON = await getPagesJSON(zip);
+  const datapackage = await getDataPackage(zip);
 
-  const capture = new Mischief(pageJSON.url);
+  const capture = new Mischief(pageJSON.url, datapackage.extras?.provenanceInfo?.mischiefOptions);
   Object.assign(capture, {
     id: pageJSON.id,
     startedAt: new Date(pageJSON.ts),
+    provenanceInfo: datapackage.extras?.provenanceInfo,
     exchanges: await getExchanges(zip)
   })
 
@@ -35,9 +37,19 @@ export async function waczToMischief(zipPath) {
  * @param {StreamZipAsync} zip
  * @returns {object[]} - an array of page entry objects
  */
-const getPageJSON = async (zip) => {
+const getPagesJSON = async (zip) => {
   const data = await zip.entryData('pages/pages.jsonl');
   return data.toString().split('\n').map(JSON.parse)[1];
+}
+
+/**
+ * Retrieves the datapackage.json data from the WARC and parses it
+ *
+ * @param {StreamZipAsync} zip
+ * @returns {object} -
+ */
+const getDataPackage = async (zip) => {
+  return JSON.parse(await zip.entryData('datapackage.json'));
 }
 
 
@@ -50,6 +62,8 @@ const getPageJSON = async (zip) => {
  */
 const getExchanges = async (zip) => {
   const exchanges = [];
+  const generatedExchanges = [];
+
   const zipEntries = await zip.entries();
   const zipDirs = Object.keys(zipEntries).reduce((acc, name) => {
     const dir = path.dirname(name);
@@ -81,7 +95,7 @@ const getExchanges = async (zip) => {
         const [versionMajor, versionMinor] = versionFromStatusLine(record.httpHeaders.statusline);
         const {status, statusText, headers} = record.getResponseInfo()
 
-        exchanges.push(new MischiefGeneratedExchange({
+        generatedExchanges.push(new MischiefGeneratedExchange({
           id: record.warcHeaders.headers.get('exchange-id'),
           date: new Date(record.warcHeaders.headers.get('WARC-Date')),
           description: record.warcHeaders.headers.get('description'),
@@ -131,5 +145,5 @@ const getExchanges = async (zip) => {
     }
   }
 
-  return exchanges;
+  return [...exchanges, ...generatedExchanges];
 }
