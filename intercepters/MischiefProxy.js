@@ -63,6 +63,7 @@ export class MischiefProxy extends MischiefIntercepter {
     const ex = this.getOrInitExchange(session._id, type);
     const prop = `${type}Raw`; // `responseRaw` | `requestRaw`
     ex[prop] = ex[prop] ? Buffer.concat([ex[prop], data], ex[prop].length + data.length) : data;
+
     this.byteLength += data.byteLength;
     this.checkAndEnforceSizeLimit(); // From parent
     return data;

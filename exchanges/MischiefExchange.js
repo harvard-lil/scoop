@@ -19,6 +19,9 @@ export class MischiefExchange {
   /** @type {Date} */
   date = new Date();
 
+  /** @type {boolean} */
+  isEntryPoint = false;
+
   /** @type {?string} */
   connectionId;
 

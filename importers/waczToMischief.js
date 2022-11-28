@@ -17,14 +17,12 @@ import { versionFromStatusLine } from "../parsers/MischiefHTTPParser.js"
 export async function waczToMischief(zipPath) {
   const zip = new StreamZip.async({ file: zipPath });
   const pageJSON = await getPageJSON(zip);
-  const {exchanges, generatedExchanges} = await getExchanges(zip);
 
   const capture = new Mischief(pageJSON.url);
   Object.assign(capture, {
     id: pageJSON.id,
     startedAt: new Date(pageJSON.ts),
-    exchanges,
-    generatedExchanges
+    exchanges: await getExchanges(zip)
   })
 
   await zip.close();
@@ -51,6 +49,7 @@ const getPageJSON = async (zip) => {
  * @returns {MischiefProxyExchange[]} - an array of reconstructed MischiefProxyExchanges
  */
 const getExchanges = async (zip) => {
+  const exchanges = [];
   const zipEntries = await zip.entries();
   const zipDirs = Object.keys(zipEntries).reduce((acc, name) => {
     const dir = path.dirname(name);
@@ -60,7 +59,6 @@ const getExchanges = async (zip) => {
   }, {})
 
   const warcEntriesByDigest = {};
-  const generatedExchanges = {};
   const rawPayloadDigests = zipDirs.raw.map(name => path.basename(name).split('_')[3])
                                        .filter(digest => digest)
 
@@ -82,7 +80,10 @@ const getExchanges = async (zip) => {
       if(url && (new URL(url)).protocol == 'file:') {
         const [versionMajor, versionMinor] = versionFromStatusLine(record.httpHeaders.statusline);
         const {status, statusText, headers} = record.getResponseInfo()
-        generatedExchanges[url] = new MischiefGeneratedExchange({
+
+        exchanges.push(new MischiefGeneratedExchange({
+          id: record.warcHeaders.headers.get('exchange-id'),
+          date: new Date(record.warcHeaders.headers.get('WARC-Date')),
           description: record.warcHeaders.headers.get('description'),
           response: {
             url,
@@ -93,14 +94,14 @@ const getExchanges = async (zip) => {
             statusMessage: statusText,
             body: await record.readFully(false),
           },
-        });
+        }));
       }
     }
   }
 
-  const regExchangeProps = await Promise.all(
+  let rawProps = await Promise.all(
     zipDirs.raw
-    // get the data from the zip and shape it for exchange initialization
+      // get the data from the zip and shape it for exchange initialization
       .map(async (name) => {
         const [type, date, id, warcPayloadDigest] = path.basename(name).split('_');
         const buffers = [await zip.entryData(name)];
@@ -118,19 +119,17 @@ const getExchanges = async (zip) => {
       })
   );
 
-  const exchanges =
-        // sort based on id to order responses next to their requests
-        regExchangeProps.sort(({id}, {id: id2}) => id.localeCompare(id2))
-        // combine requests and responses
-        .reduce((accumulator, curr) => {
-          const prev = accumulator[accumulator.length - 1];
-          if(prev && prev.id == curr.id){
-            Object.assign(prev, curr);
-          } else {
-            accumulator.push(new MischiefProxyExchange(curr));
-          }
-          return accumulator;
-        }, [])
+  // sort based on id to order responses next to their requests
+  rawProps = rawProps.sort(({id}, {id: id2}) => id.localeCompare(id2));
 
-  return {exchanges, generatedExchanges};
+  for (const props of rawProps) {
+    const prev = exchanges[exchanges.length - 1];
+    if(prev && prev.id == props.id){
+      Object.assign(prev, props);
+    } else {
+      exchanges.push(new MischiefProxyExchange(props));
+    }
+  }
+
+  return exchanges;
 }

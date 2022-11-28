@@ -12,9 +12,6 @@ export class MischiefGeneratedExchange extends MischiefExchange {
   /** @type {?string} */
   description;
 
-  /** @type {boolean} */
-  isEntryPoint = false;
-
   /**
    * @param {object} props - Object containing any of the properties of `this`.
    */

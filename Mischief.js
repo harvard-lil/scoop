@@ -93,16 +93,6 @@ export class Mischief {
    */
   exchanges = [];
 
-  /**
-   * Keeps track of exchanges that were generated during capture.
-   * Example: `file:///screenshot.png` for the full-page screenshot.
-   * 
-   * Indexed by url
-   * 
-   * @type {Object.<string, MischiefGeneratedExchange>}
-   */
-  generatedExchanges = {};
-
   /** @type {MischiefLog[]} */
   logs = [];
 
@@ -701,7 +691,7 @@ export class Mischief {
   }
 
   /**
-   * Generates a MischiefGeneratedExchange for generated content and adds it to `exchanges` and `generatedExchanges` unless time limit was reached.
+   * Generates a MischiefGeneratedExchange for generated content and adds it to `exchanges` unless time limit was reached.
    * @param {string} url 
    * @param {object} httpHeaders 
    * @param {Buffer} body 
@@ -710,39 +700,30 @@ export class Mischief {
    * @returns 
    */
   async addGeneratedExchange(url, httpHeaders, body, isEntryPoint = false, description = "") {
-    let canBeAdded = true;
-    let remainingSpace = this.options.maxSize - this.intercepter.byteLength;
+    const remainingSpace = this.options.maxSize - this.intercepter.byteLength;
 
-    if(this.state != Mischief.states.CAPTURE) {
-      canBeAdded = false;
-    }
-
-    if (body.byteLength >= remainingSpace) {
-      canBeAdded = false;
-    }
-
-    if (canBeAdded === false) {
+    if (this.state != Mischief.states.CAPTURE ||
+        body.byteLength >= remainingSpace) {
       this.state = Mischief.states.PARTIAL;
       this.addToLogs(`Generated exchange ${url} could not be saved (size limit reached).`);
       return;
     }
 
-    const exchange = new MischiefGeneratedExchange({
-      description: description,
-      isEntryPoint: Boolean(isEntryPoint),
-      response: {
-        url: url,
-        headers: httpHeaders,
-        versionMajor: 1,
-        versionMinor: 1,
-        statusCode: 200,
-        statusMessage: "OK",
-        body: body,
-      },
-    });
-
-    this.exchanges.push(exchange);
-    this.generatedExchanges[url] = exchange;
+    this.exchanges.push(
+      new MischiefGeneratedExchange({
+        description: description,
+        isEntryPoint: Boolean(isEntryPoint),
+        response: {
+          url: url,
+          headers: httpHeaders,
+          versionMajor: 1,
+          versionMinor: 1,
+          statusCode: 200,
+          statusMessage: "OK",
+          body: body,
+        },
+      })
+    );
   }
 
   /**

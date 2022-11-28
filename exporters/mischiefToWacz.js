@@ -72,19 +72,10 @@ export async function mischiefToWacz(capture, includeRaw = false) {
   }
 
   // Generate entry points (exchanges added to `pages.jsonl`).
-  let entryPoints = [];
-
-  if (capture.exchanges.length > 0) {
-    entryPoints.push(capture.exchanges[0]); // the first exchange is our entrypoint url for the entire crawl
-  }
-
-  for (let exchange of Object.values(capture.generatedExchanges)) {
-    if (exchange?.isEntryPoint && exchange.isEntryPoint === true) {
-      entryPoints.push(exchange);
-    }
-  }
-
-  wacz.pages = entryPoints.map(mischiefExchangeToPageLine)
+  const firstExchange = capture.exchanges[0]
+  wacz.pages = capture.exchanges
+                      .filter((ex) => ex === firstExchange || ex.isEntryPoint)
+                      .map(mischiefExchangeToPageLine);
 
   return await wacz.finalize();
 }
