@@ -115,7 +115,7 @@ export class Mischief {
   intercepter;
 
   /**
-   * Will only be populated is `options.provenanceSummary` is `true`.
+   * Will only be populated if `options.provenanceSummary` is `true`.
    * @type {object}
    */
   provenanceInfo = {};
