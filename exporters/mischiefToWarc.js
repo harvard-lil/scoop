@@ -60,7 +60,15 @@ export async function mischiefToWarc(capture) {
 
       try {
         async function* content() {
-          yield exchange[type].body;
+          yield (exchange[`${type}RawBody`] || exchange[type].body);
+        }
+
+        const warcHeaders = {
+          "exchange-id": exchange.id
+        }
+
+        if(exchange.description) {
+          warcHeaders.description = exchange.description
         }
 
         const record = WARCRecord.create(
@@ -72,6 +80,7 @@ export async function mischiefToWarc(capture) {
             statusline: prepareExchangeStatusLine(exchange, type),
             httpHeaders: exchange[type].headers,
             keepHeadersCase: false,
+            warcHeaders
           },
           content()
         );

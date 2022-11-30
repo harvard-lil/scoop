@@ -1,7 +1,11 @@
 import path from "path";
+import { URL } from "url";
 import StreamZip from "node-stream-zip";
+import { Readable } from "stream";
 import { Mischief } from "../Mischief.js";
-import { MischiefProxyExchange } from "../exchanges/MischiefProxyExchange.js";
+import { MischiefProxyExchange, MischiefGeneratedExchange } from "../exchanges/index.js";
+import { WARCParser } from "warcio";
+import { versionFromStatusLine } from "../parsers/MischiefHTTPParser.js"
 
 /**
  * Reconstructs a Mischief capture from a WACZ
@@ -12,12 +16,14 @@ import { MischiefProxyExchange } from "../exchanges/MischiefProxyExchange.js";
  */
 export async function waczToMischief(zipPath) {
   const zip = new StreamZip.async({ file: zipPath });
-  const pageJSON = await getPageJSON(zip);
+  const pageJSON = await getPagesJSON(zip);
+  const datapackage = await getDataPackage(zip);
 
-  const capture = new Mischief(pageJSON.url);
+  const capture = new Mischief(pageJSON.url, datapackage.extras?.provenanceInfo?.mischiefOptions);
   Object.assign(capture, {
     id: pageJSON.id,
     startedAt: new Date(pageJSON.ts),
+    provenanceInfo: datapackage.extras?.provenanceInfo,
     exchanges: await getExchanges(zip)
   })
 
@@ -31,9 +37,19 @@ export async function waczToMischief(zipPath) {
  * @param {StreamZipAsync} zip
  * @returns {object[]} - an array of page entry objects
  */
-const getPageJSON = async (zip) => {
+const getPagesJSON = async (zip) => {
   const data = await zip.entryData('pages/pages.jsonl');
   return data.toString().split('\n').map(JSON.parse)[1];
+}
+
+/**
+ * Retrieves the datapackage.json data from the WARC and parses it
+ *
+ * @param {StreamZipAsync} zip
+ * @returns {object} -
+ */
+const getDataPackage = async (zip) => {
+  return JSON.parse(await zip.entryData('datapackage.json'));
 }
 
 
@@ -45,35 +61,89 @@ const getPageJSON = async (zip) => {
  * @returns {MischiefProxyExchange[]} - an array of reconstructed MischiefProxyExchanges
  */
 const getExchanges = async (zip) => {
-  const entries = await zip.entries();
-  const props = await Promise.all(
-    Object.values(entries)
-    // only entries in the raw folder
-      .filter(({name}) => path.dirname(name) == 'raw')
-    // get the data from the zip and shape it for exchange initialization
-      .map(async ({name}) => {
-        const [type, date, id] = path.basename(name).split('_');
+  const exchanges = [];
+  const generatedExchanges = [];
+
+  const zipEntries = await zip.entries();
+  const zipDirs = Object.keys(zipEntries).reduce((acc, name) => {
+    const dir = path.dirname(name);
+    acc[dir] ||= []
+    acc[dir].push(name)
+    return acc;
+  }, {})
+
+  const warcEntriesByDigest = {};
+  const rawPayloadDigests = zipDirs.raw.map(name => path.basename(name).split('_')[3])
+                                       .filter(digest => digest)
+
+
+  // TODO: does the warc parser need any special handling for GZIPed warcs?
+  for (const name of zipDirs.archive) {
+    const zipData = await zip.entryData(name);
+    const warc = new WARCParser(Readable.from(zipData));
+
+    for await (const record of warc) {
+      // get data for rehydrating regular exchanges
+      const digest = record.warcHeader('WARC-Payload-Digest')
+      if(rawPayloadDigests.includes(digest)){
+        warcEntriesByDigest[digest] = await record.readFully(false);
+      }
+
+      // get data for rehydrating generated exchanges
+      const url = record.warcHeader('WARC-Target-URI');
+      if(url && (new URL(url)).protocol == 'file:') {
+        const [versionMajor, versionMinor] = versionFromStatusLine(record.httpHeaders.statusline);
+        const {status, statusText, headers} = record.getResponseInfo()
+
+        generatedExchanges.push(new MischiefGeneratedExchange({
+          id: record.warcHeaders.headers.get('exchange-id'),
+          date: new Date(record.warcHeaders.headers.get('WARC-Date')),
+          description: record.warcHeaders.headers.get('description'),
+          response: {
+            url,
+            versionMajor,
+            versionMinor,
+            headers: Object.fromEntries(headers),
+            statusCode: status,
+            statusMessage: statusText,
+            body: await record.readFully(false),
+          },
+        }));
+      }
+    }
+  }
+
+  let rawProps = await Promise.all(
+    zipDirs.raw
+      // get the data from the zip and shape it for exchange initialization
+      .map(async (name) => {
+        const [type, date, id, warcPayloadDigest] = path.basename(name).split('_');
+        const buffers = [await zip.entryData(name)];
+        // if the file name contains a warc payload digest and there's a matching
+        // record from the warc file, append it to the headers
+        if(warcEntriesByDigest[warcPayloadDigest]) {
+          buffers.push(warcEntriesByDigest[warcPayloadDigest]);
+        }
+
         return {
           id,
           date: new Date(date),
-          [`${type}Raw`]: await zip.entryData(name)
+          [`${type}Raw`]: Buffer.concat(buffers)
         };
       })
   );
 
-  const exchanges =
-        // sort based on id to order responses next to their requests
-        props.sort(({id}, {id: id2}) => id.localeCompare(id2))
-        // combine requests and responses
-        .reduce((accumulator, curr) => {
-          const prev = accumulator[accumulator.length - 1];
-          if(prev && prev.id == curr.id){
-            Object.assign(prev, curr);
-          } else {
-            accumulator.push(new MischiefProxyExchange(curr));
-          }
-          return accumulator;
-        }, [])
+  // sort based on id to order responses next to their requests
+  rawProps = rawProps.sort(({id}, {id: id2}) => id.localeCompare(id2));
 
-  return exchanges;
+  for (const props of rawProps) {
+    const prev = exchanges[exchanges.length - 1];
+    if(prev && prev.id == props.id){
+      Object.assign(prev, props);
+    } else {
+      exchanges.push(new MischiefProxyExchange(props));
+    }
+  }
+
+  return [...exchanges, ...generatedExchanges];
 }

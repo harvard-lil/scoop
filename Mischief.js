@@ -23,6 +23,7 @@ import CONSTANTS from "./constants.js";
 
 import * as intercepters from "./intercepters/index.js";
 import * as exporters from "./exporters/index.js";
+import * as importers from "./importers/index.js";
 
 /**
  * Path to "tmp" folder. 
@@ -92,16 +93,6 @@ export class Mischief {
    */
   exchanges = [];
 
-  /**
-   * Keeps track of exchanges that were generated during capture.
-   * Example: `file:///screenshot.png` for the full-page screenshot.
-   * 
-   * Indexed by url
-   * 
-   * @type {Object.<string, MischiefGeneratedExchange>}
-   */
-  generatedExchanges = {};
-
   /** @type {MischiefLog[]} */
   logs = [];
 
@@ -124,7 +115,7 @@ export class Mischief {
   intercepter;
 
   /**
-   * Will only be populated is `options.provenanceSummary` is `true`.
+   * Will only be populated if `options.provenanceSummary` is `true`.
    * @type {object}
    */
   provenanceInfo = {};
@@ -216,7 +207,7 @@ export class Mischief {
         name: "screenshot",
         main: async (page) => {
           const url = "file:///screenshot.png";
-          const httpHeaders = { "Content-Type": "image/png" };
+          const httpHeaders = { "content-type": "image/png" };
           const body = await page.screenshot({ fullPage: true });
           const isEntryPoint = true;
           const description = `Capture Time Screenshot of ${this.url}`;
@@ -232,8 +223,8 @@ export class Mischief {
         main: async (page) => {
           const url = "file:///dom-snapshot.html";
           const httpHeaders = {
-            "Content-Type": "text/html",
-            "Content-Disposition": "Attachment",
+            "content-type": "text/html",
+            "content-disposition": "Attachment",
           };
           const body = Buffer.from(await page.content());
           const isEntryPoint = true;
@@ -458,7 +449,7 @@ export class Mischief {
     //
     try {
       const url = "file:///video-extracted.mp4";
-      const httpHeaders = { "Content-Type": "video/mp4" };
+      const httpHeaders = { "content-type": "video/mp4" };
       const body = await readFile(videoFilename);
       const isEntryPoint = false; // TODO: Reconsider whether this should be an entry point.
 
@@ -480,7 +471,7 @@ export class Mischief {
       metadataParsed = JSON.parse(metadataRaw); // May throw
 
       const url = "file:///video-extracted-metadata.json";
-      const httpHeaders = { "Content-Type": "application/json" };
+      const httpHeaders = { "content-type": "application/json" };
       const body = Buffer.from(JSON.stringify(metadataParsed, null, 2));
       const isEntryPoint = false;
 
@@ -516,7 +507,7 @@ export class Mischief {
 
         const url = `file:///video-extracted-subtitles-${locale}.${subtitlesFormat}`;
         const httpHeaders = { 
-          "Content-Type": subtitlesFormat === "vtt" ? "text/vtt" : "text/plain"
+          "content-type": subtitlesFormat === "vtt" ? "text/vtt" : "text/plain"
         };
         const body = await readFile(`${TMP_DIR}${file}`);
         const isEntryPoint = false;
@@ -556,7 +547,7 @@ export class Mischief {
       });
 
       const url = `file:///video-extracted-summary.html`;
-      const httpHeaders = { "Content-Type": "text/html" };
+      const httpHeaders = { "content-type": "text/html" };
       const body = Buffer.from(html);
       const isEntryPoint = true;
       const description = `Extracted Video from: ${this.url}`;
@@ -624,7 +615,7 @@ export class Mischief {
     }
 
     const url = "file:///pdf-snapshot.pdf";
-    const httpHeaders = {"Content-Type": "application/pdf"};
+    const httpHeaders = {"content-type": "application/pdf"};
     const body = pdf;
     const isEntryPoint = true;
     const description = `Capture Time PDF Snapshot of ${this.url}`;
@@ -687,7 +678,7 @@ export class Mischief {
       });
 
       const url = `file:///provenance-summary.html`;
-      const httpHeaders = { "Content-Type": "text/html" };
+      const httpHeaders = { "content-type": "text/html" };
       const body = Buffer.from(html);
       const isEntryPoint = true;
       const description = `Provenance Summary`;
@@ -700,7 +691,7 @@ export class Mischief {
   }
 
   /**
-   * Generates a MischiefGeneratedExchange for generated content and adds it to `exchanges` and `generatedExchanges` unless time limit was reached.
+   * Generates a MischiefGeneratedExchange for generated content and adds it to `exchanges` unless time limit was reached.
    * @param {string} url 
    * @param {object} httpHeaders 
    * @param {Buffer} body 
@@ -709,39 +700,30 @@ export class Mischief {
    * @returns 
    */
   async addGeneratedExchange(url, httpHeaders, body, isEntryPoint = false, description = "") {
-    let canBeAdded = true;
-    let remainingSpace = this.options.maxSize - this.intercepter.byteLength;
+    const remainingSpace = this.options.maxSize - this.intercepter.byteLength;
 
-    if(this.state != Mischief.states.CAPTURE) {
-      canBeAdded = false;
-    }
-
-    if (body.byteLength >= remainingSpace) {
-      canBeAdded = false;
-    }
-
-    if (canBeAdded === false) {
+    if (this.state != Mischief.states.CAPTURE ||
+        body.byteLength >= remainingSpace) {
       this.state = Mischief.states.PARTIAL;
       this.addToLogs(`Generated exchange ${url} could not be saved (size limit reached).`);
       return;
     }
 
-    const exchange = new MischiefGeneratedExchange({
-      description: description,
-      isEntryPoint: Boolean(isEntryPoint),
-      response: {
-        url: url,
-        headers: httpHeaders,
-        versionMajor: 1,
-        versionMinor: 1,
-        statusCode: 200,
-        statusMessage: "OK",
-        body: body,
-      },
-    });
-
-    this.exchanges.push(exchange);
-    this.generatedExchanges[url] = exchange;
+    this.exchanges.push(
+      new MischiefGeneratedExchange({
+        description: description,
+        isEntryPoint: Boolean(isEntryPoint),
+        response: {
+          url: url,
+          headers: httpHeaders,
+          versionMajor: 1,
+          versionMinor: 1,
+          statusCode: 200,
+          statusMessage: "OK",
+          body: body,
+        },
+      })
+    );
   }
 
   /**
@@ -795,5 +777,9 @@ export class Mischief {
    */
   async toWacz(includeRaw=true) {
     return await exporters.mischiefToWacz(this, includeRaw);
+  }
+
+  static async fromWacz(zipPath) {
+    return await importers.waczToMischief(zipPath);
   }
 }
