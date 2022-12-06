@@ -8,3 +8,4 @@ examples/
 __*.js
 *.mp4
 executables/
+tmp/
