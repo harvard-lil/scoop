@@ -26,6 +26,7 @@ export class MischiefOptions {
    * @property {boolean} pdfSnapshot - Should Mischief save a PDF of the rendered page? Defaults to `false`. Only available in headless mode. Added as `file:///pdf-snapshot.pedf` in the exchanges list. Defaults to `true`.
    * @property {boolean} captureVideoAsAttachment - If `true`, will try to capture the main video that may be present in this page as `file:///video-extracted.mp4`. Will also save associated meta data as `file:///video-extracted-metadata.json`. This capture happens out of the browser. Defaults to `true`.
    * @property {number} captureVideoAsAttachmentTimeout - How long should Mischief wait for `captureVideoAsAttachment` to finish. Defaults to 30s.
+   * @property {string} ytDlpPath - Path to the yt-dlp executable to be used. Defaults to `./executables`.
    * @property {number} captureWindowX - Browser window resolution in pixels: X axis. Defaults to 1600.
    * @property {number} captureWindowY - Browser window resolution in pixels: Y axis. Defaults to 900.
    * @property {boolean} autoScroll - Should Mischief try to scroll through the page? Defaults to `true`.
@@ -54,6 +55,7 @@ export class MischiefOptions {
     pdfSnapshot: true,
     captureVideoAsAttachment: true,
     captureVideoAsAttachmentTimeout: 30 * 1000,
+    ytDlpPath: `${process.env.PWD}/executables/yt-dlp`,
     captureWindowX: 1600,
     captureWindowY: 900,
     autoScroll: true,
