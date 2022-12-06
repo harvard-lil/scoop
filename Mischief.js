@@ -386,7 +386,7 @@ export class Mischief {
   async #captureVideoAsAttachment() {
     const id = this.id;
     const videoFilename = `${TMP_DIR}${id}.mp4`;
-    const dlpExecutable = `./node_modules/yt-dlp/yt-dlp`;
+    const ytDlpPath = this.options.ytDlpPath;
 
     let metadataRaw = null;
     let metadataParsed = null;
@@ -401,7 +401,7 @@ export class Mischief {
     // yt-dlp health check
     //
     try {
-      const result = await exec(`${dlpExecutable} --version`);
+      const result = await exec(`${ytDlpPath} --version`);
       const version = result.stdout.trim();
 
       if (!version.match(/^[0-9]{4}\.[0-9]{2}\.[0-9]{2}$/)) {
@@ -432,12 +432,7 @@ export class Mischief {
         timeout: this.options.captureVideoAsAttachmentTimeout,
       };
 
-      const result = await exec(`${dlpExecutable} ${dlpOptions.join(' ')}`, spawnOptions);
-
-      if (result.status !== 0) {
-        throw new Error(result.stderr);
-      }
-
+      const result = await exec(`${ytDlpPath} ${dlpOptions.join(' ')}`, spawnOptions);
       metadataRaw = result.stdout;
     }
     catch(_err) {
