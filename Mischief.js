@@ -433,15 +433,9 @@ export class Mischief {
       };
 
       const result = await exec(`${ytDlpPath} ${dlpOptions.join(' ')}`, spawnOptions);
-
-      if (result.stderr !== "") {
-        throw new Error(result.stderr);
-      }
-
       metadataRaw = result.stdout;
     }
     catch(_err) {
-      console.log(_err);
       throw new Error(`No video found in ${this.url}.`); 
     }
 
