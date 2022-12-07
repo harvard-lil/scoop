@@ -37,6 +37,7 @@ export class MischiefOptions {
    * @property {string} userAgentSuffix - String to append to the user agent. Defaults to an empty string. 
    * @property {boolean} provenanceSummary - If `true`, information about the capture process (public IP address, User Agent, software version ...) will be gathered and summarized under `file:///provenance-summary.html`. WACZ exports will also hold that information at `datapackage.json` level, under `extras`. Defaults to `true`.
    * @property {string} publicIpResolverEndpoint - URL to be used to retrieve the client's public IP address for `provenanceSummary`. Endpoint requirements: must simply return a IPv4 or IPv6 address as text. Defaults to "https://myip.lil.tools".
+   * @property {string} tmpFolderPath - Path to the temporary folder Mischief uses. Defaults to `./tmp`.
    */
   static defaults = {
     verbose: true,
@@ -65,7 +66,8 @@ export class MischiefOptions {
     intercepter: "MischiefProxy",
     userAgentSuffix: "",
     provenanceSummary: true,
-    publicIpResolverEndpoint: "https://myip.lil.tools"
+    publicIpResolverEndpoint: "https://myip.lil.tools",
+    tmpFolderPath: `${process.env.PWD}/tmp/`,
   };
 
   /**
