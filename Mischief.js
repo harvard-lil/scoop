@@ -6,6 +6,7 @@
  */
 import { v4 as uuidv4 } from "uuid";
 import { readFile, writeFile, rm, readdir, mkdir, mkdtemp, access } from "fs/promises";
+import { constants as fsConstants } from 'node:fs';
 import os from "os";
 import util from 'util';
 import { exec as execCB } from "child_process";
@@ -342,7 +343,7 @@ export class Mischief {
     if (!tmpFolderPathExists) {
       try {
         await mkdir(this.options.tmpFolderPath);
-        await access(this.options.tmpFolderPath);
+        await access(this.options.tmpFolderPath, fsConstants.W_OK);
         tmpFolderPathExists = true;
       }
       catch(err) {
@@ -354,9 +355,16 @@ export class Mischief {
     try {
       this.captureTmpFolderPath = await mkdtemp(this.options.tmpFolderPath);
       this.captureTmpFolderPath += `/`;
+      await access(this.captureTmpFolderPath, fsConstants.W_OK);
+
       this.addToLogs(`Capture-specific temporary folder ${this.captureTmpFolderPath} created.`);
     }
     catch(err) {
+      try {
+        await rm(this.captureTmpFolderPath);
+      }
+      catch (err) { /* Ignore: Deletes the capture-specific folder if it was created, if possible. */ }
+
       throw new Error(`Mischief was unable to create a capture-specific temporary folder.\n${err}`);
     }
 
