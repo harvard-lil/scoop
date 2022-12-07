@@ -5,10 +5,11 @@ import { valueOf, defaultTestCaptureOptions } from '../utils.js';
 import { v4 as uuidv4 } from "uuid";
 import { writeFile, rm } from "fs/promises";
 
-import { TMP_DIR, Mischief } from '../../Mischief.js'
+import { Mischief } from "../../Mischief.js";
+import { MischiefOptions} from "../../MischiefOptions.js";
 
 test('roundtrip should produce identical mischief', async (_t) => {
-  const fpath = `${TMP_DIR}${uuidv4()}.wacz`
+  const fpath = `${MischiefOptions.defaults.tmpFolderPath}${uuidv4()}.wacz`
   const capture = new Mischief('https://example.com', defaultTestCaptureOptions);
   await capture.capture();
   const wacz = await capture.toWacz();
