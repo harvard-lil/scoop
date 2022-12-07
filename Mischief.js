@@ -5,7 +5,8 @@
  * @license MIT
  */
 import { v4 as uuidv4 } from "uuid";
-import { readFile, writeFile, rm, readdir } from "fs/promises";
+import { readFile, writeFile, rm, readdir, mkdir, mkdtemp, access } from "fs/promises";
+import { constants as fsConstants } from 'node:fs';
 import os from "os";
 import util from 'util';
 import { exec as execCB } from "child_process";
@@ -24,12 +25,6 @@ import CONSTANTS from "./constants.js";
 import * as intercepters from "./intercepters/index.js";
 import * as exporters from "./exporters/index.js";
 import * as importers from "./importers/index.js";
-
-/**
- * Path to "tmp" folder. 
- * @constant
- */
-export const TMP_DIR = `./tmp/`;
 
 /**
  * Path to "assets" folder. 
@@ -95,6 +90,13 @@ export class Mischief {
 
   /** @type {MischiefLog[]} */
   logs = [];
+
+  /**
+   * Path to the capture-specific temporary folder created by `setup()`.
+   * Will be a child folder of the path defined in `this.options.tmpFolderPath`.
+   * @type {?string}
+   */
+  captureTmpFolderPath = null;
 
   /**
    * The time at which the page was crawled.
@@ -319,7 +321,7 @@ export class Mischief {
   }
 
   /**
-   * Sets up the proxy and Playwright resources
+   * Sets up the proxy and Playwright resources, creates capture-specific temporary folder.
    *
    * @returns {Promise<boolean>}
    */
@@ -327,8 +329,47 @@ export class Mischief {
     this.startedAt = new Date();
     this.state = Mischief.states.SETUP;
     const options = this.options;
-    const userAgent = chromium._playwright.devices["Desktop Chrome"].userAgent + options.userAgentSuffix;
 
+    // Create "base" temporary folder if it doesn't exist
+    let tmpFolderPathExists = false;
+    try {
+      await access(this.options.tmpFolderPath);
+      tmpFolderPathExists = true;
+    }
+    catch(_err) { 
+      this.addToLogs(`Base temporary folder ${this.options.tmpFolderPath} does not exist or cannot be accessed. Mischief will attempt to create it.`);
+    }
+
+    if (!tmpFolderPathExists) {
+      try {
+        await mkdir(this.options.tmpFolderPath);
+        await access(this.options.tmpFolderPath, fsConstants.W_OK);
+        tmpFolderPathExists = true;
+      }
+      catch(err) {
+        this.addToLogs(`Error while creating base temporary folder ${this.options.tmpFolderPath}.\n${err}`);
+      }
+    }
+
+    // Create captures-specific temporary folder under base temporary folder
+    try {
+      this.captureTmpFolderPath = await mkdtemp(this.options.tmpFolderPath);
+      this.captureTmpFolderPath += `/`;
+      await access(this.captureTmpFolderPath, fsConstants.W_OK);
+
+      this.addToLogs(`Capture-specific temporary folder ${this.captureTmpFolderPath} created.`);
+    }
+    catch(err) {
+      try {
+        await rm(this.captureTmpFolderPath);
+      }
+      catch (err) { /* Ignore: Deletes the capture-specific folder if it was created, if possible. */ }
+
+      throw new Error(`Mischief was unable to create a capture-specific temporary folder.\n${err}`);
+    }
+
+    // Playwright init
+    const userAgent = chromium._playwright.devices["Desktop Chrome"].userAgent + options.userAgentSuffix;
     this.addToLogs(`User Agent used for capture: ${userAgent}`);
 
     this.#browser = await chromium.launch({
@@ -362,7 +403,7 @@ export class Mischief {
   }
 
   /**
-   * Tears down Playwright and intercepter resources.
+   * Tears down Playwright, intercepter resources, and capture-specific temporary folder.
    * @returns {Promise<boolean>}
    */
   async teardown() {
@@ -370,6 +411,9 @@ export class Mischief {
     await this.intercepter.teardown();
     await this.#browser.close();
     this.exchanges = this.intercepter.exchanges.concat(this.exchanges);
+
+    this.addToLogs(`Clearing capture-specific temporary folder ${this.captureTmpFolderPath}`);
+    await rm(this.captureTmpFolderPath, {recursive: true, force: true});
   }
 
   /**
@@ -385,7 +429,7 @@ export class Mischief {
    */
   async #captureVideoAsAttachment() {
     const id = this.id;
-    const videoFilename = `${TMP_DIR}${id}.mp4`;
+    const videoFilename = `${this.captureTmpFolderPath}${id}.mp4`;
     const ytDlpPath = this.options.ytDlpPath;
 
     let metadataRaw = null;
@@ -454,10 +498,6 @@ export class Mischief {
     catch(err) {
       throw new Error(`Error while creating exchange for file:///video-extracted.mp4. ${err}`);
     }
-    // Clean up .mp4 file for this capture.
-    finally {
-      await rm(videoFilename, {force: true});
-    }
 
     //
     // Try to add metadata to exchanges
@@ -481,7 +521,7 @@ export class Mischief {
     // Pull subtitles, if any.
     //
     try {
-      for (const file of await readdir(TMP_DIR)) {
+      for (const file of await readdir(this.captureTmpFolderPath)) {
 
         if (!file.startsWith(id)) {
           continue;
@@ -504,7 +544,7 @@ export class Mischief {
         const httpHeaders = { 
           "content-type": subtitlesFormat === "vtt" ? "text/vtt" : "text/plain"
         };
-        const body = await readFile(`${TMP_DIR}${file}`);
+        const body = await readFile(`${this.captureTmpFolderPath}${file}`);
         const isEntryPoint = false;
 
         this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint);
@@ -515,15 +555,6 @@ export class Mischief {
     catch(err) {
       // Ignore subtitles-related errors.
       //console.log(err);
-    }
-
-    //
-    // Clean up files generated for this capture.
-    //
-    for (const file of await readdir(TMP_DIR)) {
-      if (file.startsWith(id)) {
-        await rm(`${TMP_DIR}${file}`);
-      }
     }
 
     //
@@ -565,8 +596,8 @@ export class Mischief {
   async #takePdfSnapshot(page) {
     let pdf = null;
     let dimensions = null;
-    const tmpFilenameIn = `${TMP_DIR}${this.id}-raw.pdf`;
-    const tmpFilenameOut = `${TMP_DIR}${this.id}-compressed.pdf`
+    const tmpFilenameIn = `${this.captureTmpFolderPath}${this.id}-raw.pdf`;
+    const tmpFilenameOut = `${this.captureTmpFolderPath}${this.id}-compressed.pdf`
 
     await page.emulateMedia({media: 'screen'});
 
@@ -603,10 +634,6 @@ export class Mischief {
     }
     catch(err) {
       this.addToLogs("gs command (Ghostscript) is not available or failed. The PDF Snapshot will be stored uncompressed.", true, err);
-    }
-    finally {
-      await rm(tmpFilenameIn, {force: true});
-      await rm(tmpFilenameOut, {force: true});
     }
 
     const url = "file:///pdf-snapshot.pdf";
