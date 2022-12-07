@@ -4,6 +4,9 @@
  * @author The Harvard Library Innovation Lab
  * @license MIT
  */
+import { statSync } from "fs"; 
+// Note: used `statSync` instead of `stat` from `fs/promises` here for convenience. 
+// We're using `MischiefOptions.filterOptions()` in `Mischief()`, which cannot be async.
 
 export class MischiefOptions {
   /**
@@ -104,6 +107,15 @@ export class MischiefOptions {
     // Check for invalid combinations
     if (options.pdfSnapshot && !options.headless) {
       throw new Error(`"pdfSnapshot" option is only available in "headless" mode. Both options need to be "true".`);
+    }
+
+    // Check that paths are valid
+    if (!statSync(options.ytDlpPath).isFile()) {
+      throw new Error(`"ytDlpPath" must be a path to a file.`);
+    }
+
+    if (!statSync(options.tmpFolderPath).isDirectory()) {
+      throw new Error(`"tmpFolderPath" must be a path to a directory.`);
     }
 
     return options;
