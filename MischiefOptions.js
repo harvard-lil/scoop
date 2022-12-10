@@ -14,7 +14,7 @@ export class MischiefOptions {
    * Available options and defaults for Mischief.
    * Unless specified otherwise at constructor level, Mischief will run with these settings.
    * 
-   * @property {boolean} logLevel - Determines the logging level of this instance. Can be "trace", "debug", "info", "warn" or "error". Defaults to "info". See https://github.com/pimterry/loglevel for more information. 
+   * @property {boolean} logLevel - Determines the logging level of this instance. Can be "silent", "trace", "debug", "info", "warn" or "error". Defaults to "info". See https://github.com/pimterry/loglevel for more information. 
    * @property {boolean} headless - Should Playwright run in headless mode? Defaults to `false`.
    * @property {string} proxyHost - What host should Playwright proxy through for capture? Defaults to `localhost`.
    * @property {number} proxyPort - What port should Playwright proxy through for capture? Defaults to 9000.
