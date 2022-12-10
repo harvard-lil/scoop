@@ -15,7 +15,7 @@ import { WARCParser } from "warcio";
  * Mischief capture to WACZ converter.
  *
  * Note:
- * - Logs are added to capture object via `Mischief.addToLogs()`.
+ * - Logs are added to capture object via `Mischief.log`.
  *
  * @param {Mischief} capture
  * @param {boolean} includeRaw - If `true`, includes the raw http exchanges in the WACZ.

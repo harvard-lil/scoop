@@ -4,6 +4,7 @@
  * @author The Harvard Library Innovation Lab
  * @license MIT
  */
+import path from "path";
 import { statSync } from "fs"; 
 // Note: used `statSync` instead of `stat` from `fs/promises` here for convenience. 
 // We're using `MischiefOptions.filterOptions()` in `Mischief()`, which cannot be async.
@@ -13,7 +14,7 @@ export class MischiefOptions {
    * Available options and defaults for Mischief.
    * Unless specified otherwise at constructor level, Mischief will run with these settings.
    * 
-   * @property {boolean} verbose - Should log entries be printed as they are created? Defaults to `true`.
+   * @property {boolean} logLevel - Determines the logging level of this instance. Can be "trace", "debug", "info", "warn" or "error". Defaults to "info". See https://github.com/pimterry/loglevel for more information. 
    * @property {boolean} headless - Should Playwright run in headless mode? Defaults to `false`.
    * @property {string} proxyHost - What host should Playwright proxy through for capture? Defaults to `localhost`.
    * @property {number} proxyPort - What port should Playwright proxy through for capture? Defaults to 9000.
@@ -43,7 +44,7 @@ export class MischiefOptions {
    * @property {string} tmpFolderPath - Path to the temporary folder Mischief uses. Defaults to `./tmp`.
    */
   static defaults = {
-    verbose: true,
+    logLevel: "info",
     headless: true,
     proxyHost: "localhost",
     proxyPort: 9000,
@@ -114,7 +115,7 @@ export class MischiefOptions {
       throw new Error(`"ytDlpPath" must be a path to a file.`);
     }
 
-    if (!statSync(options.tmpFolderPath).isDirectory()) {
+    if (options.tmpFolderPath !== path.normalize(options.tmpFolderPath)) {
       throw new Error(`"tmpFolderPath" must be a path to a directory.`);
     }
 

@@ -4,24 +4,26 @@
  * @author The Harvard Library Innovation Lab
  * @license MIT
  */
-import { v4 as uuidv4 } from "uuid";
+
+import os from "os";
+import util from "util";
 import { readFile, writeFile, rm, readdir, mkdir, mkdtemp, access } from "fs/promises";
 import { constants as fsConstants } from 'node:fs';
-import os from "os";
-import util from 'util';
+
 import { exec as execCB } from "child_process";
 const exec = util.promisify(execCB);
 
-import { chromium } from "playwright";
+import log from "loglevel";
+import logPrefix from "loglevel-plugin-prefix";
 import nunjucks from "nunjucks";
 import ipAddressValidator from "ip-address-validator";
+import { v4 as uuidv4 } from "uuid";
+import { chromium } from "playwright";
 import { getOSInfo } from "get-os-info";
 
 import { MischiefGeneratedExchange } from "./exchanges/index.js";
-import { MischiefLog } from "./MischiefLog.js";
 import { MischiefOptions } from "./MischiefOptions.js";
 import CONSTANTS from "./constants.js";
-
 import * as intercepters from "./intercepters/index.js";
 import * as exporters from "./exporters/index.js";
 import * as importers from "./importers/index.js";
@@ -88,8 +90,12 @@ export class Mischief {
    */
   exchanges = [];
 
-  /** @type {MischiefLog[]} */
-  logs = [];
+  /**
+   * Logger.
+   * Logging level controlled via `MischiefOptions.logLevel`. 
+   * @type {?log.Logger} 
+   */
+  log = log;
 
   /**
    * Path to the capture-specific temporary folder created by `setup()`.
@@ -129,6 +135,18 @@ export class Mischief {
   constructor(url, options = {}) {
     this.url = this.filterUrl(url);
     this.options = MischiefOptions.filterOptions(options);
+
+    // Logging setup (level, output formatting)
+    logPrefix.reg(this.log);    
+    logPrefix.apply(log, {
+      format(level, name, timestamp) {
+        const timestampColor = CONSTANTS.LOGGING_COLORS.DEFAULT;
+        const msgColor = CONSTANTS.LOGGING_COLORS[level.toUpperCase()];
+        return `${timestampColor(`[${timestamp}]`)} ${msgColor(level)}`;
+      },
+    });
+    this.log.setLevel(this.options.logLevel);
+
     this.intercepter = new intercepters[this.options.intercepter](this);
   }
 
@@ -149,7 +167,7 @@ export class Mischief {
 
     // Push step: Setup interceptor
     steps.push({
-      name: "intercepter",
+      name: "Intercepter",
       main: async (page) => {
         await this.intercepter.setup(page);
       }
@@ -157,7 +175,7 @@ export class Mischief {
 
     // Push step: Initial page load
     steps.push({
-      name: "initial load",
+      name: "Initial page load",
       main: async (page) => {
         await page.goto(this.url, { waitUntil: "load", timeout: options.loadTimeout });
       }
@@ -171,7 +189,7 @@ export class Mischief {
       options.autoScroll
     ) {
       steps.push({
-        name: "browser scripts",
+        name: "Browser scripts",
         setup: async (page) => {
           await page.addInitScript({
             path: "./node_modules/browsertrix-behaviors/dist/behaviors.js",
@@ -197,7 +215,7 @@ export class Mischief {
 
     // Push step: Wait for network idle
     steps.push({
-      name: "network idle",
+      name: "Wait for network idle",
       main: async (page) => {
         await page.waitForLoadState("networkidle", {timeout: options.networkIdleTimeout});
       }
@@ -206,7 +224,7 @@ export class Mischief {
     // Push step: Screenshot
     if (options.screenshot) {
       steps.push({
-        name: "screenshot",
+        name: "Screenshot",
         main: async (page) => {
           const url = "file:///screenshot.png";
           const httpHeaders = { "content-type": "image/png" };
@@ -250,7 +268,7 @@ export class Mischief {
     // Push step: Capture of in-page videos as attachment
     if (options.captureVideoAsAttachment) {
       steps.push({
-        name: "out-of-browser capture of video as attachment",
+        name: "Out-of-browser capture of video as attachment",
         main: async () => {
           await this.#captureVideoAsAttachment();
         }
@@ -260,7 +278,7 @@ export class Mischief {
     // Push step: Provenance summary
     if (options.provenanceSummary) {
       steps.push({
-        name: "provenance summary",
+        name: "Provenance summary",
         main: async (page) => {
           await this.#captureProvenanceInfo(page);
         }
@@ -269,7 +287,7 @@ export class Mischief {
 
     // Push step: Teardown
     steps.push({
-      name: "teardown",
+      name: "Teardown",
       main: async () => {
         this.state = Mischief.states.COMPLETE;
         await this.teardown();
@@ -283,11 +301,13 @@ export class Mischief {
 
     try {
       page = await this.setup();
-      this.addToLogs(`Starting capture of ${this.url} with options: ${JSON.stringify(options)}`);
+      this.log.info(`Starting capture of ${this.url}.`);
+      this.log.info(options);
       this.state = Mischief.states.CAPTURE;
     } 
-    catch (e) {
-      this.addToLogs("An error ocurred during capture setup", true, e);
+    catch (err) {
+      this.log.error("An error ocurred during capture setup.");
+      this.log.trace(err);
       this.state = Mischief.states.FAILED;
       return; // exit early if the browser and proxy couldn't be launched
     }
@@ -306,15 +326,16 @@ export class Mischief {
     while(i++ < steps.length-1 && this.state == Mischief.states.CAPTURE) {
       const step = steps[i];
       try {
-        this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name}`);
+        this.log.info(`STEP [${i+1}/${steps.length}]: ${step.name}`);
         await step.main(page);
       } 
       catch(err) {
         if(this.state == Mischief.states.CAPTURE){
-          this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name} - failed`, true, err);
+          this.log.warn(`STEP [${i+1}/${steps.length}]: ${step.name} - failed.`);
+          this.log.trace(err);
         } 
         else {
-          this.addToLogs(`STEP [${i+1}/${steps.length}]: ${step.name} - ended due to max time or size reached`, true);
+          this.log.warn(`STEP [${i+1}/${steps.length}]: ${step.name} - ended due to max time or size reached.`);
         }
       }
     }
@@ -337,7 +358,7 @@ export class Mischief {
       tmpFolderPathExists = true;
     }
     catch(_err) { 
-      this.addToLogs(`Base temporary folder ${this.options.tmpFolderPath} does not exist or cannot be accessed. Mischief will attempt to create it.`);
+      this.log.info(`Base temporary folder ${this.options.tmpFolderPath} does not exist or cannot be accessed. Mischief will attempt to create it.`);
     }
 
     if (!tmpFolderPathExists) {
@@ -347,7 +368,8 @@ export class Mischief {
         tmpFolderPathExists = true;
       }
       catch(err) {
-        this.addToLogs(`Error while creating base temporary folder ${this.options.tmpFolderPath}.\n${err}`);
+        this.log.warn(`Error while creating base temporary folder ${this.options.tmpFolderPath}.`);
+        this.log.trace(err);
       }
     }
 
@@ -357,7 +379,7 @@ export class Mischief {
       this.captureTmpFolderPath += `/`;
       await access(this.captureTmpFolderPath, fsConstants.W_OK);
 
-      this.addToLogs(`Capture-specific temporary folder ${this.captureTmpFolderPath} created.`);
+      this.log.info(`Capture-specific temporary folder ${this.captureTmpFolderPath} created.`);
     }
     catch(err) {
       try {
@@ -370,7 +392,7 @@ export class Mischief {
 
     // Playwright init
     const userAgent = chromium._playwright.devices["Desktop Chrome"].userAgent + options.userAgentSuffix;
-    this.addToLogs(`User Agent used for capture: ${userAgent}`);
+    this.log.info(`User Agent used for capture: ${userAgent}`);
 
     this.#browser = await chromium.launch({
       headless: options.headless,
@@ -390,7 +412,7 @@ export class Mischief {
     });
 
     const totalTimeoutTimer = setTimeout(() => {
-      this.addToLogs(`totalTimeout of ${options.totalTimeout}ms reached. Ending further capture.`);
+      this.log.info(`totalTimeout of ${options.totalTimeout}ms reached. Ending further capture.`);
       this.state = Mischief.states.PARTIAL;
       this.teardown();
     }, options.totalTimeout);
@@ -407,12 +429,12 @@ export class Mischief {
    * @returns {Promise<boolean>}
    */
   async teardown() {
-    this.addToLogs("Closing browser and intercepter.");
+    this.log.info("Closing browser and intercepter.");
     await this.intercepter.teardown();
     await this.#browser.close();
     this.exchanges = this.intercepter.exchanges.concat(this.exchanges);
 
-    this.addToLogs(`Clearing capture-specific temporary folder ${this.captureTmpFolderPath}`);
+    this.log.info(`Clearing capture-specific temporary folder ${this.captureTmpFolderPath}`);
     await rm(this.captureTmpFolderPath, {recursive: true, force: true});
   }
 
@@ -633,7 +655,8 @@ export class Mischief {
       pdf = await readFile(tmpFilenameOut);
     }
     catch(err) {
-      this.addToLogs("gs command (Ghostscript) is not available or failed. The PDF Snapshot will be stored uncompressed.", true, err);
+      this.log.warn("gs command (Ghostscript) is not available or failed. The PDF Snapshot will be stored uncompressed.");
+      this.log.trace(err);
     }
 
     const url = "file:///pdf-snapshot.pdf";
@@ -675,7 +698,8 @@ export class Mischief {
       captureIp = ip;
     }
     catch(err) {
-      this.addToLogs("Public IP address could not be found.", true, err);
+      this.log.warn("Public IP address could not be found.");
+      this.log.trace(err);
     }
 
     // Gather provenance info
@@ -727,7 +751,7 @@ export class Mischief {
     if (this.state != Mischief.states.CAPTURE ||
         body.byteLength >= remainingSpace) {
       this.state = Mischief.states.PARTIAL;
-      this.addToLogs(`Generated exchange ${url} could not be saved (size limit reached).`);
+      this.warn(`Generated exchange ${url} could not be saved (size limit reached).`);
       return;
     }
 
@@ -746,19 +770,6 @@ export class Mischief {
         },
       })
     );
-  }
-
-  /**
-   * Creates and stores a log entry.
-   * Will automatically be printed to STDOUT if `this.options.verbose` is `true`.
-   * 
-   * @param {string} message 
-   * @param {boolean} [isWarning=false] 
-   * @param {string} [trace=""] 
-   */
-  addToLogs(message, isWarning = false, trace = "") {
-    const log = new MischiefLog(message, isWarning, trace, this.options.verbose);
-    this.logs.push(log);
   }
 
   /**
