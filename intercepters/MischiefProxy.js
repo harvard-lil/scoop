@@ -17,7 +17,7 @@ export class MischiefProxy extends MischiefIntercepter {
     });
 
     await this.#connection.listen(this.options.proxyPort, this.options.proxyHost, () => {
-      this.capture.addToLogs(`TCP-Proxy-Server started ${JSON.stringify(this.#connection.address())}`);
+      this.capture.log.info(`TCP-Proxy-Server started ${JSON.stringify(this.#connection.address())}`);
     });
 
     // Arbitrary 250ms wait (fix for observed start up bug)

@@ -18,7 +18,7 @@ import { Mischief } from "../Mischief.js";;
  * Mischief capture to WARC converter.
  * 
  * Note:
- * - Logs are added to capture object via `Mischief.addToLogs()`. 
+ * - Logs are added to capture object via `Mischief.log`. 
  * 
  * @param {Mischief} capture
  * @returns {Promise<ArrayBuffer>}
@@ -88,7 +88,8 @@ export async function mischiefToWarc(capture) {
         serializedRecords.push(await WARCSerializer.serialize(record));
       }
       catch(err) {
-        capture.addToLogs(`${exchange[type].url} ${type} could not be added to warc.`, true, err);
+        capture.log.warn(`${exchange[type].url} ${type} could not be added to warc.`);
+        capture.log.trace(err);
       }
     }
   }
