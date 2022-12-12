@@ -12,8 +12,9 @@ import { Blob } from 'buffer'
 import { WARCRecord, WARCSerializer } from 'warcio'
 
 import CONSTANTS from '../constants.js'
-import { Mischief } from '../Mischief.js' // warcio needs the crypto utils suite but does not import it.
-global.crypto = crypto
+import { Mischief } from '../Mischief.js'
+
+global.crypto = crypto // warcio needs the crypto utils suite as a global, but does not import it.
 
 /**
  * Mischief capture to WARC converter.
