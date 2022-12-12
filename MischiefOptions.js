@@ -71,7 +71,12 @@ export class MischiefOptions {
     userAgentSuffix: '',
     provenanceSummary: true,
     publicIpResolverEndpoint: 'https://myip.lil.tools',
-    tmpFolderPath: `${process.env.PWD}/tmp/`
+    tmpFolderPath: `${process.env.PWD}/tmp/`,
+    blacklist: [
+      // /.*\.?cloudflareinsights.com\/.*/,
+      /\.png/,
+      /104\.16\.57\.101/
+    ]
   }
 
   /**

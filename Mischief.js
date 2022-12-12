@@ -126,15 +126,17 @@ export class Mischief {
    * Will only be populated if `options.provenanceSummary` is `true`.
    * @type {object}
    */
-  provenanceInfo = {}
+  provenanceInfo = {
+    blockedRequests: []
+  }
 
   /**
    * @param {string} url - Must be a valid HTTP(S) url.
    * @param {object} [options={}] - See `MischiefOptions.defaults` for details.
    */
   constructor (url, options = {}) {
-    this.url = this.filterUrl(url)
     this.options = MischiefOptions.filterOptions(options)
+    this.url = this.filterUrl(url)
 
     // Logging setup (level, output formatting)
     logPrefix.reg(this.log)
@@ -688,6 +690,7 @@ export class Mischief {
 
     // Gather provenance info
     this.provenanceInfo = {
+      ...this.provenanceInfo,
       captureIp,
       userAgent,
       software: CONSTANTS.SOFTWARE,
@@ -760,6 +763,7 @@ export class Mischief {
    * This function throws if:
    * - `url` is not a valid url
    * - `url` is not an http / https url
+   * - `url` matches a blacklist rule
    *
    * @param {string} url
    */
@@ -771,10 +775,17 @@ export class Mischief {
         throw new Error('Invalid protocol.')
       }
 
-      return filteredUrl.href
+      url = filteredUrl.href
     } catch (err) {
       throw new Error(`Invalid url provided.\n${err}`)
     }
+
+    const rule = this.options.blacklist.find(re => url.match(re))
+    if (rule) {
+      throw new Error(`Blacklisted url provided matching: ${rule}`)
+    }
+
+    return url
   }
 
   /**

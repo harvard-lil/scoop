@@ -11,8 +11,8 @@ export class MischiefProxy extends MischiefIntercepter {
     this.#connection = new ProxyServer({
       intercept: true,
       verbose: this.options.proxyVerbose,
-      injectData: (data, session) => this.intercept('request', data, session),
-      injectResponse: (data, session) => this.intercept('response', data, session)
+      injectData: this.interceptRequest.bind(this),
+      injectResponse: this.interceptResponse.bind(this)
     })
 
     await this.#connection.listen(this.options.proxyPort, this.options.proxyHost, () => {
@@ -32,6 +32,25 @@ export class MischiefProxy extends MischiefIntercepter {
       proxy: { server: `http://${this.options.proxyHost}:${this.options.proxyPort}` },
       ignoreHTTPSErrors: true
     }
+  }
+
+  interceptRequest (data, session) {
+    const url = (session.request.path[0] === '/') ?
+          `https://${session.request.headers.host}${session.request.path}` :
+          session.request.path
+    const ip = session._dst.remoteAddress
+
+    if(this.capture.options.blacklist.find(re => url.match(re) || ip.match(re))){
+      this.capture.log.warn(`Blocking ${url} resolved to IP ${ip}`)
+      this.capture.provenanceInfo.blockedRequests.push(url)
+      return session.destroy()
+    }
+
+    return this.intercept('request', data, session)
+  }
+
+  interceptResponse (data, session) {
+    return this.intercept('response', data, session)
   }
 
   /**

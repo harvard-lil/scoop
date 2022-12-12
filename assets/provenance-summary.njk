@@ -115,6 +115,19 @@
 
       </section>
 
+      <section>
+        <h2>Blocked requests</h2>
+
+        <p>The following requests were blocked.</p>
+          <ul>
+          {% for url in blockedRequests %}
+            <li>{{ url }}</li>
+          {% endfor %}
+          </ul>
+        </table>
+
+      </section>
+
     </main>
 
   </body>
