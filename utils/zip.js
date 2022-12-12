@@ -1,5 +1,5 @@
-import { Writable } from "stream";
-import Archiver from "archiver";
+import { Writable } from 'stream'
+import Archiver from 'archiver'
 
 /**
  * Sniffs a buffer to loosely infer whether it's a zip file
@@ -10,8 +10,8 @@ import Archiver from "archiver";
  * @param {Buffer} buf
  * @returns {boolean}
  */
-export function isZip(buf) {
-  return buf.toString('utf8', 0, 2) === 'PK';
+export function isZip (buf) {
+  return buf.toString('utf8', 0, 2) === 'PK'
 }
 
 /**
@@ -21,8 +21,8 @@ export function isZip(buf) {
  * @param {Buffer} buf
  * @returns {boolean}
  */
-export function usesStoreCompression(buf) {
-  return buf.readUIntLE(8, 2) === 0;
+export function usesStoreCompression (buf) {
+  return buf.readUIntLE(8, 2) === 0
 }
 
 /**
@@ -33,8 +33,8 @@ export function usesStoreCompression(buf) {
  * @param {Buffer} buf
  * @returns {integer}
  */
-export function fileNameLen(buf) {
-  return buf.readUIntLE(26, 2);
+export function fileNameLen (buf) {
+  return buf.readUIntLE(26, 2)
 }
 
 /**
@@ -45,8 +45,8 @@ export function fileNameLen(buf) {
  * @param {Buffer} buf
  * @returns {integer}
  */
-export function extraFieldLen(buf) {
-  return buf.readUIntLE(28, 2);
+export function extraFieldLen (buf) {
+  return buf.readUIntLE(28, 2)
 }
 
 /**
@@ -57,8 +57,8 @@ export function extraFieldLen(buf) {
  * @param {integer} byteLen
  * @returns {string}
  */
-export function readBodyAsString(buf, byteLen) {
-  return buf.toString(30 + fileNameLen(buf) + extraFieldLen(buf), byteLen);
+export function readBodyAsString (buf, byteLen) {
+  return buf.toString(30 + fileNameLen(buf) + extraFieldLen(buf), byteLen)
 }
 
 /**
@@ -68,21 +68,21 @@ export function readBodyAsString(buf, byteLen) {
  * @param {boolean} [store=true] - should store compression be used?
  * @returns {Promise<Buffer>} - a buffer containing the zipped data
  */
-export async function create(files, store = true) {
-  const archive = new Archiver('zip', {store});
+export async function create (files, store = true) {
+  const archive = new Archiver('zip', { store })
 
-  const buffers = [];
-  const converter = new Writable();
+  const buffers = []
+  const converter = new Writable()
   converter._write = (chunk, _encoding, cb) => {
-    buffers.push(chunk);
-    process.nextTick(cb);
+    buffers.push(chunk)
+    process.nextTick(cb)
   }
-  archive.pipe(converter);
+  archive.pipe(converter)
 
   Object.entries(files).forEach(([name, data]) => {
-    archive.append(data, {name})
+    archive.append(data, { name })
   })
 
-  await archive.finalize();
-  return Buffer.concat(buffers);
+  await archive.finalize()
+  return Buffer.concat(buffers)
 }

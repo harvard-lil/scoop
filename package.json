@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "postinstall": "bash postinstall.sh",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "standard-fix": "standard --fix",
+    "test": "standard && node --test"
   },
   "repository": {
     "type": "git",
@@ -36,6 +37,6 @@
   },
   "devDependencies": {
     "@types/node": "^18.11.0",
-    "prettier": "^2.7.1"
+    "standard": "*"
   }
 }

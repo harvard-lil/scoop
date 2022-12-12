@@ -1,38 +1,37 @@
-import { MischiefIntercepter } from './MischiefIntercepter.js';
-import { MischiefProxyExchange } from '../exchanges/index.js';
-import ProxyServer from "transparent-proxy";
+import { MischiefIntercepter } from './MischiefIntercepter.js'
+import { MischiefProxyExchange } from '../exchanges/index.js'
+import ProxyServer from 'transparent-proxy'
 
 export class MischiefProxy extends MischiefIntercepter {
-
   #connection
 
-  exchanges = [];
+  exchanges = []
 
-  async setup() {
+  async setup () {
     this.#connection = new ProxyServer({
       intercept: true,
       verbose: this.options.proxyVerbose,
-      injectData: (data, session) => this.intercept("request", data, session),
-      injectResponse: (data, session) => this.intercept("response", data, session)
-    });
+      injectData: (data, session) => this.intercept('request', data, session),
+      injectResponse: (data, session) => this.intercept('response', data, session)
+    })
 
     await this.#connection.listen(this.options.proxyPort, this.options.proxyHost, () => {
-      this.capture.log.info(`TCP-Proxy-Server started ${JSON.stringify(this.#connection.address())}`);
-    });
+      this.capture.log.info(`TCP-Proxy-Server started ${JSON.stringify(this.#connection.address())}`)
+    })
 
     // Arbitrary 250ms wait (fix for observed start up bug)
-    await new Promise(resolve => setTimeout(resolve, 250));
+    await new Promise(resolve => setTimeout(resolve, 250))
   }
 
-  teardown() {
+  teardown () {
     this.#connection.close()
   }
 
-  get contextOptions() {
+  get contextOptions () {
     return {
       proxy: { server: `http://${this.options.proxyHost}:${this.options.proxyPort}` },
-      ignoreHTTPSErrors: true,
-    };
+      ignoreHTTPSErrors: true
+    }
   }
 
   /**
@@ -43,12 +42,12 @@ export class MischiefProxy extends MischiefIntercepter {
    * @param {string} id
    * @param {string} type
    */
-  getOrInitExchange(connectionId, type) {
+  getOrInitExchange (connectionId, type) {
     // TODO: For loop-ify for clarity and maintainability?
     return (
-      this.exchanges.findLast(ex => ex.connectionId == connectionId && (type == "response" || !ex.responseRaw))
-        || this.exchanges[this.exchanges.push(new MischiefProxyExchange({connectionId})) - 1]
-    );
+      this.exchanges.findLast(ex => ex.connectionId === connectionId && (type === 'response' || !ex.responseRaw)) ||
+        this.exchanges[this.exchanges.push(new MischiefProxyExchange({ connectionId })) - 1]
+    )
   }
 
   /**
@@ -59,13 +58,13 @@ export class MischiefProxy extends MischiefIntercepter {
    * @param {Buffer} data
    * @param {Session} session
    */
-  intercept(type, data, session) {
-    const ex = this.getOrInitExchange(session._id, type);
-    const prop = `${type}Raw`; // `responseRaw` | `requestRaw`
-    ex[prop] = ex[prop] ? Buffer.concat([ex[prop], data], ex[prop].length + data.length) : data;
+  intercept (type, data, session) {
+    const ex = this.getOrInitExchange(session._id, type)
+    const prop = `${type}Raw` // `responseRaw` | `requestRaw`
+    ex[prop] = ex[prop] ? Buffer.concat([ex[prop], data], ex[prop].length + data.length) : data
 
-    this.byteLength += data.byteLength;
-    this.checkAndEnforceSizeLimit(); // From parent
-    return data;
+    this.byteLength += data.byteLength
+    this.checkAndEnforceSizeLimit() // From parent
+    return data
   }
 }

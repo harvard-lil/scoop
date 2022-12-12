@@ -4,17 +4,17 @@
  * @author The Harvard Library Innovation Lab
  * @license MIT
  */
-import path from "path";
-import { statSync } from "fs"; 
-// Note: used `statSync` instead of `stat` from `fs/promises` here for convenience. 
+import path from 'path'
+import { statSync } from 'fs'
+// Note: used `statSync` instead of `stat` from `fs/promises` here for convenience.
 // We're using `MischiefOptions.filterOptions()` in `Mischief()`, which cannot be async.
 
 export class MischiefOptions {
   /**
    * Available options and defaults for Mischief.
    * Unless specified otherwise at constructor level, Mischief will run with these settings.
-   * 
-   * @property {boolean} logLevel - Determines the logging level of this instance. Can be "silent", "trace", "debug", "info", "warn" or "error". Defaults to "info". See https://github.com/pimterry/loglevel for more information. 
+   *
+   * @property {boolean} logLevel - Determines the logging level of this instance. Can be "silent", "trace", "debug", "info", "warn" or "error". Defaults to "info". See https://github.com/pimterry/loglevel for more information.
    * @property {boolean} headless - Should Playwright run in headless mode? Defaults to `false`.
    * @property {string} proxyHost - What host should Playwright proxy through for capture? Defaults to `localhost`.
    * @property {number} proxyPort - What port should Playwright proxy through for capture? Defaults to 9000.
@@ -38,20 +38,20 @@ export class MischiefOptions {
    * @property {boolean} grabSecondaryResources - Should Mischief try to download img srcsets and secondary stylesheets? Defaults to `true`.
    * @property {boolean} runSiteSpecificBehaviors - Should Mischief run behaviors tailored to specific sites (ex: Twitter) in an attempt to better grab the page? Defaults to `true`.
    * @property {string} intercepter - Network interception method to be used. Available at the moment: "MischiefProxy".
-   * @property {string} userAgentSuffix - String to append to the user agent. Defaults to an empty string. 
+   * @property {string} userAgentSuffix - String to append to the user agent. Defaults to an empty string.
    * @property {boolean} provenanceSummary - If `true`, information about the capture process (public IP address, User Agent, software version ...) will be gathered and summarized under `file:///provenance-summary.html`. WACZ exports will also hold that information at `datapackage.json` level, under `extras`. Defaults to `true`.
    * @property {string} publicIpResolverEndpoint - URL to be used to retrieve the client's public IP address for `provenanceSummary`. Endpoint requirements: must simply return a IPv4 or IPv6 address as text. Defaults to "https://myip.lil.tools".
    * @property {string} tmpFolderPath - Path to the temporary folder Mischief uses. Defaults to `./tmp`.
    */
   static defaults = {
-    logLevel: "info",
+    logLevel: 'info',
     headless: true,
-    proxyHost: "localhost",
+    proxyHost: 'localhost',
     proxyPort: 9000,
     proxyVerbose: false,
     totalTimeout: 2 * 60 * 1000,
     loadTimeout: 30 * 1000,
-    networkIdleTimeout: 30 * 1000, 
+    networkIdleTimeout: 30 * 1000,
     behaviorsTimeout: 60 * 1000,
     keepPartialResponses: true,
     maxSize: 200 * 1024 * 1024,
@@ -67,59 +67,58 @@ export class MischiefOptions {
     autoPlayMedia: true,
     grabSecondaryResources: true,
     runSiteSpecificBehaviors: true,
-    intercepter: "MischiefProxy",
-    userAgentSuffix: "",
+    intercepter: 'MischiefProxy',
+    userAgentSuffix: '',
     provenanceSummary: true,
-    publicIpResolverEndpoint: "https://myip.lil.tools",
-    tmpFolderPath: `${process.env.PWD}/tmp/`,
-  };
+    publicIpResolverEndpoint: 'https://myip.lil.tools',
+    tmpFolderPath: `${process.env.PWD}/tmp/`
+  }
 
   /**
    * Filters an options object by comparing it with `MischiefOptions`.
    * Will use defaults for missing properties.
-   * 
-   * @param {object} newOptions 
+   *
+   * @param {object} newOptions
    */
-  static filterOptions(newOptions) {
-    const options = {};
-    const defaults = MischiefOptions.defaults;
+  static filterOptions (newOptions) {
+    const options = {}
+    const defaults = MischiefOptions.defaults
 
     // Create new option object from `newOptions` and `defaults`:
     // - Only pull entries from `newOptions` that are defined in `defaults`
     // - Apply basic type casting based on type of defaults
     for (const key of Object.keys(defaults)) {
-      options[key] = key in newOptions ? newOptions[key] : defaults[key];
+      options[key] = key in newOptions ? newOptions[key] : defaults[key]
 
       switch (typeof defaults[key]) {
-        case "boolean":
-          options[key] = Boolean(options[key]);
-        break;
+        case 'boolean':
+          options[key] = Boolean(options[key])
+          break
 
-        case "number":
-          options[key] = Number(options[key]);
-        break;
+        case 'number':
+          options[key] = Number(options[key])
+          break
 
-        case "string":
-          options[key] = String(options[key]);
-        break;
+        case 'string':
+          options[key] = String(options[key])
+          break
       }
     }
 
     // Check for invalid combinations
     if (options.pdfSnapshot && !options.headless) {
-      throw new Error(`"pdfSnapshot" option is only available in "headless" mode. Both options need to be "true".`);
+      throw new Error('"pdfSnapshot" option is only available in "headless" mode. Both options need to be "true".')
     }
 
     // Check that paths are valid
     if (!statSync(options.ytDlpPath).isFile()) {
-      throw new Error(`"ytDlpPath" must be a path to a file.`);
+      throw new Error('"ytDlpPath" must be a path to a file.')
     }
 
     if (options.tmpFolderPath !== path.normalize(options.tmpFolderPath)) {
-      throw new Error(`"tmpFolderPath" must be a path to a directory.`);
+      throw new Error('"tmpFolderPath" must be a path to a directory.')
     }
 
-    return options;
+    return options
   }
-
 }
