@@ -5,5 +5,5 @@
  * @license MIT
  * @description Entry point for the importers module.
  */
-import { waczToMischief } from "./waczToMischief.js";
-export { waczToMischief };
+import { waczToMischief } from './waczToMischief.js'
+export { waczToMischief }

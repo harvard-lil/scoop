@@ -1,27 +1,26 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import { valueOf, defaultTestCaptureOptions } from '../utils.js';
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { valueOf, defaultTestCaptureOptions } from '../utils.js'
 
-import { v4 as uuidv4 } from "uuid";
-import { writeFile, rm } from "fs/promises";
+import { v4 as uuidv4 } from 'uuid'
+import { writeFile, rm } from 'fs/promises'
 
-import { Mischief } from "../../Mischief.js";
-import { MischiefOptions} from "../../MischiefOptions.js";
+import { Mischief } from '../../Mischief.js'
+import { MischiefOptions } from '../../MischiefOptions.js'
 
 test('roundtrip should produce identical mischief', async (_t) => {
   const fpath = `${MischiefOptions.defaults.tmpFolderPath}${uuidv4()}.wacz`
-  const capture = new Mischief('https://example.com', defaultTestCaptureOptions);
-  await capture.capture();
-  const wacz = await capture.toWacz();
+  const capture = new Mischief('https://example.com', defaultTestCaptureOptions)
+  await capture.capture()
+  const wacz = await capture.toWacz()
 
-  let reconstructedCapture;
+  let reconstructedCapture
   try {
-    await writeFile(fpath, Buffer.from(wacz));
-    reconstructedCapture = await Mischief.fromWacz(fpath);
-  }
-  finally {
-    await rm(fpath, {force: true});
+    await writeFile(fpath, Buffer.from(wacz))
+    reconstructedCapture = await Mischief.fromWacz(fpath)
+  } finally {
+    await rm(fpath, { force: true })
   }
 
-  assert.deepEqual(valueOf(reconstructedCapture), valueOf(capture));
+  assert.deepEqual(valueOf(reconstructedCapture), valueOf(capture))
 })

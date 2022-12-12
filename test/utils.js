@@ -1,19 +1,19 @@
-import { Mischief } from '../Mischief.js';
+import { Mischief } from '../Mischief.js'
 import { MischiefProxyExchange } from '../exchanges/MischiefProxyExchange.js'
 import { MischiefGeneratedExchange } from '../exchanges/MischiefGeneratedExchange.js'
 
 export const defaultTestCaptureOptions = {
   headless: true,
-  captureVideoAsAttachment: false,
+  captureVideoAsAttachment: false
 }
 
-export function valueOf(source) {
-  switch(source.constructor) {
+export function valueOf (source) {
+  switch (source.constructor) {
     case Array: {
-      return source.map(valueOf);
+      return source.map(valueOf)
     }
     case Object: {
-      return Object.fromEntries(Object.entries(source).map(([k, v]) => [k, valueOf(v)]));
+      return Object.fromEntries(Object.entries(source).map(([k, v]) => [k, valueOf(v)]))
     }
     case Mischief: {
       return filterProps(source, [
@@ -21,7 +21,7 @@ export function valueOf(source) {
         'options',
         'provenanceInfo',
         'exchanges'
-      ]);
+      ])
     }
     case MischiefProxyExchange: {
       return filterProps(source, [
@@ -29,7 +29,7 @@ export function valueOf(source) {
         'date',
         'requestRaw',
         'responseRaw'
-      ]);
+      ])
     }
     case MischiefGeneratedExchange: {
       return filterProps(source, [
@@ -37,14 +37,14 @@ export function valueOf(source) {
         'date',
         'description',
         'response'
-      ]);
+      ])
     }
     default: {
-      return source;
+      return source
     }
   }
 }
 
-function filterProps(obj, keep) {
+function filterProps (obj, keep) {
   return Object.fromEntries(keep.map(k => [k, valueOf(obj[k])]))
 }

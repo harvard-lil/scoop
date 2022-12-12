@@ -3,97 +3,96 @@
  * @module exchanges.MischiefProxyExchange
  * @author The Harvard Library Innovation Lab
  * @license MIT
- * @description 
+ * @description
 */
-import { bodyStartIndex } from "../parsers/MischiefHTTPParser.js";
+import { bodyStartIndex } from '../parsers/MischiefHTTPParser.js'
 
-import { MischiefExchange } from "./MischiefExchange.js";
-import { MischiefHTTPParser } from "../parsers/index.js";
+import { MischiefExchange } from './MischiefExchange.js'
+import { MischiefHTTPParser } from '../parsers/index.js'
 
 /**
  * Represents an HTTP exchange captured via MischiefProxy.
  */
 export class MischiefProxyExchange extends MischiefExchange {
+  /** @type {?Buffer} */
+  _requestRaw
+
+  get requestRaw () {
+    return this._requestRaw
+  }
+
+  set requestRaw (val) {
+    this._request = null
+    this._requestRaw = val
+  }
+
+  get requestRawHeaders () {
+    return this.requestRaw.subarray(0, bodyStartIndex(this.requestRaw))
+  }
+
+  get requestRawBody () {
+    return this.requestRaw.subarray(bodyStartIndex(this.requestRaw))
+  }
 
   /** @type {?Buffer} */
-  _requestRaw;
+  _responseRaw
 
-  get requestRaw() {
-    return this._requestRaw;
+  get responseRaw () {
+    return this._responseRaw
   }
 
-  set requestRaw(val) {
-    this._request = null;
-    this._requestRaw = val;
+  set responseRaw (val) {
+    this._response = null
+    this._responseRaw = val
   }
 
-  get requestRawHeaders() {
-    return this.requestRaw.subarray(0, bodyStartIndex(this.requestRaw));
+  get responseRawHeaders () {
+    return this.responseRaw.subarray(0, bodyStartIndex(this.responseRaw))
   }
 
-  get requestRawBody() {
-    return this.requestRaw.subarray(bodyStartIndex(this.requestRaw));
+  get responseRawBody () {
+    return this.responseRaw.subarray(bodyStartIndex(this.responseRaw))
   }
 
-  /** @type {?Buffer} */
-  _responseRaw;
-
-  get responseRaw() {
-    return this._responseRaw;
-  }
-
-  set responseRaw(val) {
-    this._response = null;
-    this._responseRaw = val;
-  }
-
-  get responseRawHeaders() {
-    return this.responseRaw.subarray(0, bodyStartIndex(this.responseRaw));
-  }
-
-  get responseRawBody() {
-    return this.responseRaw.subarray(bodyStartIndex(this.responseRaw));
-  }
-
-  get request() {
+  get request () {
     if (!this._request && this.requestRaw) {
-      this._request = MischiefHTTPParser.parseRequest(this.requestRaw);
+      this._request = MischiefHTTPParser.parseRequest(this.requestRaw)
 
-      if(this._request.url[0] == "/"){
-        this._request.url = `https://${this._request.headers[1]}${this._request.url}`;
+      if (this._request.url[0] === '/') {
+        this._request.url = `https://${this._request.headers[1]}${this._request.url}`
       }
 
-      this._request.headers = MischiefHTTPParser.headersToMap(this._request.headers);
+      this._request.headers = MischiefHTTPParser.headersToMap(this._request.headers)
     }
-    return this._request;
+    return this._request
   }
 
-  set request(val) {
-    this._request = val;
+  set request (val) {
+    this._request = val
   }
 
-  get response() {
+  get response () {
     if (!this._response && this.responseRaw) {
-      this._response = MischiefHTTPParser.parseResponse(this.responseRaw);
-      this._response.headers = MischiefHTTPParser.headersToMap(this._response.headers);
+      this._response = MischiefHTTPParser.parseResponse(this.responseRaw)
+      this._response.headers = MischiefHTTPParser.headersToMap(this._response.headers)
       this._response.url = this.request.url
     }
-    return this._response;
+    return this._response
   }
 
-  set response(val) {
-    this._response = val;
+  set response (val) {
+    this._response = val
   }
 
   /**
    * @param {object} props - Object containing any of the properties of `this`.
    */
-  constructor(props = {}) {
-    super(props);
+  constructor (props = {}) {
+    super(props)
 
     for (const [key, value] of Object.entries(props)) {
       if (key in this) {
-        this[key] = value;
+        this[key] = value
       }
     }
   }
