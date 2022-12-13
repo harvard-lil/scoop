@@ -7,6 +7,8 @@ export class MischiefIntercepter {
 
   exchanges = []
 
+  record = true
+
   constructor (capture) {
     this.capture = capture
     return this

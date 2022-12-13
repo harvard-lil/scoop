@@ -484,6 +484,8 @@ export class Mischief {
     // Try and pull video and video meta data from url
     //
     try {
+      this.intercepter.record = false
+
       const dlpOptions = [
         '--dump-json', // Will return JSON meta data via stdout
         '--no-simulate', // Forces download despites `--dump-json`
@@ -493,6 +495,8 @@ export class Mischief {
         '--sub-langs', 'all',
         '--format', 'mp4', // Forces .mp4 format
         '--output', videoFilename,
+        '--no-check-certificate',
+        '--proxy', `'http://${this.options.proxyHost}:${this.options.proxyPort}'`,
         this.url
       ]
 
@@ -502,8 +506,10 @@ export class Mischief {
 
       const result = await exec(`${ytDlpPath} ${dlpOptions.join(' ')}`, spawnOptions)
       metadataRaw = result.stdout
-    } catch (_err) {
+    } catch {
       throw new Error(`No video found in ${this.url}.`)
+    } finally {
+      this.intercepter.record = true
     }
 
     //

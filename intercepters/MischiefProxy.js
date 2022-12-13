@@ -81,6 +81,10 @@ export class MischiefProxy extends MischiefIntercepter {
    * @param {Session} session
    */
   intercept (type, data, session) {
+    if(!this.record) {
+      return data
+    }
+
     const ex = this.getOrInitExchange(session._id, type)
     const prop = `${type}Raw` // `responseRaw` | `requestRaw`
     ex[prop] = ex[prop] ? Buffer.concat([ex[prop], data], ex[prop].length + data.length) : data
