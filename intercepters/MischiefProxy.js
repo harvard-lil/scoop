@@ -52,13 +52,13 @@ export class MischiefProxy extends MischiefIntercepter {
   }
 
   interceptRequest (data, session) {
-    const url = (session.request.path[0] === '/') ?
-          `https:${session.request.headers.host}${session.request.path}` :
-          session.request.path
+    const url = (session.request.path[0] === '/')
+      ? `https:${session.request.headers.host}${session.request.path}`
+      : session.request.path
     const ip = session._dst.remoteAddress
 
     const ruleIndex = this.capture.blacklist.findIndex(searchBlacklistFor(url, ip))
-    if(ruleIndex > -1){
+    if (ruleIndex > -1) {
       const rule = this.capture.options.blacklist[ruleIndex]
       this.capture.log.warn(`Blocking ${url} resolved to IP ${ip} matching rule ${rule}`)
       this.capture.provenanceInfo.blockedRequests.push({ url, ip, rule })
@@ -81,7 +81,7 @@ export class MischiefProxy extends MischiefIntercepter {
    * @param {Session} session
    */
   intercept (type, data, session) {
-    if(!this.record) {
+    if (!this.record) {
       return data
     }
 
