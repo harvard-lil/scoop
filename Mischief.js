@@ -22,6 +22,7 @@ import { getOSInfo } from 'get-os-info'
 
 import { MischiefGeneratedExchange } from './exchanges/index.js'
 import { MischiefOptions } from './MischiefOptions.js'
+import { castBlacklistItem, searchBlacklistFor } from './utils/blacklist.js'
 import CONSTANTS from './constants.js'
 import * as intercepters from './intercepters/index.js'
 import * as exporters from './exporters/index.js'
@@ -123,6 +124,12 @@ export class Mischief {
   intercepter
 
   /**
+   * A mirror of options.blacklist with IPs parsed for matching
+   * @type {(String|RegEx|Address4|Address6)[]}
+   */
+  blacklist = []
+
+  /**
    * Will only be populated if `options.provenanceSummary` is `true`.
    * @type {object}
    */
@@ -136,6 +143,7 @@ export class Mischief {
    */
   constructor (url, options = {}) {
     this.options = MischiefOptions.filterOptions(options)
+    this.blacklist = this.options.blacklist.map(castBlacklistItem)
     this.url = this.filterUrl(url)
 
     // Logging setup (level, output formatting)
@@ -780,7 +788,7 @@ export class Mischief {
       throw new Error(`Invalid url provided.\n${err}`)
     }
 
-    const rule = this.options.blacklist.find(re => url.match(re))
+    const rule = this.blacklist.find(searchBlacklistFor(url))
     if (rule) {
       throw new Error(`Blacklisted url provided matching: ${rule}`)
     }

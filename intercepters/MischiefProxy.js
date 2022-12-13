@@ -1,6 +1,7 @@
 import { MischiefIntercepter } from './MischiefIntercepter.js'
 import { MischiefProxyExchange } from '../exchanges/index.js'
 import ProxyServer from 'transparent-proxy'
+import { searchBlacklistFor } from '../utils/blacklist.js'
 
 export class MischiefProxy extends MischiefIntercepter {
   #connection
@@ -34,25 +35,6 @@ export class MischiefProxy extends MischiefIntercepter {
     }
   }
 
-  interceptRequest (data, session) {
-    const url = (session.request.path[0] === '/') ?
-          `https://${session.request.headers.host}${session.request.path}` :
-          session.request.path
-    const ip = session._dst.remoteAddress
-
-    if(this.capture.options.blacklist.find(re => url.match(re) || ip.match(re))){
-      this.capture.log.warn(`Blocking ${url} resolved to IP ${ip}`)
-      this.capture.provenanceInfo.blockedRequests.push(url)
-      return session.destroy()
-    }
-
-    return this.intercept('request', data, session)
-  }
-
-  interceptResponse (data, session) {
-    return this.intercept('response', data, session)
-  }
-
   /**
    * Returns an exchange based on the session id and type ("request" or "response").
    * If the type is a request and there's already been a response on that same session,
@@ -67,6 +49,27 @@ export class MischiefProxy extends MischiefIntercepter {
       this.exchanges.findLast(ex => ex.connectionId === connectionId && (type === 'response' || !ex.responseRaw)) ||
         this.exchanges[this.exchanges.push(new MischiefProxyExchange({ connectionId })) - 1]
     )
+  }
+
+  interceptRequest (data, session) {
+    const url = (session.request.path[0] === '/') ?
+          `https:${session.request.headers.host}${session.request.path}` :
+          session.request.path
+    const ip = session._dst.remoteAddress
+
+    const ruleIndex = this.capture.blacklist.findIndex(searchBlacklistFor(url, ip))
+    if(ruleIndex > -1){
+      const rule = this.capture.options.blacklist[ruleIndex]
+      this.capture.log.warn(`Blocking ${url} resolved to IP ${ip} matching rule ${rule}`)
+      this.capture.provenanceInfo.blockedRequests.push({ url, ip, rule })
+      return session.destroy()
+    }
+
+    return this.intercept('request', data, session)
+  }
+
+  interceptResponse (data, session) {
+    return this.intercept('response', data, session)
   }
 
   /**
