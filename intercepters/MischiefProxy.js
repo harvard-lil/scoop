@@ -12,8 +12,8 @@ export class MischiefProxy extends MischiefIntercepter {
     this.#connection = new ProxyServer({
       intercept: true,
       verbose: this.options.proxyVerbose,
-      injectData: this.interceptRequest.bind(this),
-      injectResponse: this.interceptResponse.bind(this)
+      injectData: this.interceptRequest,
+      injectResponse: this.interceptResponse
     })
 
     await this.#connection.listen(this.options.proxyPort, this.options.proxyHost, () => {
@@ -51,7 +51,7 @@ export class MischiefProxy extends MischiefIntercepter {
     )
   }
 
-  interceptRequest (data, session) {
+  interceptRequest = (data, session) => {
     const ip = session._dst.remoteAddress
     // https doesn't have the protocol or host in the path so add it here
     const url = (session.request.path[0] === '/')
@@ -73,7 +73,7 @@ export class MischiefProxy extends MischiefIntercepter {
     return this.intercept('request', data, session)
   }
 
-  interceptResponse (data, session) {
+  interceptResponse = (data, session) => {
     return this.intercept('response', data, session)
   }
 
