@@ -130,7 +130,7 @@ export class MischiefOptions {
           options[key] = constructor(options[key])
           break
 
-        case Array:
+        default:
           if(options[key].constructor != constructor) {
             throw new Error(`${key} must be type ${constructor.name}`)
           }
