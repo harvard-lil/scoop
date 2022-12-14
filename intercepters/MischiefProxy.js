@@ -52,16 +52,21 @@ export class MischiefProxy extends MischiefIntercepter {
   }
 
   interceptRequest (data, session) {
+    const ip = session._dst.remoteAddress
+    // https doesn't have the protocol or host in the path so add it here
     const url = (session.request.path[0] === '/')
       ? `https://${session.request.headers.host}${session.request.path}`
       : session.request.path
-    const ip = session._dst.remoteAddress
 
+    // search for a blacklist match but use the index to pull the original
+    // un-parsed rule from options so that the printing matches user expectations
     const ruleIndex = this.capture.blacklist.findIndex(searchBlacklistFor(url, ip))
     if (ruleIndex > -1) {
       const rule = this.capture.options.blacklist[ruleIndex]
       this.capture.log.warn(`Blocking ${url} resolved to IP ${ip} matching rule ${rule}`)
       this.capture.provenanceInfo.blockedRequests.push({ url, ip, rule })
+      // TODO: confirm in transparent-proxy that this doesn't kill subsequent
+      // requests that were earmarked for this session
       return session.destroy()
     }
 
@@ -81,6 +86,7 @@ export class MischiefProxy extends MischiefIntercepter {
    * @param {Session} session
    */
   intercept (type, data, session) {
+    // early exit with unmodified data if not recording exchanges
     if (!this.record) {
       return data
     }

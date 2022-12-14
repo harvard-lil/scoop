@@ -22,7 +22,7 @@ import { getOSInfo } from 'get-os-info'
 
 import { MischiefGeneratedExchange } from './exchanges/index.js'
 import { MischiefOptions } from './MischiefOptions.js'
-import { castBlacklistItem, searchBlacklistFor } from './utils/blacklist.js'
+import { castBlacklistMatcher, searchBlacklistFor } from './utils/blacklist.js'
 import CONSTANTS from './constants.js'
 import * as intercepters from './intercepters/index.js'
 import * as exporters from './exporters/index.js'
@@ -143,7 +143,7 @@ export class Mischief {
    */
   constructor (url, options = {}) {
     this.options = MischiefOptions.filterOptions(options)
-    this.blacklist = this.options.blacklist.map(castBlacklistItem)
+    this.blacklist = this.options.blacklist.map(castBlacklistMatcher)
     this.url = this.filterUrl(url)
 
     // Logging setup (level, output formatting)
