@@ -15,7 +15,7 @@ import { exec as execCB } from 'child_process'
 import log from 'loglevel'
 import logPrefix from 'loglevel-plugin-prefix'
 import nunjucks from 'nunjucks'
-import ipAddressValidator from 'ip-address-validator'
+import { Address4, Address6 } from '@laverdet/beaugunderson-ip-address'
 import { v4 as uuidv4 } from 'uuid'
 import { chromium } from 'playwright'
 import { getOSInfo } from 'get-os-info'
@@ -692,8 +692,14 @@ export class Mischief {
       const response = await fetch(this.options.publicIpResolverEndpoint)
       const ip = await response.text()
 
-      if (!ipAddressValidator.isIPAddress(ip)) {
-        throw new Error(`${ip} is not a valid IP address.`)
+      try {
+        new Address4(ip)
+      } catch {
+        try {
+          new Address6(ip)
+        } catch {
+          throw new Error(`${ip} is not a valid IP address.`)
+        }
       }
 
       captureIp = ip
