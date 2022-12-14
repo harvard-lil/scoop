@@ -484,7 +484,7 @@ export class Mischief {
     // Try and pull video and video meta data from url
     //
     try {
-      this.intercepter.record = false
+      this.intercepter.recordExchanges = false
 
       const dlpOptions = [
         '--dump-json', // Will return JSON meta data via stdout
@@ -509,7 +509,7 @@ export class Mischief {
     } catch {
       throw new Error(`No video found in ${this.url}.`)
     } finally {
-      this.intercepter.record = true
+      this.intercepter.recordExchanges = true
     }
 
     //

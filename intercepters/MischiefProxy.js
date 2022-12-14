@@ -87,7 +87,7 @@ export class MischiefProxy extends MischiefIntercepter {
    */
   intercept (type, data, session) {
     // early exit with unmodified data if not recording exchanges
-    if (!this.record) {
+    if (!this.recordExchanges) {
       return data
     }
 
