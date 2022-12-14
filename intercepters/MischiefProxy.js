@@ -53,7 +53,7 @@ export class MischiefProxy extends MischiefIntercepter {
 
   interceptRequest (data, session) {
     const url = (session.request.path[0] === '/')
-      ? `https:${session.request.headers.host}${session.request.path}`
+      ? `https://${session.request.headers.host}${session.request.path}`
       : session.request.path
     const ip = session._dst.remoteAddress
 
