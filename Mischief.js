@@ -15,13 +15,14 @@ import { exec as execCB } from 'child_process'
 import log from 'loglevel'
 import logPrefix from 'loglevel-plugin-prefix'
 import nunjucks from 'nunjucks'
-import ipAddressValidator from 'ip-address-validator'
+import { Address4, Address6 } from '@laverdet/beaugunderson-ip-address'
 import { v4 as uuidv4 } from 'uuid'
 import { chromium } from 'playwright'
 import { getOSInfo } from 'get-os-info'
 
 import { MischiefGeneratedExchange } from './exchanges/index.js'
 import { MischiefOptions } from './MischiefOptions.js'
+import { castBlocklistMatcher, searchBlocklistFor } from './utils/blocklist.js'
 import CONSTANTS from './constants.js'
 import * as intercepters from './intercepters/index.js'
 import * as exporters from './exporters/index.js'
@@ -123,18 +124,27 @@ export class Mischief {
   intercepter
 
   /**
+   * A mirror of options.blocklist with IPs parsed for matching
+   * @type {(String|RegEx|Address4|Address6)[]}
+   */
+  blocklist = []
+
+  /**
    * Will only be populated if `options.provenanceSummary` is `true`.
    * @type {object}
    */
-  provenanceInfo = {}
+  provenanceInfo = {
+    blockedRequests: []
+  }
 
   /**
    * @param {string} url - Must be a valid HTTP(S) url.
    * @param {object} [options={}] - See `MischiefOptions.defaults` for details.
    */
   constructor (url, options = {}) {
-    this.url = this.filterUrl(url)
     this.options = MischiefOptions.filterOptions(options)
+    this.blocklist = this.options.blocklist.map(castBlocklistMatcher)
+    this.url = this.filterUrl(url)
 
     // Logging setup (level, output formatting)
     logPrefix.reg(this.log)
@@ -474,6 +484,8 @@ export class Mischief {
     // Try and pull video and video meta data from url
     //
     try {
+      this.intercepter.recordExchanges = false
+
       const dlpOptions = [
         '--dump-json', // Will return JSON meta data via stdout
         '--no-simulate', // Forces download despites `--dump-json`
@@ -483,6 +495,8 @@ export class Mischief {
         '--sub-langs', 'all',
         '--format', 'mp4', // Forces .mp4 format
         '--output', videoFilename,
+        '--no-check-certificate',
+        '--proxy', `'http://${this.options.proxyHost}:${this.options.proxyPort}'`,
         this.url
       ]
 
@@ -492,8 +506,10 @@ export class Mischief {
 
       const result = await exec(`${ytDlpPath} ${dlpOptions.join(' ')}`, spawnOptions)
       metadataRaw = result.stdout
-    } catch (_err) {
+    } catch {
       throw new Error(`No video found in ${this.url}.`)
+    } finally {
+      this.intercepter.recordExchanges = true
     }
 
     //
@@ -676,8 +692,14 @@ export class Mischief {
       const response = await fetch(this.options.publicIpResolverEndpoint)
       const ip = await response.text()
 
-      if (!ipAddressValidator.isIPAddress(ip)) {
-        throw new Error(`${ip} is not a valid IP address.`)
+      try {
+        new Address4(ip)
+      } catch {
+        try {
+          new Address6(ip)
+        } catch {
+          throw new Error(`${ip} is not a valid IP address.`)
+        }
       }
 
       captureIp = ip
@@ -688,6 +710,7 @@ export class Mischief {
 
     // Gather provenance info
     this.provenanceInfo = {
+      ...this.provenanceInfo,
       captureIp,
       userAgent,
       software: CONSTANTS.SOFTWARE,
@@ -760,6 +783,7 @@ export class Mischief {
    * This function throws if:
    * - `url` is not a valid url
    * - `url` is not an http / https url
+   * - `url` matches a blocklist rule
    *
    * @param {string} url
    */
@@ -771,10 +795,17 @@ export class Mischief {
         throw new Error('Invalid protocol.')
       }
 
-      return filteredUrl.href
+      url = filteredUrl.href
     } catch (err) {
       throw new Error(`Invalid url provided.\n${err}`)
     }
+
+    const rule = this.blocklist.find(searchBlocklistFor(url))
+    if (rule) {
+      throw new Error(`Blocked url provided matching blocklist rule: ${rule}`)
+    }
+
+    return url
   }
 
   /**

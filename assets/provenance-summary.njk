@@ -60,6 +60,7 @@
       table-layout: fixed;
       border-collapse: collapse;
       width: 100%;
+      text-align: left;
     }
 
     table * {
@@ -68,13 +69,10 @@
 
     table tr {
       border-bottom: 1px solid lightgray;
-      display: block;
-      padding: 0.5rem;
-      padding-left: 0rem;
     }
     
     table tr td {
-      padding: 0.25rem;
+      padding: 0.75rem 0.25rem;
     }
 
     table tr td:first-of-type {
@@ -112,8 +110,33 @@
           </tr>
           {% endfor %}
         </table>
-
       </section>
+
+      {% if blockedRequests.length %}
+      <section>
+        <h2>Blocked requests</h2>
+
+        <p>The following requests were blocked.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>URL</th>
+              <th>IP</th>
+              <th>Blocklist Rule</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for block in blockedRequests %}
+            <tr>
+              <td>{{ block.url }}</td>
+              <td>{{ block.ip }}</td>
+              <td>{{ block.rule }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+      {% endif %}
 
     </main>
 
