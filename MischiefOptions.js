@@ -122,18 +122,18 @@ export class MischiefOptions {
     for (const key of Object.keys(defaults)) {
       options[key] = key in newOptions ? newOptions[key] : defaults[key]
 
-      switch (typeof defaults[key]) {
-        case 'boolean':
-          options[key] = Boolean(options[key])
+      const constructor = defaults[key].constructor
+      switch (constructor) {
+        case Boolean:
+        case Number:
+        case String:
+          options[key] = constructor(options[key])
           break
 
-        case 'number':
-          options[key] = Number(options[key])
-          break
-
-        case 'string':
-          options[key] = String(options[key])
-          break
+        case Array:
+          if(options[key].constructor != constructor) {
+            throw new Error(`${key} must be type ${constructor.name}`)
+          }
       }
     }
 
