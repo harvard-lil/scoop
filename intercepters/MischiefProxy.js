@@ -1,7 +1,7 @@
 import { MischiefIntercepter } from './MischiefIntercepter.js'
 import { MischiefProxyExchange } from '../exchanges/index.js'
 import ProxyServer from 'transparent-proxy'
-import { searchBlacklistFor } from '../utils/blacklist.js'
+import { searchBlocklistFor } from '../utils/blocklist.js'
 
 export class MischiefProxy extends MischiefIntercepter {
   #connection
@@ -58,11 +58,11 @@ export class MischiefProxy extends MischiefIntercepter {
       ? `https://${session.request.headers.host}${session.request.path}`
       : session.request.path
 
-    // search for a blacklist match but use the index to pull the original
+    // search for a blocklist match but use the index to pull the original
     // un-parsed rule from options so that the printing matches user expectations
-    const ruleIndex = this.capture.blacklist.findIndex(searchBlacklistFor(url, ip))
+    const ruleIndex = this.capture.blocklist.findIndex(searchBlocklistFor(url, ip))
     if (ruleIndex > -1) {
-      const rule = this.capture.options.blacklist[ruleIndex]
+      const rule = this.capture.options.blocklist[ruleIndex]
       this.capture.log.warn(`Blocking ${url} resolved to IP ${ip} matching rule ${rule}`)
       this.capture.provenanceInfo.blockedRequests.push({ url, ip, rule })
       // TODO: confirm in transparent-proxy that this doesn't kill subsequent

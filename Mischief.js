@@ -22,7 +22,7 @@ import { getOSInfo } from 'get-os-info'
 
 import { MischiefGeneratedExchange } from './exchanges/index.js'
 import { MischiefOptions } from './MischiefOptions.js'
-import { castBlacklistMatcher, searchBlacklistFor } from './utils/blacklist.js'
+import { castBlocklistMatcher, searchBlocklistFor } from './utils/blocklist.js'
 import CONSTANTS from './constants.js'
 import * as intercepters from './intercepters/index.js'
 import * as exporters from './exporters/index.js'
@@ -124,10 +124,10 @@ export class Mischief {
   intercepter
 
   /**
-   * A mirror of options.blacklist with IPs parsed for matching
+   * A mirror of options.blocklist with IPs parsed for matching
    * @type {(String|RegEx|Address4|Address6)[]}
    */
-  blacklist = []
+  blocklist = []
 
   /**
    * Will only be populated if `options.provenanceSummary` is `true`.
@@ -143,7 +143,7 @@ export class Mischief {
    */
   constructor (url, options = {}) {
     this.options = MischiefOptions.filterOptions(options)
-    this.blacklist = this.options.blacklist.map(castBlacklistMatcher)
+    this.blocklist = this.options.blocklist.map(castBlocklistMatcher)
     this.url = this.filterUrl(url)
 
     // Logging setup (level, output formatting)
@@ -777,7 +777,7 @@ export class Mischief {
    * This function throws if:
    * - `url` is not a valid url
    * - `url` is not an http / https url
-   * - `url` matches a blacklist rule
+   * - `url` matches a blocklist rule
    *
    * @param {string} url
    */
@@ -794,9 +794,9 @@ export class Mischief {
       throw new Error(`Invalid url provided.\n${err}`)
     }
 
-    const rule = this.blacklist.find(searchBlacklistFor(url))
+    const rule = this.blocklist.find(searchBlocklistFor(url))
     if (rule) {
-      throw new Error(`Blacklisted url provided matching: ${rule}`)
+      throw new Error(`Blocked url provided matching blocklist rule: ${rule}`)
     }
 
     return url

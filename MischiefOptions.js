@@ -42,7 +42,7 @@ export class MischiefOptions {
    * @property {boolean} provenanceSummary - If `true`, information about the capture process (public IP address, User Agent, software version ...) will be gathered and summarized under `file:///provenance-summary.html`. WACZ exports will also hold that information at `datapackage.json` level, under `extras`. Defaults to `true`.
    * @property {string} publicIpResolverEndpoint - URL to be used to retrieve the client's public IP address for `provenanceSummary`. Endpoint requirements: must simply return a IPv4 or IPv6 address as text. Defaults to "https://myip.lil.tools".
    * @property {string} tmpFolderPath - Path to the temporary folder Mischief uses. Defaults to `./tmp`.
-   * @property {(String|RegEx)[]} blacklist - a list of patterns, to be matched against each request's URL and IP address, and subsequently blocked during capture. Valid entries include url strings, CIDR strings, and regular expressions.
+   * @property {(String|RegEx)[]} blocklist - a list of patterns, to be matched against each request's URL and IP address, and subsequently blocked during capture. Valid entries include url strings, CIDR strings, and regular expressions.
    */
   static defaults = {
     logLevel: 'info',
@@ -73,7 +73,7 @@ export class MischiefOptions {
     provenanceSummary: true,
     publicIpResolverEndpoint: 'https://myip.lil.tools',
     tmpFolderPath: `${process.env.PWD}/tmp/`,
-    blacklist: [
+    blocklist: [
       '0.0.0.0/8',
       '10.0.0.0/8',
       '100.64.0.0/10',
