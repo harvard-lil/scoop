@@ -106,7 +106,8 @@
         <h2>Video</h2>
 
         {% if videoSaved %}
-        <video src="video-extracted.mp4" controls>
+        <video controls>
+          <source src="video-extracted.mp4" type="video/mp4" />
           {% if subtitlesSaved and subtitlesFormat == 'vtt' %}
             {% for locale in subtitlesAvailableLocales %}
             <track 
