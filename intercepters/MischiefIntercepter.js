@@ -24,7 +24,6 @@ export class MischiefIntercepter {
    */
   byteLength = 0
 
-
   /**
    * Data recorded by the intercepter,
    * formatted as a series of exchanges

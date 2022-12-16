@@ -131,7 +131,7 @@ export class MischiefOptions {
           break
 
         default:
-          if(options[key].constructor != constructor) {
+          if (options[key].constructor !== constructor) {
             throw new Error(`${key} must be type ${constructor.name}`)
           }
       }

@@ -28,12 +28,13 @@
     "http-parser-js": "^0.5.8",
     "loglevel": "^1.8.1",
     "loglevel-plugin-prefix": "^0.8.4",
+    "node-html-parser": "^6.1.4",
     "node-stream-zip": "^1.15.0",
     "nunjucks": "^3.2.3",
     "playwright": "^1.27.1",
     "transparent-proxy": "^1.9.1",
     "uuid": "^9.0.0",
-    "warcio": "^1.6.1"
+    "warcio": "^2.0.0"
   },
   "devDependencies": {
     "@types/node": "^18.11.0",
