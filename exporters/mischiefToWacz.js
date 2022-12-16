@@ -18,10 +18,11 @@ import { WARCParser } from 'warcio'
  * - Logs are added to capture object via `Mischief.log`.
  *
  * @param {Mischief} capture
- * @param {boolean} includeRaw - If `true`, includes the raw http exchanges in the WACZ.
+ * @param {boolean} [includeRaw=false] - If `true`, includes the raw http exchanges in the WACZ.
+ * @param {boolean|object} [sign=false] -
  * @returns {Promise<ArrayBuffer>}
  */
-export async function mischiefToWacz (capture, includeRaw = false) {
+export async function mischiefToWacz (capture, includeRaw = false, sign = false) {
   const validStates = [Mischief.states.PARTIAL, Mischief.states.COMPLETE]
 
   if (!(capture instanceof Mischief) || !validStates.includes(capture.state)) {
@@ -76,5 +77,5 @@ export async function mischiefToWacz (capture, includeRaw = false) {
     .filter((ex) => ex === firstExchange || ex.isEntryPoint)
     .map(mischiefExchangeToPageLine)
 
-  return await wacz.finalize()
+  return await wacz.finalize(sign)
 }

@@ -819,10 +819,11 @@ export class Mischief {
   /**
    * (Shortcut) Export this Mischief capture to WACZ.
    * @param {boolean} [includeRaw=true] - Include a copy of RAW Http exchanges to the wacz (under `/raw`)?
+   * @param {boolean|object} [sign=false] - Sign the WACZ using the given url and (optional) authorizaton token
    * @returns {Promise<ArrayBuffer>}
    */
-  async toWacz (includeRaw = true) {
-    return await exporters.mischiefToWacz(this, includeRaw)
+  async toWacz (includeRaw = true, sign = false) {
+    return await exporters.mischiefToWacz(this, includeRaw, sign)
   }
 
   static async fromWacz (zipPath) {
