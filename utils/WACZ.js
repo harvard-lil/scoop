@@ -255,7 +255,9 @@ export class WACZ {
   /**
    * Generates a datapackage-digest based on the datapackage JSON
    *
-   * @param {boolean|object} [sign=false]
+   * @param {boolean|object} [sign=false] - Optional server information for signing the WACZ
+   * @param {string} sign.server - url of the signing server
+   * @param {string} sign.token - Optional token to be passed to the signing server via the Authorization header
    * @returns {string} - a string with the contents of the datapackage-digest
    */
   async generateDatapackageDigest (sign = false) {
@@ -283,7 +285,9 @@ export class WACZ {
    * Validates that the requirements for a WACZ are met and generates
    * a datapackage, datapackage-digest, and (optionally) CDXJ index
    *
-   * @param {boolean|object} [sign=false] -
+   * @param {boolean|object} [sign=false] - Optional server information for signing the WACZ
+   * @param {string} sign.server - url of the signing server
+   * @param {string} sign.token - Optional token to be passed to the signing server via the Authorization header
    * @param {boolean} [autoindex=true] - automatically create a CDXJ index
    * @returns {Promise<Buffer>} - a buffer with the zipped contents of the WACZ
    */
@@ -365,7 +369,7 @@ export function mischiefExchangeToPageLine (exchange) {
 /**
  * Query a signature server to sign the WACZ
  *
- * @param {string} url - Url of the signing server
+ * @param {string} url - url of the signing server
  * @param {Object} payload - Payload to be passed to the signing server
  * @param {string} payload.hash - sha256 hash of datapackage.json as included in datapackage-digest.json
  * @param {string} payload.created - ISO 8861 date from datapackage.json, marking when it was created

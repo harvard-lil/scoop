@@ -19,7 +19,9 @@ import { WARCParser } from 'warcio'
  *
  * @param {Mischief} capture
  * @param {boolean} [includeRaw=false] - If `true`, includes the raw http exchanges in the WACZ.
- * @param {boolean|object} [sign=false] -
+ * @param {boolean|object} [sign=false] - Optional server information for signing the WACZ
+ * @param {string} sign.server - url of the signing server
+ * @param {string} sign.token - Optional token to be passed to the signing server via the Authorization header
  * @returns {Promise<ArrayBuffer>}
  */
 export async function mischiefToWacz (capture, includeRaw = false, sign = false) {
