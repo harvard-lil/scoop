@@ -263,17 +263,20 @@ export class WACZ {
       throw new Error('datapackage.json must be present to generate datapackage-digest.json')
     }
 
-    const payload = {
+    const digest = {
       path: 'datapackage.json',
       hash: hash(this.files['datapackage.json'])
     }
 
     if (sign) {
-      const sigPayload = { hash: payload.hash, created: this.created }
-      payload.signatureData = await requestSignature(sign.server, sigPayload, sign.auth)
+      digest.signatureData = await requestSignature(
+        sign.server,
+        { hash: digest.hash, created: this.created },
+        sign.auth
+      )
     }
 
-    return stringify(payload)
+    return stringify(digest)
   }
 
   /**
