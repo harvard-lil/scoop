@@ -34,7 +34,7 @@
     "playwright": "^1.27.1",
     "transparent-proxy": "^1.9.1",
     "uuid": "^9.0.0",
-    "warcio": "^2.0.0"
+    "warcio": "^2.0.1"
   },
   "devDependencies": {
     "@types/node": "^18.11.0",

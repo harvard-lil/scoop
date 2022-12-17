@@ -191,7 +191,7 @@ export class WACZ {
         }
       })
 
-    await new CDXIndexer(converter, { format: 'cdxj' }).run(warcs)
+    await new CDXIndexer({ format: 'cdxj' }).writeAll(warcs, converter)
     return Buffer.concat(buffers)
   }
 
