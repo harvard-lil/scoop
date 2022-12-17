@@ -74,7 +74,6 @@ export class MischiefOptions {
     publicIpResolverEndpoint: 'https://myip.lil.tools',
     tmpFolderPath: `${process.env.PWD}/tmp/`,
     blocklist: [
-      '/\.png/',
       '/https?:\/\/localhost/',
       '0.0.0.0/8',
       '10.0.0.0/8',
