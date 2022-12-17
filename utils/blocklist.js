@@ -27,7 +27,6 @@ export function castBlocklistMatcher (val) {
 
   const pattern = val.match(/^\/(.*)\/$/)
   if (pattern) {
-    console.log(val, new RegExp(pattern[1]))
     return new RegExp(pattern[1])
   }
 
