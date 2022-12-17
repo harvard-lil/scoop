@@ -3,21 +3,18 @@
 import { Address4, Address6 } from '@laverdet/beaugunderson-ip-address'
 
 /**
- * Parses a blocklist value for later matching.
- * RegExps are returned as-is while strings are attempted to be parsed
- * as IPs and CIDR ranges before being returned as-is if unsuccessful.
+ * Parses a blocklist entry for later matching.
+ * All entries are strings that we attempt to parse
+ * as IPs and CIDR ranges, then RegExp, before being
+ * returned as-is if unsuccessful.
  *
- * @param {String | RegExp} val - a blocklist matcher
+ * @param {String} val - a blocklist matcher
  * @throws {Error} - Throws if datatype does not match String or RegExp
  * @returns {RegExp | String | Address4 | Address6} - The parsed matcher
  */
 export function castBlocklistMatcher (val) {
-  if (![String, RegExp].includes(val.constructor)) {
-    throw new Error('Blocklist matchers may only be strings or regular expressions.')
-  }
-
-  if (val instanceof RegExp) {
-    return val
+  if (val.constructor != String) {
+    throw new Error('Blocklist matchers may only be strings')
   }
 
   try {
@@ -27,6 +24,12 @@ export function castBlocklistMatcher (val) {
   try {
     return new Address6(val)
   } catch {}
+
+  const pattern = val.match(/^\/(.*)\/$/)
+  if (pattern) {
+    console.log(val, new RegExp(pattern[1]))
+    return new RegExp(pattern[1])
+  }
 
   return val
 }
@@ -45,6 +48,10 @@ function matchAgainst (matcher) {
       // If the test val is an IP, it must first be cast as Address4|Address6
       // to work with an Address4|Address6 matcher
       return Boolean(castBlocklistMatcher(val).isInSubnet?.(matcher))
+    }
+
+    if (matcher.constructor == String) {
+      return val == matcher
     }
 
     return Boolean(val.match?.(matcher))
