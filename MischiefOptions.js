@@ -74,7 +74,7 @@ export class MischiefOptions {
     publicIpResolverEndpoint: 'https://myip.lil.tools',
     tmpFolderPath: `${process.env.PWD}/tmp/`,
     blocklist: [
-      '/https?:\/\/localhost/',
+      '/https?:\/\/localhost/', // eslint-disable-line
       '0.0.0.0/8',
       '10.0.0.0/8',
       '100.64.0.0/10',

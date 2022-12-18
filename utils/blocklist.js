@@ -13,7 +13,7 @@ import { Address4, Address6 } from '@laverdet/beaugunderson-ip-address'
  * @returns {RegExp | String | Address4 | Address6} - The parsed matcher
  */
 export function castBlocklistMatcher (val) {
-  if (val.constructor != String) {
+  if (val.constructor !== String) {
     throw new Error('Blocklist matchers may only be strings')
   }
 
@@ -49,8 +49,8 @@ function matchAgainst (matcher) {
       return Boolean(castBlocklistMatcher(val).isInSubnet?.(matcher))
     }
 
-    if (matcher.constructor == String) {
-      return val == matcher
+    if (matcher.constructor === String) {
+      return val === matcher
     }
 
     return Boolean(val.match?.(matcher))
