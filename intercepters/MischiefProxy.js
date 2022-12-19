@@ -2,6 +2,7 @@ import { MischiefIntercepter } from './MischiefIntercepter.js'
 import { MischiefProxyExchange } from '../exchanges/index.js'
 import ProxyServer from 'transparent-proxy'
 import { searchBlocklistFor } from '../utils/blocklist.js'
+import { Mischief } from '../Mischief.js'
 
 export class MischiefProxy extends MischiefIntercepter {
   #connection
@@ -42,6 +43,7 @@ export class MischiefProxy extends MischiefIntercepter {
    *
    * @param {string} id
    * @param {string} type
+   * @returns {MischiefExchange}
    */
   getOrInitExchange (connectionId, type) {
     // TODO: For loop-ify for clarity and maintainability?
@@ -86,7 +88,7 @@ export class MischiefProxy extends MischiefIntercepter {
    * @param {Session} session
    */
   intercept (type, data, session) {
-    // early exit with unmodified data if not recording exchanges
+    // Early exit with unmodified data if not recording exchanges
     if (!this.recordExchanges) {
       return data
     }
@@ -95,8 +97,25 @@ export class MischiefProxy extends MischiefIntercepter {
     const prop = `${type}Raw` // `responseRaw` | `requestRaw`
     ex[prop] = ex[prop] ? Buffer.concat([ex[prop], data], ex[prop].length + data.length) : data
 
+    // Check for "noarchive"
+    if (type === 'response') {
+      const noArchive = this.checkAndEnforceNoArchiveDirective(ex)
+
+      // Mark capture as canceled if this was the principal url
+      if (noArchive && this.capture.url === ex.request.url) {
+        this.capture.state = Mischief.states.CANCELED
+        this.capture.log.warn('Capture canceled. Principal url bears "noarchive" directive.')
+      }
+
+      // Delete response
+      if (noArchive) {
+        ex.response = null
+      }
+    }
+
     this.byteLength += data.byteLength
     this.checkAndEnforceSizeLimit() // From parent
+
     return data
   }
 }

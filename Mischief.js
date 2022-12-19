@@ -62,7 +62,8 @@ export class Mischief {
     CAPTURE: 2,
     COMPLETE: 3,
     PARTIAL: 4,
-    FAILED: 5
+    FAILED: 5,
+    CANCELED: 6
   }
 
   /**
