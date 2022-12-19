@@ -300,19 +300,7 @@ export class WACZ {
 
     const resp = await fetch(url, { method: 'POST', headers, body })
     const json = await resp.json()
-
-    const requiredProps = {
-      hash: assertions.assertSHA256WithPrefix,
-      created: assertions.assertISO8861Date,
-      software: assertions.assertString,
-      // 'version': assertions.assertString, //TODO: verify whether this is required; some implementations append this to the end of `software`
-      signature: assertions.assertBase64
-    }
-
-    for (const [key, assert] of Object.entries(requiredProps)) {
-      assert(json[key], `'${key}' key of signature server response is invalid due to the following error:`)
-    }
-
+    assertValidSignatureResponse(json)
     return json
   }
 
@@ -395,5 +383,40 @@ export function mischiefExchangeToPageLine (exchange) {
     url: exchange.response.url,
     ts: exchange.date.toISOString(),
     title: exchange?.description || `High-Fidelity Web Capture of ${exchange.response.url}`
+  }
+}
+
+function assertValidSignatureResponse (resp) {
+  const generalProps = {
+    hash: assertions.assertSHA256WithPrefix,
+    created: assertions.assertISO8861Date,
+    software: assertions.assertString,
+    // 'version': assertions.assertString, //TODO: verify whether this is required; some implementations append this to the end of `software`
+    signature: assertions.assertBase64
+  }
+
+  const anonSigProps = {
+    publicKey: assertions.assertBase64
+  }
+
+  const domainIdentProps = {
+    domain: assertions.assertDomainName,
+    domainCert: assertions.assertPEMCertificateChain,
+    timeSignature: assertions.assertBase64,
+    timestampCert: assertions.assertPEMCertificateChain
+  }
+
+  const propsToValidate = {
+    ...generalProps,
+    ...(resp.publicKey ? anonSigProps : domainIdentProps)
+  }
+
+  // crossSignedCert is optional
+  if (resp.crossSignedCert) {
+    propsToValidate.crossSignedCert = assertions.assertPEMCertificateChain
+  }
+
+  for (const [key, assert] of Object.entries(propsToValidate)) {
+    assert(resp[key], `'${key}' key of signature server response is invalid due to the following error:`)
   }
 }

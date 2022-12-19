@@ -1,3 +1,5 @@
+import { X509Certificate } from 'crypto'
+
 const makeAssertion = (description, matcher) => {
   return (val, customMsg) => {
     if (!matcher(val)) {
@@ -27,4 +29,20 @@ export const assertBase64 = makeAssertion(
 export const assertSHA256WithPrefix = makeAssertion(
   'SHA256 with "sha:" prefix',
   (val) => val?.match?.(/^sha256:[A-Fa-f0-9]{64}$/)
+)
+
+export const assertPEMCertificateChain = makeAssertion(
+  'PEM certificate chain',
+  (val) => {
+    try {
+      return new X509Certificate(val)
+    } catch {
+      return false
+    }
+  }
+)
+
+export const assertDomainName = makeAssertion(
+  'domain name',
+  (val) => val?.match?.(/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]/)
 )
