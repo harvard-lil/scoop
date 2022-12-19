@@ -11,6 +11,7 @@ import { Readable, Writable } from 'stream'
 import { createHash } from 'crypto'
 
 import { CDXIndexer } from 'warcio'
+import * as validators from './validators.js'
 import CONSTANTS from '../constants.js'
 import * as zip from '../utils/zip.js'
 
@@ -298,7 +299,23 @@ export class WACZ {
     }
 
     const resp = await fetch(url, { method: 'POST', headers, body })
-    return resp.json()
+    const json = await resp.json()
+
+    const requiredProps = {
+      'hash': validators.sha256WithPrefix,
+      'created': validators.iso8861Date,
+      'software': validators.string,
+      'version': validators.string,
+      'signature': validators.base64
+    }
+
+    for (const [key, validator] of Object.entries(requiredProps)){
+      if (!validator(json[key])){
+        throw new Error(`'${key}' key of signature server response did not match expected format.\n${json[key]} != ${validator}`)
+      }
+    }
+
+    return json
   }
 
   /**
