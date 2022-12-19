@@ -693,10 +693,10 @@ export class Mischief {
       const ip = await response.text()
 
       try {
-        new Address4(ip)
+        new Address4(ip) // eslint-disable-line
       } catch {
         try {
-          new Address6(ip)
+          new Address6(ip) // eslint-disable-line
         } catch {
           throw new Error(`${ip} is not a valid IP address.`)
         }

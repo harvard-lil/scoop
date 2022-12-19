@@ -289,10 +289,10 @@ export class WACZ {
    * @param {string} payload.created - ISO 8861 date from datapackage.json, marking when it was created
    * @return {Promise} a promise of https.request
    */
-  async requestSignature(payload) {
+  async requestSignature (payload) {
     const url = new URL(this.signingServer.url)
     const body = stringify(payload)
-    const headers = { "Content-Type": "application/json" }
+    const headers = { 'Content-Type': 'application/json' }
 
     if (this.signingServer.auth) {
       headers.Authorization = this.signingServer.auth
@@ -302,14 +302,14 @@ export class WACZ {
     const json = await resp.json()
 
     const requiredProps = {
-      'hash': assertions.assertSHA256WithPrefix,
-      'created': assertions.assertISO8861Date,
-      'software': assertions.assertString,
-      //'version': assertions.assertString, //TODO: verify whether this is required; some implementations append this to the end of `software`
-      'signature': assertions.assertBase64
+      hash: assertions.assertSHA256WithPrefix,
+      created: assertions.assertISO8861Date,
+      software: assertions.assertString,
+      // 'version': assertions.assertString, //TODO: verify whether this is required; some implementations append this to the end of `software`
+      signature: assertions.assertBase64
     }
 
-    for (const [key, assert] of Object.entries(requiredProps)){
+    for (const [key, assert] of Object.entries(requiredProps)) {
       assert(json[key], `'${key}' key of signature server response is invalid due to the following error:`)
     }
 
