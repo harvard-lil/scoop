@@ -22,11 +22,7 @@ export class WACZ {
     [/^pages\//, [this.assertPages]]
   ]
 
-  /**
-   * @param {object} signingServer - Optional server information for signing the WACZ
-   * @param {string} signingServer.url - url of the signing server
-   * @param {string} signingServer.token - Optional token to be passed to the signing server via the Authorization header
-   */
+  /** @type {?{url: string, token: ?string}}  */
   signingServer
 
   created = (new Date()).toISOString()
@@ -284,10 +280,10 @@ export class WACZ {
   /**
    * Query a signature server to sign the WACZ
    *
-   * @param {Object} payload - Payload to be passed to the signing server
+   * @param {object} payload - Payload to be passed to the signing server
    * @param {string} payload.hash - sha256 hash of datapackage.json as included in datapackage-digest.json
    * @param {string} payload.created - ISO 8861 date from datapackage.json, marking when it was created
-   * @return {Promise} a promise of https.request
+   * @return {Promise<object>} a promise of https.request
    */
   async requestSignature (payload) {
     const url = new URL(this.signingServer.url)
