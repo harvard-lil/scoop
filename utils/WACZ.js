@@ -294,8 +294,8 @@ export class WACZ {
     const body = stringify(payload)
     const headers = { 'Content-Type': 'application/json' }
 
-    if (this.signingServer.auth) {
-      headers.Authorization = this.signingServer.auth
+    if (this.signingServer.token) {
+      headers.Authorization = this.signingServer.token
     }
 
     const resp = await fetch(url, { method: 'POST', headers, body })
