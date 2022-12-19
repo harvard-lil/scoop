@@ -43,7 +43,7 @@ for (const entry of toCapture) {
 
     switch (format) {
       case 'wacz':
-        data = await myCapture.toWacz(true, { server: 'https://authsign.lil.tools/sign' })
+        data = await myCapture.toWacz(true, { url: 'https://authsign.lil.tools/sign' })
         break
 
       case 'warc':

@@ -19,19 +19,19 @@ import { WARCParser } from 'warcio'
  *
  * @param {Mischief} capture
  * @param {boolean} [includeRaw=false] - If `true`, includes the raw http exchanges in the WACZ.
- * @param {boolean|object} [sign=false] - Optional server information for signing the WACZ
- * @param {string} sign.server - url of the signing server
- * @param {string} sign.token - Optional token to be passed to the signing server via the Authorization header
+ * @param {object} signingServer - Optional server information for signing the WACZ
+ * @param {string} signingServer.url - url of the signing server
+ * @param {string} signingServer.token - Optional token to be passed to the signing server via the Authorization header
  * @returns {Promise<ArrayBuffer>}
  */
-export async function mischiefToWacz (capture, includeRaw = false, sign = false) {
+export async function mischiefToWacz (capture, includeRaw = false, signingServer) {
   const validStates = [Mischief.states.PARTIAL, Mischief.states.COMPLETE]
 
   if (!(capture instanceof Mischief) || !validStates.includes(capture.state)) {
     throw new Error('`capture` must be a partial or complete Mischief object.')
   }
 
-  const wacz = new WACZ()
+  const wacz = new WACZ({ signingServer })
 
   // Append WARC
   const warc = Buffer.from(await capture.toWarc())
@@ -79,5 +79,5 @@ export async function mischiefToWacz (capture, includeRaw = false, sign = false)
     .filter((ex) => ex === firstExchange || ex.isEntryPoint)
     .map(mischiefExchangeToPageLine)
 
-  return await wacz.finalize(sign)
+  return await wacz.finalize()
 }
