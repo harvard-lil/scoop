@@ -177,7 +177,15 @@ export class Mischief {
   async capture () {
     const options = this.options
 
-    /** @type {{name: String, setup: ?function, main: function, compatibleStates: number[]}[]} */
+    /**
+     * @typedef MischiefCaptureStep
+     * @property {string} name
+     * @property {?function} setup
+     * @property {function} main
+     * @property {number[]} compatibleStates - Determines under which conditions this step's `main` function can run. Array of values based off `Mischief.states`.
+     */
+
+    /** @type {MischiefCaptureStep[]} */
     const steps = []
 
     //
@@ -374,7 +382,7 @@ export class Mischief {
     while (i++ < steps.length - 1) {
       const step = steps[i]
 
-      if (step.compatibleStates.includes(this.step)) {
+      if (!step.compatibleStates.includes(this.state)) {
         this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} - skipped (incompatible state)`)
         continue
       }
@@ -491,6 +499,7 @@ export class Mischief {
   async cleanup () {
     // If the whole capture was canceled: flush all exchanges
     if (this.state === Mischief.states.CANCELED) {
+      this.log.info('Capture canceled, clearing all exchanges.')
       this.exchanges = []
     }
 
@@ -499,6 +508,7 @@ export class Mischief {
     for (let i = 0; i < this.exchanges.length; i++) {
       const exchange = this.exchanges[i]
       if (exchange?.response?.url && this.urlsToDiscard.includes(exchange.response.url)) {
+        this.log.info(`Clearing exchange #${i} for url ${exchange?.response?.url}`)
         exchangesToDelete.push(i)
       }
     }
@@ -865,7 +875,7 @@ export class Mischief {
     if (this.state !== Mischief.states.CAPTURE ||
         body.byteLength >= remainingSpace) {
       this.state = Mischief.states.PARTIAL
-      this.warn(`Generated exchange ${url} could not be saved (size limit reached).`)
+      this.log.warn(`Generated exchange ${url} could not be saved (size limit reached).`)
       return
     }
 
