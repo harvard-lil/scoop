@@ -503,8 +503,9 @@ export class Mischief {
       this.exchanges = []
     }
 
-    // Go over exchanges and remove exchanges that were specifically marked for deletion
+    // Remove exchanges that were specifically marked for deletion
     const exchangesToDelete = []
+
     for (let i = 0; i < this.exchanges.length; i++) {
       const exchange = this.exchanges[i]
       if (exchange?.response?.url && this.urlsToDiscard.includes(exchange.response.url)) {
@@ -525,7 +526,7 @@ export class Mischief {
   /**
    * Checks the main documents as well as iframes for the "noarchive" directive and:
    * - Cancels capture if the main document was tagged with the "noarchive" directive.
-   * - Keeps track of nested documents tagged with the "noarchive" directive under `this.urlsToDiscard` so associated exchanges can be discarded after teardown. 
+   * - Keeps track of nested documents tagged with the "noarchive" directive under `this.urlsToDiscard` so associated exchanges can be discarded after teardown.
    *
    * @param {object} page - Playwright "Page" object
    * @returns {void}
