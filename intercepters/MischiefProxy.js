@@ -101,15 +101,14 @@ export class MischiefProxy extends MischiefIntercepter {
     if (type === 'response') {
       const noArchive = this.checkAndEnforceNoArchiveDirective(ex)
 
-      // Mark capture as canceled if this was the principal url
-      if (noArchive && this.capture.url === ex.request.url) {
-        this.capture.state = Mischief.states.CANCELED
-        this.capture.log.warn('Capture canceled. Principal url bears "noarchive" directive.')
-      }
-
       // Delete response
       if (noArchive) {
         ex.response = null
+      }
+
+      // Mark capture as canceled if this was the principal url
+      if (noArchive && this.capture.url === ex.request.url) {
+        this.capture.state = Mischief.states.CANCELED
       }
     }
 

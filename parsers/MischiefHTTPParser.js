@@ -5,6 +5,7 @@
  * @license MIT
  * @description Utility class for parsing intercepted HTTP exchanges.
  */
+import zlib from 'node:zlib'
 import { HTTPParser as _HTTPParser } from 'http-parser-js'
 
 /**
@@ -178,4 +179,30 @@ export function bodyStartIndex (buffer) {
  */
 export function versionFromStatusLine (statusLine) {
   return statusLine.match(/\/([\d.]+)/)[1].split('.').map(n => parseInt(n))
+}
+
+/**
+ * Utility for turning an HTTP body into a string.
+ * Handles "deflate", "gzip" and "br" decompression.
+ *
+ * @param {Buffer} body
+ * @param {?string} [contentEncoding=null] - Can be "br", "deflate" or "gzip"
+ * @returns {string}
+ */
+export function bodyToString (body, contentEncoding = null) {
+  switch (contentEncoding) {
+    case 'deflate':
+      body = zlib.inflateSync(body, { finishFlush: zlib.constants.Z_SYNC_FLUSH })
+      break
+
+    case 'gzip':
+      body = zlib.gunzipSync(body, { finishFlush: zlib.constants.Z_SYNC_FLUSH })
+      break
+
+    case 'br':
+      body = zlib.brotliDecompressSync(body, { finishFlush: zlib.constants.BROTLI_OPERATION_FLUSH })
+      break
+  }
+
+  return body.toString('utf-8')
 }

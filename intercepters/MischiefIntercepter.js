@@ -1,9 +1,8 @@
-import zlib from 'node:zlib'
 import { strict as assert } from 'node:assert'
 import { parse as parseHTML } from 'node-html-parser'
 
 import { Mischief } from '../Mischief.js'
-import { MischiefExchange } from '../exchanges/MischiefExchange.js'
+import { bodyToString } from '../parsers/MischiefHTTPParser.js'
 
 export class MischiefIntercepter {
   /**
@@ -65,19 +64,18 @@ export class MischiefIntercepter {
    * @returns {boolean}
    */
   checkAndEnforceNoArchiveDirective (exchange) {
-    let responseBody = null
-    let contentType = null
-    let contentEncoding = null
-
     // Skip if `followNoArchive` is off
     if (!this.options.followNoArchive) {
       return false
     }
 
+    let responseBody = null
+    let contentType = null
+    let contentEncoding = null
+    const parsedHeaders = new Headers(exchange?.response?.headers) // eslint-disable-line
+
     // Skip if a content-type was found, and it is not `text/html`
-    contentType = exchange?.response?.headers['content-type']
-      ? exchange?.response?.headers['content-type']
-      : exchange?.response?.headers['Content-Type']
+    contentType = parsedHeaders.get('content-type')
 
     if (contentType && !contentType.startsWith('text/html')) {
       return false
@@ -91,24 +89,10 @@ export class MischiefIntercepter {
     }
 
     // Handle deflate / gzip / brotly compression
-    contentEncoding = exchange?.response?.headers['content-encoding']
-      ? exchange?.response?.headers['content-encoding']
-      : exchange?.response?.headers['Content-Encoding']
+    contentEncoding = parsedHeaders.get('content-encoding')
 
     try {
-      switch (contentEncoding) {
-        case 'deflate':
-          responseBody = zlib.inflateSync(responseBody, { finishFlush: zlib.constants.Z_SYNC_FLUSH })
-          break
-
-        case 'gzip':
-          responseBody = zlib.gunzipSync(responseBody, { finishFlush: zlib.constants.Z_SYNC_FLUSH })
-          break
-
-        case 'br':
-          responseBody = zlib.brotliDecompressSync(responseBody, { finishFlush: zlib.constants.BROTLI_OPERATION_FLUSH })
-          break
-      }
+      responseBody = bodyToString(responseBody, contentEncoding)
     } catch (err) {
       this.capture.log.warn('Could not determine if the current exchange was marked as "noarchive".')
       this.capture.log.warn(`Error while decompressing ${contentEncoding} body. Assuming "noarchive" directive is absent.`)

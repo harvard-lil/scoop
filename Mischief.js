@@ -803,6 +803,7 @@ export class Mischief {
 
     const rule = this.blocklist.find(searchBlocklistFor(url))
     if (rule) {
+      this.state = Mischief.states.CANCELED
       throw new Error(`Blocked url provided matching blocklist rule: ${rule}`)
     }
 
