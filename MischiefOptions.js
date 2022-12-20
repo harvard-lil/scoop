@@ -43,6 +43,8 @@ export class MischiefOptions {
    * @property {string} publicIpResolverEndpoint - URL to be used to retrieve the client's public IP address for `provenanceSummary`. Endpoint requirements: must simply return a IPv4 or IPv6 address as text. Defaults to "https://myip.lil.tools".
    * @property {string} tmpFolderPath - Path to the temporary folder Mischief uses. Defaults to `./tmp`.
    * @property {string[]} blocklist - a list of patterns, to be matched against each request's URL and IP address, and subsequently blocked during capture. Valid entries include url strings, CIDR strings, and regular expressions.
+   * @property {boolean} ignoreNoArchive - If `true`, will ignore the "noarchive" directive. Defaults to `false`.
+   * @property {string} noArchiveMetaName - Name of the meta tag containing "noarchive" to look for. Default to "robots".
    */
   static defaults = {
     logLevel: 'info',
@@ -103,7 +105,9 @@ export class MischiefOptions {
       'fc00::/7',
       'fe80::/10',
       'ff00::/8'
-    ]
+    ],
+    ignoreNoArchive: false,
+    noArchiveMetaName: 'robots'
   }
 
   /**

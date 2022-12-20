@@ -27,6 +27,7 @@ import CONSTANTS from './constants.js'
 import * as intercepters from './intercepters/index.js'
 import * as exporters from './exporters/index.js'
 import * as importers from './importers/index.js'
+
 const exec = util.promisify(execCB)
 
 /**
@@ -62,7 +63,8 @@ export class Mischief {
     CAPTURE: 2,
     COMPLETE: 3,
     PARTIAL: 4,
-    FAILED: 5
+    FAILED: 5,
+    CANCELED: 6
   }
 
   /**
@@ -90,6 +92,13 @@ export class Mischief {
    * @type {MischiefExchange[]}
    */
   exchanges = []
+
+  /**
+   * URLs of exchanges that need to be discarded after teardown.
+   * Example: "noarchive" documents in <iframe>s.
+   * @type {string[]}
+   */
+  urlsToDiscard = []
 
   /**
    * Logger.
@@ -168,7 +177,7 @@ export class Mischief {
   async capture () {
     const options = this.options
 
-    /** @type {{name: String, setup: ?function, main: function}[]} */
+    /** @type {{name: String, setup: ?function, main: function, compatibleStates: number[]}[]} */
     const steps = []
 
     //
@@ -180,7 +189,8 @@ export class Mischief {
       name: 'Intercepter',
       main: async (page) => {
         await this.intercepter.setup(page)
-      }
+      },
+      compatibleStates: Object.values(Mischief.states)
     })
 
     // Push step: Initial page load
@@ -188,8 +198,20 @@ export class Mischief {
       name: 'Initial page load',
       main: async (page) => {
         await page.goto(this.url, { waitUntil: 'load', timeout: options.loadTimeout })
-      }
+      },
+      compatibleStates: [Mischief.states.CAPTURE]
     })
+
+    // Push step: "noarchive" check
+    if (options.ignoreNoArchive === false) {
+      steps.push({
+        name: '"noarchive" directive check',
+        main: async (page) => {
+          await this.#enforceNoArchiveDirective(page)
+        },
+        compatibleStates: [Mischief.states.CAPTURE]
+      })
+    }
 
     // Push step: Browser scripts
     if (
@@ -219,7 +241,8 @@ export class Mischief {
           await Promise.allSettled(
             page.frames().map((frame) => frame.evaluate('self.__bx_behaviors.run()'))
           )
-        }
+        },
+        compatibleStates: [Mischief.states.CAPTURE]
       })
     }
 
@@ -228,7 +251,8 @@ export class Mischief {
       name: 'Wait for network idle',
       main: async (page) => {
         await page.waitForLoadState('networkidle', { timeout: options.networkIdleTimeout })
-      }
+      },
+      compatibleStates: [Mischief.states.CAPTURE]
     })
 
     // Push step: Screenshot
@@ -242,7 +266,8 @@ export class Mischief {
           const isEntryPoint = true
           const description = `Capture Time Screenshot of ${this.url}`
           this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description)
-        }
+        },
+        compatibleStates: [Mischief.states.CAPTURE]
       })
     }
 
@@ -261,7 +286,8 @@ export class Mischief {
           const description = `Capture Time DOM Snapshot of ${this.url}`
 
           this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description)
-        }
+        },
+        compatibleStates: [Mischief.states.CAPTURE]
       })
     }
 
@@ -271,7 +297,8 @@ export class Mischief {
         name: 'PDF snapshot',
         main: async (page) => {
           await this.#takePdfSnapshot(page)
-        }
+        },
+        compatibleStates: [Mischief.states.CAPTURE]
       })
     }
 
@@ -281,7 +308,8 @@ export class Mischief {
         name: 'Out-of-browser capture of video as attachment',
         main: async () => {
           await this.#captureVideoAsAttachment()
-        }
+        },
+        compatibleStates: [Mischief.states.CAPTURE]
       })
     }
 
@@ -291,7 +319,8 @@ export class Mischief {
         name: 'Provenance summary',
         main: async (page) => {
           await this.#captureProvenanceInfo(page)
-        }
+        },
+        compatibleStates: [Mischief.states.CAPTURE]
       })
     }
 
@@ -301,7 +330,17 @@ export class Mischief {
       main: async () => {
         this.state = Mischief.states.COMPLETE
         await this.teardown()
-      }
+      },
+      compatibleStates: Object.values(Mischief.states)
+    })
+
+    // Push step: Cleanup
+    steps.push({
+      name: 'Cleanup',
+      main: async () => {
+        await this.cleanup()
+      },
+      compatibleStates: Object.values(Mischief.states)
     })
 
     //
@@ -332,17 +371,23 @@ export class Mischief {
     // Run capture steps
     //
     let i = -1
-    while (i++ < steps.length - 1 && this.state === Mischief.states.CAPTURE) {
+    while (i++ < steps.length - 1) {
       const step = steps[i]
+
+      if (step.compatibleStates.includes(this.step)) {
+        this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} - skipped (incompatible state)`)
+        continue
+      }
+
       try {
         this.log.info(`STEP [${i + 1}/${steps.length}]: ${step.name}`)
         await step.main(page)
       } catch (err) {
-        if (this.state === Mischief.states.CAPTURE) {
+        if (this.state === Mischief.states.PARTIAL) {
+          this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} - ended due to max time or size reached.`)
+        } else {
           this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} - failed.`)
           this.log.trace(err)
-        } else {
-          this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} - ended due to max time or size reached.`)
         }
       }
     }
@@ -436,9 +481,72 @@ export class Mischief {
     await this.intercepter.teardown()
     await this.#browser.close()
     this.exchanges = this.intercepter.exchanges.concat(this.exchanges)
+  }
 
+  /**
+   * Post-capture cleanup:
+   * - Deletes capture-specific temporary folder
+   * - Delete exchanges that are to be discarded and could not be intercepted
+   */
+  async cleanup () {
+    // If the whole capture was canceled: flush all exchanges
+    if (this.state === Mischief.states.CANCELED) {
+      this.exchanges = []
+    }
+
+    // Go over exchanges and remove exchanges that were specifically marked for deletion
+    const exchangesToDelete = []
+    for (let i = 0; i < this.exchanges.length; i++) {
+      const exchange = this.exchanges[i]
+      if (exchange?.response?.url && this.urlsToDiscard.includes(exchange.response.url)) {
+        exchangesToDelete.push(i)
+      }
+    }
+
+    for (const index of exchangesToDelete) {
+      this.exchanges.splice(index, 1)
+    }
+
+    // Delete capture-specific temporary folder
     this.log.info(`Clearing capture-specific temporary folder ${this.captureTmpFolderPath}`)
     await rm(this.captureTmpFolderPath, { recursive: true, force: true })
+  }
+
+  /**
+   * Checks the main documents as well as iframes for the "noarchive" directive and:
+   * - Mark the capture as canceled if the main document is "noarchive"
+   * - Mark urls of nested documents that are "noarchive" so they can be discarded down the road
+   *
+   * @param {object} page - Playwright "Page" object
+   * @returns {void}
+   * @private
+   */
+  async #enforceNoArchiveDirective (page) {
+    const selector = `meta[name='${this.options.noArchiveMetaName}'][content*='noarchive']`
+
+    // Main document
+    const noArchive = await page.evaluate((selector) => {
+      return document.querySelectorAll(selector).length
+    }, selector)
+
+    if (noArchive) {
+      this.log.error(`${this.url} uses the "noarchive" directive. Canceling capture.`)
+      this.state = Mischief.states.CANCELED
+      return
+    }
+
+    // Nested documents
+    for (const frame of page.mainFrame().childFrames()) {
+      const noArchive = await frame.evaluate((selector) => {
+        return document.querySelectorAll(selector).length
+      }, selector)
+
+      if (noArchive) {
+        const url = frame.url()
+        this.log.warn(`${url} (iframe) uses the "noarchive" directive. Captures of this document will be discarded.`)
+        this.urlsToDiscard.push(frame.url())
+      }
+    }
   }
 
   /**
@@ -802,6 +910,7 @@ export class Mischief {
 
     const rule = this.blocklist.find(searchBlocklistFor(url))
     if (rule) {
+      this.state = Mischief.states.CANCELED
       throw new Error(`Blocked url provided matching blocklist rule: ${rule}`)
     }
 
