@@ -524,8 +524,8 @@ export class Mischief {
 
   /**
    * Checks the main documents as well as iframes for the "noarchive" directive and:
-   * - Mark the capture as canceled if the main document is "noarchive"
-   * - Mark urls of nested documents that are "noarchive" so they can be discarded down the road
+   * - Cancels capture if the main document was tagged with the "noarchive" directive.
+   * - Keeps track of nested documents tagged with the "noarchive" directive under `this.urlsToDiscard` so associated exchanges can be discarded after teardown. 
    *
    * @param {object} page - Playwright "Page" object
    * @returns {void}
@@ -554,7 +554,7 @@ export class Mischief {
       if (noArchive) {
         const url = frame.url()
         this.log.warn(`${url} (iframe) uses the "noarchive" directive. Captures of this document will be discarded.`)
-        this.urlsToDiscard.push(frame.url())
+        this.urlsToDiscard.push(url)
       }
     }
   }
