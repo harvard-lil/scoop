@@ -131,10 +131,31 @@ export class Mischief {
 
   /**
    * Will only be populated if `options.provenanceSummary` is `true`.
-   * @type {object}
+   * @type {{
+   *   captureIp: ?string,
+   *   userAgent: ?string,
+   *   software: ?string,
+   *   version: ?string,
+   *   osType: ?string,
+   *   osName: ?string,
+   *   osVersion: ?string,
+   *   cpuArchitecture: ?string,
+   *   blockedRequests: {url: string, ip: string, rule: string}[],
+   *   noArchiveUrls: string[]
+   * }}
    */
   provenanceInfo = {
-    blockedRequests: []
+    captureIp: null,
+    userAgent: null,
+    software: CONSTANTS.SOFTWARE,
+    version: CONSTANTS.VERSION,
+    osType: null,
+    osName: null,
+    osVersion: null,
+    cpuArchitecture: null,
+    mischiefOptions: null,
+    blockedRequests: [],
+    noArchiveUrls: []
   }
 
   /**
