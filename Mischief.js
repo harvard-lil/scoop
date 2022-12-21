@@ -145,15 +145,6 @@ export class Mischief {
    * }}
    */
   provenanceInfo = {
-    captureIp: null,
-    userAgent: null,
-    software: CONSTANTS.SOFTWARE,
-    version: CONSTANTS.VERSION,
-    osType: null,
-    osName: null,
-    osVersion: null,
-    cpuArchitecture: null,
-    mischiefOptions: null,
     blockedRequests: [],
     noArchiveUrls: []
   }
