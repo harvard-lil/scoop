@@ -3,7 +3,6 @@ import { parse as parseHTML } from 'node-html-parser'
 
 import { Mischief } from '../Mischief.js'
 import { bodyToString } from '../parsers/MischiefHTTPParser.js'
-import { searchBlocklistFor } from '../utils/blocklist.js'
 
 export class MischiefIntercepter {
   /**
