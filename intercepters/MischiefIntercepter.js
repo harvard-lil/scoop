@@ -97,8 +97,6 @@ export class MischiefIntercepter {
       return false
     }
 
-    responseBody = responseBody.toString('utf-8')
-
     // Skip if "noarchive" cannot be found in the document
     if (!responseBody.match(/noarchive/i)) {
       return false
