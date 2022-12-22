@@ -51,26 +51,46 @@ export class MischiefProxy extends MischiefIntercepter {
     )
   }
 
-  interceptRequest = (data, session) => {
+  /**
+   * Checks an outgoing request against the blocklist. Interrupts the request it needed.
+   * Keeps trace of blocked requests in `Mischief.provenanceInfo`.
+   *
+   * @param {object} session - ProxyServer session
+   * @returns {boolean} - `true` if request was interrupted
+   */
+  checkRequestAgainstBlocklist (session) {
     const ip = session._dst.remoteAddress
+
     // https doesn't have the protocol or host in the path so add it here
     const url = (session.request.path[0] === '/')
       ? `https://${session.request.headers.host}${session.request.path}`
       : session.request.path
 
-    // search for a blocklist match but use the index to pull the original
-    // un-parsed rule from options so that the printing matches user expectations
+    // Search for a blocklist match:
+    // Use the index to pull the original un-parsed rule from options so that the printing matches user expectations
     const ruleIndex = this.capture.blocklist.findIndex(searchBlocklistFor(url, ip))
-    if (ruleIndex > -1) {
-      const rule = this.capture.options.blocklist[ruleIndex]
-      this.capture.log.warn(`Blocking ${url} resolved to IP ${ip} matching rule ${rule}`)
-      this.capture.provenanceInfo.blockedRequests.push({ url, ip, rule })
-      // TODO: confirm in transparent-proxy that this doesn't kill subsequent
-      // requests that were earmarked for this session
-      return session.destroy()
+
+    if (ruleIndex === -1) {
+      return false
     }
 
-    return this.intercept('request', data, session)
+    const rule = this.capture.options.blocklist[ruleIndex]
+    this.capture.log.warn(`Blocking ${url} resolved to IP ${ip} matching rule ${rule}`)
+    this.capture.provenanceInfo.blockedRequests.push({ url, ip, rule })
+
+    // TODO: confirm in transparent-proxy that this doesn't kill subsequent
+    // requests that were earmarked for this session
+    session.destroy()
+
+    return true
+  }
+
+  interceptRequest = (data, session) => {
+    this.checkRequestAgainstBlocklist(session) // May interrupt request
+
+    if (!session._src.destroyed && !session._dst.destroyed) {
+      return this.intercept('request', data, session)
+    }
   }
 
   interceptResponse = (data, session) => {
@@ -79,14 +99,14 @@ export class MischiefProxy extends MischiefIntercepter {
 
   /**
    * Collates network data (both requests and responses) from the proxy.
-   * Capture size enforcement happens here.
+   * Post-capture checks and capture size enforcement happens here.
    *
    * @param {string} type
    * @param {Buffer} data
    * @param {Session} session
    */
   intercept (type, data, session) {
-    // early exit with unmodified data if not recording exchanges
+    // Early exit with unmodified data if not recording exchanges
     if (!this.recordExchanges) {
       return data
     }
@@ -94,6 +114,10 @@ export class MischiefProxy extends MischiefIntercepter {
     const ex = this.getOrInitExchange(session._id, type)
     const prop = `${type}Raw` // `responseRaw` | `requestRaw`
     ex[prop] = ex[prop] ? Buffer.concat([ex[prop], data], ex[prop].length + data.length) : data
+
+    if (type === 'response') {
+      this.checkExchangeForNoArchive(ex)
+    }
 
     this.byteLength += data.byteLength
     this.checkAndEnforceSizeLimit() // From parent

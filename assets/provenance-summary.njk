@@ -71,7 +71,7 @@
       border-bottom: 1px solid lightgray;
     }
     
-    table tr td {
+    table tr td, table tr th {
       padding: 0.75rem 0.25rem;
     }
 
@@ -135,6 +135,21 @@
             {% endfor %}
           </tbody>
         </table>
+      </section>
+      {% endif %}
+
+      {% if noArchiveUrls.length %}
+      <section>
+        <h2>Urls tagged with the "noarchive" directive</h2>
+
+        <p>The following urls returned an HTML document tagged with the <em>noarchive</em> directive.</p>
+
+        <ul>
+          {% for url in noArchiveUrls %}
+          <li>{{ url }}</li>
+          {% endfor %}
+        </ul>
+
       </section>
       {% endif %}
 
