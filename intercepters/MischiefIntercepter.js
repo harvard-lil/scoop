@@ -65,7 +65,7 @@ export class MischiefIntercepter {
    * @param {MischiefExchange} exchange
    * @returns {boolean} - `true` if request contained "noarchive"
    */
-  checkExchangeForNoArchive (exchange) {
+  async checkExchangeForNoArchive (exchange) {
     let responseBody = null
     let contentType = null
     let contentEncoding = null
@@ -89,7 +89,7 @@ export class MischiefIntercepter {
     contentEncoding = parsedHeaders.get('content-encoding')
 
     try {
-      responseBody = bodyToString(responseBody, contentEncoding)
+      responseBody = await bodyToString(responseBody, contentEncoding)
     } catch (err) {
       this.capture.log.info(`Error while decompressing ${contentEncoding} body. Assuming "noarchive" directive is absent.`)
       this.capture.log.trace(err)

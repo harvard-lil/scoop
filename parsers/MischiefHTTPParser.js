@@ -6,7 +6,13 @@
  * @description Utility class for parsing intercepted HTTP exchanges.
  */
 import zlib from 'node:zlib'
+import { promisify } from 'util'
+
 import { HTTPParser as _HTTPParser } from 'http-parser-js'
+
+const inflate = promisify(zlib.inflate)
+const gunzip = promisify(zlib.gunzip)
+const brotliDecompress = promisify(zlib.brotliDecompress)
 
 /**
  * Via: https://github.com/creationix/http-parser-js/blob/master/standalone-example.js
@@ -189,18 +195,18 @@ export function versionFromStatusLine (statusLine) {
  * @param {?string} [contentEncoding=null] - Can be "br", "deflate" or "gzip"
  * @returns {string}
  */
-export function bodyToString (body, contentEncoding = null) {
+export async function bodyToString (body, contentEncoding = null) {
   switch (contentEncoding) {
     case 'deflate':
-      body = zlib.inflateSync(body, { finishFlush: zlib.constants.Z_SYNC_FLUSH })
+      body = await inflate(body, { finishFlush: zlib.constants.Z_SYNC_FLUSH })
       break
 
     case 'gzip':
-      body = zlib.gunzipSync(body, { finishFlush: zlib.constants.Z_SYNC_FLUSH })
+      body = await gunzip(body, { finishFlush: zlib.constants.Z_SYNC_FLUSH })
       break
 
     case 'br':
-      body = zlib.brotliDecompressSync(body, { finishFlush: zlib.constants.BROTLI_OPERATION_FLUSH })
+      body = await brotliDecompress(body, { finishFlush: zlib.constants.BROTLI_OPERATION_FLUSH })
       break
   }
 
