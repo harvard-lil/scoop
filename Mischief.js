@@ -87,6 +87,7 @@ export class Mischief {
 
   /**
    * Array of HTTP exchanges that constitute the capture.
+   * Only contains generated exchanged until `teardown()`.
    * @type {MischiefExchange[]}
    */
   exchanges = []
@@ -148,6 +149,18 @@ export class Mischief {
     blockedRequests: [],
     noArchiveUrls: []
   }
+
+  /**
+   * Info extracted by the browser about the page on initial load
+   * @type {{
+   *   title: ?string,
+   *   description: ?string,
+   *   url: ?string,
+   *   faviconUrl: ?string,
+   *   favicon: ?Buffer
+   * }}
+   */
+  pageInfo = {}
 
   /**
    * @param {string} url - Must be a valid HTTP(S) url.
@@ -307,6 +320,14 @@ export class Mischief {
       })
     }
 
+    // Push step: Capture page info
+    steps.push({
+      name: 'Capture page info',
+      main: async (page) => {
+        await this.#capturePageInfo(page)
+      }
+    })
+
     // Push step: Teardown
     steps.push({
       name: 'Teardown',
@@ -451,6 +472,62 @@ export class Mischief {
 
     this.log.info(`Clearing capture-specific temporary folder ${this.captureTmpFolderPath}`)
     await rm(this.captureTmpFolderPath, { recursive: true, force: true })
+  }
+
+  /**
+   * Tries to populate `this.pageInfo`.
+   * Captures page title, description, url and favicon url directly from the browser.
+   * Will attempt to find the favicon in intercepted exchanges if running in headfull mode, and request it out-of-band otherwise.
+   *
+   * @param {object} page - Playwright "Page" object
+   * @private
+   */
+  async #capturePageInfo (page) {
+    this.pageInfo = await page.evaluate(() => {
+      return {
+        title: document.title,
+        description: document.querySelector("meta[name='description']")?.content,
+        url: window.location.href,
+        faviconUrl: document.querySelector("link[rel*='icon']")?.href,
+        favicon: null
+      }
+    })
+
+    if (!this.pageInfo.faviconUrl) {
+      return
+    }
+
+    // If `headless`: request the favicon out of band,
+    if (this.options.headless) {
+      try {
+        const response = await fetch(this.pageInfo.faviconUrl)
+
+        if (!response.headers.get('content-type').startsWith('image/')) {
+          throw new Error(`Request for favicon returned mime type ${response.headers.get('content-type')}`)
+        }
+
+        this.pageInfo.favicon = Buffer.from(await response.arrayBuffer())
+
+        // Add favicon to exchanges as a generated exchange (as it was captured out of band)
+        this.addGeneratedExchange(
+          this.pageInfo.faviconUrl,
+          Object.fromEntries(response.headers.entries()),
+          this.pageInfo.favicon,
+          false,
+          'Favicon (captured out-of-band by Mischief)'
+        )
+      } catch (err) {
+        this.log.warn(`Could not fetch favicon at url ${this.pageInfo.faviconUrl}.`)
+        this.log.trace(err)
+      }
+    // Otherwise: look for it in exchanges
+    } else {
+      for (const exchange of this.intercepter.exchanges) {
+        if (exchange?.request?.url && exchange.request.url === this.pageInfo.faviconUrl) {
+          this.pageInfo.favicon = exchange.response.body
+        }
+      }
+    }
   }
 
   /**
