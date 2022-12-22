@@ -443,8 +443,8 @@ export class Mischief {
 
   /**
    * Runs `yt-dlp` on the current url to try and capture:
-   * - The "main" video of the current page (`file:///video-extracted.mp4`)
-   * - Associated subtitles (`file:///video-extracted-LOCALE.EXT`)
+   * - The "main" video(s) of the current page (`file:///video-extracted-x.mp4`)
+   * - Associated subtitles (`file:///video-extracted-x.LOCALE.vtt`)
    * - Associated meta data (`file:///video-extracted-metadata.json`)
    *
    * These elements are added as "attachments" to the archive, for context / playback fallback purposes.
@@ -453,18 +453,22 @@ export class Mischief {
    * @private
    */
   async #captureVideoAsAttachment () {
-    const id = this.id
-    const videoFilename = `${this.captureTmpFolderPath}${id}.mp4`
+    const videoFilename = `${this.captureTmpFolderPath}video-extracted-%(autonumber)d.mp4`
     const ytDlpPath = this.options.ytDlpPath
 
     let metadataRaw = null
     let metadataParsed = null
 
-    const subtitlesAvailableLocales = []
-    let subtitlesFormat = 'vtt'
     let videoSaved = false
     let metadataSaved = false
     let subtitlesSaved = false
+
+    /**
+     * Key: video filename (ex: "video-extracted-1").
+     * Value: array of subtitle locales (ex: ["en-US", "fr-FR"])
+     * @type {Object<string, string[]>}
+     */
+    const availableVideosAndSubtitles = {}
 
     //
     // yt-dlp health check
@@ -477,11 +481,12 @@ export class Mischief {
         throw new Error(`Unknown version: ${version}`)
       }
     } catch (err) {
-      throw new Error(`"yt-dlp" executable is not available or cannot be executed. ${err}`)
+      this.log.trace(err)
+      throw new Error('"yt-dlp" executable is not available or cannot be executed.')
     }
 
     //
-    // Try and pull video and video meta data from url
+    // Try and pull video(s) and meta data from url
     //
     try {
       this.intercepter.recordExchanges = false
@@ -494,7 +499,7 @@ export class Mischief {
         '--write-subs', // Try to pull subs
         '--sub-langs', 'all',
         '--format', 'mp4', // Forces .mp4 format
-        '--output', videoFilename,
+        '--output', `"${videoFilename}"`,
         '--no-check-certificate',
         '--proxy', `'http://${this.options.proxyHost}:${this.options.proxyPort}'`,
         this.url
@@ -506,32 +511,84 @@ export class Mischief {
 
       const result = await exec(`${ytDlpPath} ${dlpOptions.join(' ')}`, spawnOptions)
       metadataRaw = result.stdout
-    } catch {
+    } catch (err) {
+      this.log.trace(err)
       throw new Error(`No video found in ${this.url}.`)
     } finally {
       this.intercepter.recordExchanges = true
     }
 
     //
-    // Try to add video to exchanges
+    // Add available video(s) and subtitles to exchanges
     //
-    try {
-      const url = 'file:///video-extracted.mp4'
-      const httpHeaders = { 'content-type': 'video/mp4' }
-      const body = await readFile(videoFilename)
-      const isEntryPoint = false // TODO: Reconsider whether this should be an entry point.
+    for (const file of await readdir(this.captureTmpFolderPath)) {
+      // Video
+      if (file.startsWith('video-extracted-') && file.endsWith('.mp4')) {
+        try {
+          const url = `file:///${file}`
+          const httpHeaders = { 'content-type': 'video/mp4' }
+          const body = await readFile(`${this.captureTmpFolderPath}${file}`)
+          const isEntryPoint = false // TODO: Reconsider whether this should be an entry point.
 
-      this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint)
-      videoSaved = true
-    } catch (err) {
-      throw new Error(`Error while creating exchange for file:///video-extracted.mp4. ${err}`)
+          this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint)
+          videoSaved = true
+
+          // Push to map of available videos and subtitles
+          const index = file.replace('.mp4', '')
+
+          if (!(index in availableVideosAndSubtitles)) {
+            availableVideosAndSubtitles[index] = []
+          }
+        } catch (err) {
+          this.log.warn(`Error while creating exchange for ${file}.`)
+          this.log.trace(err)
+        }
+      }
+
+      // Subtitles
+      if (file.startsWith('video-extracted-') && file.endsWith('.vtt')) {
+        try {
+          const url = `file:///${file}`
+          const httpHeaders = { 'content-type': 'text/vtt' }
+          const body = await readFile(`${this.captureTmpFolderPath}${file}`)
+          const isEntryPoint = false
+          const locale = file.split('.')[1]
+
+          // Example of valid locales: "en", "en-US"
+          if (!locale.match(/^[a-z]{2}$/) && !locale.match(/[a-z]{2}-[A-Z]{2}/)) {
+            continue
+          }
+
+          this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint)
+          subtitlesSaved = true
+
+          // Push to map of available videos and subtitles
+          const index = file.replace('.vtt', '').replace(`.${locale}`, '')
+
+          if (!(index in availableVideosAndSubtitles)) {
+            availableVideosAndSubtitles[index] = []
+          }
+
+          availableVideosAndSubtitles[index].push(locale)
+        } catch (err) {
+          this.log.warn(`Error while creating exchange for ${file}.`)
+          this.log.trace(err)
+        }
+      }
     }
 
     //
     // Try to add metadata to exchanges
     //
     try {
-      metadataParsed = JSON.parse(metadataRaw) // May throw
+      metadataParsed = []
+
+      // yt-dlp returns JSONL when there is more than 1 video
+      for (const line of metadataRaw.split('\n')) {
+        if (line) {
+          metadataParsed.push(JSON.parse(line)) // May throw
+        }
+      }
 
       const url = 'file:///video-extracted-metadata.json'
       const httpHeaders = { 'content-type': 'application/json' }
@@ -541,45 +598,8 @@ export class Mischief {
       this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint)
       metadataSaved = true
     } catch (err) {
-      throw new Error(`Error while creating exchange for file:///video-extracted-medatadata.json. ${err}`)
-    }
-
-    //
-    // Pull subtitles, if any.
-    //
-    try {
-      for (const file of await readdir(this.captureTmpFolderPath)) {
-        if (!file.startsWith(id)) {
-          continue
-        }
-
-        if (!file.endsWith('.vtt') && !file.endsWith('.srt')) {
-          continue
-        }
-
-        let locale = null
-        subtitlesFormat = 'vtt';
-        [, locale, subtitlesFormat] = file.split('.')
-
-        // Example of valid locales: "en", "en-US"
-        if (!locale.match(/^[a-z]{2}$/) && !locale.match(/[a-z]{2}-[A-Z]{2}/)) {
-          continue
-        }
-
-        const url = `file:///video-extracted-subtitles-${locale}.${subtitlesFormat}`
-        const httpHeaders = {
-          'content-type': subtitlesFormat === 'vtt' ? 'text/vtt' : 'text/plain'
-        }
-        const body = await readFile(`${this.captureTmpFolderPath}${file}`)
-        const isEntryPoint = false
-
-        this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint)
-        subtitlesAvailableLocales.push(locale) // Keep track of available locales
-        subtitlesSaved = true
-      }
-    } catch (err) {
-      // Ignore subtitles-related errors.
-      // console.log(err);
+      this.log.warn('Error while creating exchange for file:///video-extracted-medatadata.json.')
+      this.log.trace(err)
     }
 
     //
@@ -592,8 +612,7 @@ export class Mischief {
         videoSaved,
         metadataSaved,
         subtitlesSaved,
-        subtitlesAvailableLocales,
-        subtitlesFormat,
+        availableVideosAndSubtitles,
         metadataParsed
       })
 
@@ -601,11 +620,12 @@ export class Mischief {
       const httpHeaders = { 'content-type': 'text/html' }
       const body = Buffer.from(html)
       const isEntryPoint = true
-      const description = `Extracted Video from: ${this.url}`
+      const description = `Extracted Video data from: ${this.url}`
 
       this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description)
     } catch (err) {
-      throw new Error(`Error while creating exchange for file:///video-extracted-summary.html. ${err}`)
+      this.log.warn('Error while creating exchange for file:///video-extracted-summary.html.')
+      this.log.trace(err)
     }
   }
 

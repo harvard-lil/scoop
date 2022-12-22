@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Extracted video for {{url}}</title>
+    <title>Extracted video(s) for {{url}}</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
@@ -60,6 +60,7 @@
       table-layout: fixed;
       border-collapse: collapse;
       width: 100%;
+      margin-bottom: 1rem;
     }
 
     table * {
@@ -86,6 +87,7 @@
       width: 100%;
       aspect-ratio: 16/9;
       margin: auto;
+      margin-bottom: 1rem;
       background-color: black;
     }
     </style>
@@ -97,108 +99,124 @@
     <main>
 
       <header>
-        <h1>Extracted Video</h1>
-        <p>The following video was extracted by Mischief using yt-dlp during the capture of {{ url }}.</p>
+        <h1>Extracted Video(s)</h1>
+        <p>The following video data was extracted by Mischief using yt-dlp during the capture of {{ url }}.</p>
         <p>This summary was generated on {{ now }}.</p>
       </header>
 
+      {% if videoSaved %}
       <section>
         <h2>Video</h2>
 
-        {% if videoSaved %}
+        {% for filename, locales in availableVideosAndSubtitles %}
         <video controls>
-          <source src="video-extracted.mp4" type="video/mp4" />
-          {% if subtitlesSaved and subtitlesFormat == 'vtt' %}
-            {% for locale in subtitlesAvailableLocales %}
+          <source src="{{ filename }}.mp4" type="video/mp4" />
+            {% for locale in locales %}
             <track 
               kind="captions" 
               srclang="{{ locale }}" 
-              src="video-extracted-subtitles-{{ locale }}.vtt"
+              src="{{ filename }}.{{ locale }}.vtt"
               {% if loop.first %} default {% endif %}>
             {% endfor %}
-          {% endif %}
         </video>
-        {% endif %}
+        {% endfor %}
+
       </section>
+      {% endif %}
         
+      {% if metadataSaved %}
       <section>
         <h2>Metadata summary</h2>
 
         <p>At the time of capture.</p>
 
+        {% for entry in metadataParsed %}
         <table>
-          {% if metadataSaved and metadataParsed.title %}
+
+          <tr>
+            <td>Video #</td>
+            <td>{{ loop.index }}</td>
+          </tr>
+
+          {% if entry.title %}
           <tr>
             <td>Video title:</td>
-            <td>{{ metadataParsed.title }}</td>
+            <td>{{ entry.title }}</td>
           </tr>
           {% endif %}
 
-          {% if metadataSaved and metadataParsed.description %}
+          {% if entry.description %}
           <tr>
             <td>Video description:</td>
-            <td>{{ metadataParsed.description }}</td>
+            <td>{{ entry.description }}</td>
           </tr>
           {% endif %}
 
-          {% if metadataSaved and metadataParsed.uploader %}
+          {% if entry.uploader %}
           <tr>
             <td>Video uploader:</td>
-            <td>{{ metadataParsed.uploader }}</td>
+            <td>{{ entry.uploader }}</td>
           </tr>
           {% endif %}
 
-          {% if metadataSaved and metadataParsed.uploader_url %}
+          {% if entry.uploader_url %}
           <tr>
             <td>Uploader url:</td>
-            <td>{{ metadataParsed.uploader_url }}</td>
+            <td>{{ entry.uploader_url }}</td>
           </tr>
           {% endif %}
 
-          {% if metadataSaved and metadataParsed.comment_count %}
+          {% if entry.comment_count %}
           <tr>
             <td>Comments:</td>
-            <td>{{ metadataParsed.comment_count }}</td>
+            <td>{{ entry.comment_count }}</td>
           </tr>
           {% endif %}
 
-          {% if metadataSaved and metadataParsed.like_count %}
+          {% if entry.like_count %}
           <tr>
             <td>Likes:</td>
-            <td>{{ metadataParsed.like_count }}</td>
+            <td>{{ entry.like_count }}</td>
           </tr>
           {% endif %}
 
-          {% if metadataSaved and metadataParsed.repost_count %}
+          {% if entry.repost_count %}
           <tr>
             <td>Reposts:</td>
-            <td>{{ metadataParsed.repost_count }}</td>
+            <td>{{ entry.repost_count }}</td>
           </tr>
           {% endif %}
 
-          {% if metadataSaved and metadataParsed.timestamp %}
+          {% if entry.timestamp %}
           <tr>
             <td>Publication time:</td>
-            <td class="publication-timestamp"></td>
+            <td class="publication-timestamp-{{ loop.index }}"></td>
             <script>
-            const publication = new Date({{ metadataParsed.timestamp }} * 1000);
-            document.querySelector(".publication-timestamp").innerText = publication.toISOString();
+            const publication = new Date({{ entry.timestamp }} * 1000);
+            document.querySelector(".publication-timestamp-{{ loop.index }}").innerText = publication.toISOString();
             </script>
           </tr>
           {% endif %}
         </table>
+        {% endfor %}
 
       </section>
+      {% endif %}
 
       <section>
         <h2>Individual assets</h2>
 
-        <ul>
-        {% if videoSaved %}
+        {% for filename, locales in availableVideosAndSubtitles %}
         <li>
-          <a href="video-extracted.mp4">Video file</a>
+          <a href="{{ filename }}.mp4">Video file: {{ filename }}.mp4</a>
         </li>
-        {% endif %}
+          
+          {% for locale in locales %}
+          <li>
+            <a href="{{ filename }}.{{ locale }}.vtt">Video subtitles: {{ filename }}.{{ locale }}.vtt</a>
+          </li>
+          {% endfor %}
+        {% endfor %}
 
         {% if metadataSaved %}
         <li>
@@ -206,14 +224,6 @@
         </li>
         {% endif %}
 
-        {% if subtitlesSaved %}
-          {% for locale in subtitlesAvailableLocales %}
-          <li>
-          <a href="video-extracted-subtitles-{{ locale }}.{{ subtitlesFormat }}">Video subtitles ({{locale}})</a>
-          </li>
-          {% endfor %}
-        {% endif %}
-        </ul>
       </section>
     </main>
 
