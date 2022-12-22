@@ -104,7 +104,7 @@ export class MischiefIntercepter {
 
     // Parse DOM and look for full "noarchive" meta.
     try {
-      const dom = parseHTML(responseBody.toString('utf-8'))
+      const dom = parseHTML(responseBody)
       assert(dom.querySelector('[content*=\'noarchive\']'))
     } catch (err) {
       return false
