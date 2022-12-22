@@ -829,6 +829,28 @@ export class Mischief {
   }
 
   /**
+   * Returns a map of "generated" exchanges.
+   * Generated exchanges = anything generated directly by Mischief (PDF snapshot, full-page screenshot, videos ...)
+   * @returns {Object.<string, MischiefGeneratedExchange>}
+   */
+  extractGeneratedExchanges () {
+    if (![Mischief.states.COMPLETE, Mischief.states.PARTIAL].includes(this.state)) {
+      throw new Error('Cannot export generated exchanges on a pending or failed capture.')
+    }
+
+    const generatedExchanges = {}
+
+    for (const exchange of this.exchanges) {
+      if (exchange instanceof MischiefGeneratedExchange) {
+        const key = exchange.response.url.replace('file:///', '')
+        generatedExchanges[key] = exchange
+      }
+    }
+
+    return generatedExchanges
+  }
+
+  /**
    * (Shortcut) Export this Mischief capture to WARC.
    * @returns {Promise<ArrayBuffer>}
    */
