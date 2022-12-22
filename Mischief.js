@@ -502,7 +502,7 @@ export class Mischief {
       try {
         const response = await fetch(this.pageInfo.faviconUrl)
 
-        if (!response.headers.get('content-type').startsWith('image/')) {
+        if (!response.headers?.get('content-type')?.startsWith('image/')) {
           throw new Error(`Request for favicon returned mime type ${response.headers.get('content-type')}`)
         }
 
