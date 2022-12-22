@@ -86,13 +86,9 @@ export class MischiefProxy extends MischiefIntercepter {
   }
 
   interceptRequest = (data, session) => {
-    let interrupted = false
+    this.checkRequestAgainstBlocklist(session) // May interrupt request
 
-    interrupted = this.checkRequestAgainstBlocklist(session)
-
-    // Other methods susceptible of interrupting the request can be plugged here.
-
-    if (!interrupted) {
+    if (!session._src.destroyed && !session._dst.destroyed) {
       return this.intercept('request', data, session)
     }
   }
