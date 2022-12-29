@@ -271,7 +271,7 @@ export class WACZ {
     }
 
     if (this.signingServer) {
-      digest.signatureData = await this.requestSignature({ hash: digest.hash, created: this.created })
+      digest.signedData = await this.requestSignature({ hash: digest.hash, created: this.created })
     }
 
     return stringify(digest)
