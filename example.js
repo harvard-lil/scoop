@@ -16,6 +16,7 @@ const toCapture = [
   { name: 'youtube-stream', url: 'https://www.youtube.com/watch?v=jfKfPfyJRdk' },
   { name: 'twitter-profile', url: 'https://twitter.com/macargnelutti' },
   { name: 'twitter-video', url: 'https://twitter.com/dog_rates/status/1298052245209006086?s=20' },
+  { name: 'twitter-multi-video', url: 'https://twitter.com/dog_rates/status/1599117227323961344' },
   { name: 'youtube-video', url: 'https://www.youtube.com/watch?v=zVz1SAtdw8A' },
   { name: 'cern', url: 'http://info.cern.ch/hypertext/WWW/TheProject.html' },
   { name: 'sumo', url: 'https://www.sumo.or.jp/EnSumoDataRikishi/profile/3761' },
