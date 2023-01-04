@@ -174,7 +174,7 @@ export class Mischief {
     // Logging setup (level, output formatting)
     logPrefix.reg(this.log)
     logPrefix.apply(log, {
-      format (level, name, timestamp) {
+      format (level, _name, timestamp) {
         const timestampColor = CONSTANTS.LOGGING_COLORS.DEFAULT
         const msgColor = CONSTANTS.LOGGING_COLORS[level.toUpperCase()]
         return `${timestampColor(`[${timestamp}]`)} ${msgColor(level)}`
@@ -421,7 +421,7 @@ export class Mischief {
     } catch (err) {
       try {
         await rm(this.captureTmpFolderPath)
-      } catch (err) { /* Ignore: Deletes the capture-specific folder if it was created, if possible. */ }
+      } catch { /* Ignore: Deletes the capture-specific folder if it was created, if possible. */ }
 
       throw new Error(`Mischief was unable to create a capture-specific temporary folder.\n${err}`)
     }
@@ -860,7 +860,7 @@ export class Mischief {
    * @param {string} description
    * @returns
    */
-  async addGeneratedExchange (url, httpHeaders, body, isEntryPoint = false, description = '') {
+  addGeneratedExchange (url, httpHeaders, body, isEntryPoint = false, description = '') {
     const remainingSpace = this.options.maxSize - this.intercepter.byteLength
 
     if (this.state !== Mischief.states.CAPTURE ||
