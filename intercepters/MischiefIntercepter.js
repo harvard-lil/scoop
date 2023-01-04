@@ -105,7 +105,7 @@ export class MischiefIntercepter {
     try {
       const dom = parseHTML(responseBody)
       assert(dom.querySelector('[content*=\'noarchive\']'))
-    } catch (err) {
+    } catch {
       return false
     }
 

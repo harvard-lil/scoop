@@ -19,11 +19,11 @@ export function castBlocklistMatcher (val) {
 
   try {
     return new Address4(val)
-  } catch {}
+  } catch { /* Ignore: continue on to try parsing as IPv6 */ }
 
   try {
     return new Address6(val)
-  } catch {}
+  } catch { /* Ignore: continue on to try parsing as a RegExp */ }
 
   const pattern = val.match(/^\/(.*)\/$/)
   if (pattern) {
