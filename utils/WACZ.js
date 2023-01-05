@@ -1,11 +1,3 @@
-/**
- * Mischief
- * @module utils.WACZ
- * @author The Harvard Library Innovation Lab
- * @license MIT
- * @description WACZ builder.
- */
-
 import path from 'path'
 import { Readable, Writable } from 'stream'
 import { createHash } from 'crypto'
@@ -15,6 +7,9 @@ import * as assertions from './assertions.js'
 import CONSTANTS from '../constants.js'
 import * as zip from '../utils/zip.js'
 
+/**
+ * WACZ builder
+ */
 export class WACZ {
   validations = [
     [/^archives\//, [this.assertWarc]],
@@ -341,7 +336,7 @@ export class WACZ {
  *
  * @param {object} files - an object whose keys are the file paths and values are the file data
  * @param {string} dir - the directory to check
- * @returns {boolean} -
+ * @returns {boolean}
  */
 const dirEmpty = (files, dir) => {
   const regex = new RegExp(`^${dir}/.+`)
@@ -352,7 +347,7 @@ const dirEmpty = (files, dir) => {
  * Converts an object to a string using standarized spacing
  *
  * @param {any} obj - an JS object
- * @returns {string} - a JSON string
+ * @returns {string} a JSON string
  */
 const stringify = (obj) => JSON.stringify(obj, null, 2)
 
@@ -360,7 +355,7 @@ const stringify = (obj) => JSON.stringify(obj, null, 2)
  * Hashes a buffer to conform to the WACZ spec
  *
  * @param {Buffer} buffer
- * @returns {string} - a sha256 hash prefixed with "sha256:"
+ * @returns {string} a sha256 hash prefixed with "sha256:"
  */
 export function hash (buffer) {
   return 'sha256:' + createHash('sha256').update(buffer).digest('hex')

@@ -2,13 +2,13 @@ import { Writable } from 'stream'
 import Archiver from 'archiver'
 
 /**
- * Sniffs a buffer to loosely infer whether it's a zip file
+ * Sniffs a buffer to loosely infer whether it's a zip file.
  *
  * Note: this is an imperfect method.
- * Details: https://stackoverflow.com/a/1887113
+ * @see {@link https://stackoverflow.com/a/1887113}
  *
- * @param {Buffer} buf
- * @returns {boolean}
+ * @param {Buffer} buf - The buffer to check
+ * @returns {boolean} True if buffer appears to be a zip file.
  */
 export function isZip (buf) {
   return buf.toString('utf8', 0, 2) === 'PK'
@@ -18,7 +18,7 @@ export function isZip (buf) {
  * Checks the header of a zip buffer
  * to see if STORE compression was used
  *
- * @param {Buffer} buf
+ * @param {Buffer} buf - A buffer containing zip data
  * @returns {boolean}
  */
 export function usesStoreCompression (buf) {
@@ -30,7 +30,7 @@ export function usesStoreCompression (buf) {
  * how long the file name is in the header.
  * Used to seek past the header to the body.
  *
- * @param {Buffer} buf
+ * @param {Buffer} buf - A buffer containing zip data
  * @returns {integer}
  */
 export function fileNameLen (buf) {
@@ -42,7 +42,7 @@ export function fileNameLen (buf) {
  * how long the "extra field" is in the header.
  * Used to seek past the header to the body.
  *
- * @param {Buffer} buf
+ * @param {Buffer} buf - A buffer containing zip data
  * @returns {integer}
  */
 export function extraFieldLen (buf) {
@@ -53,7 +53,7 @@ export function extraFieldLen (buf) {
  * A convenience function to seek past the header
  * of a zip buffer and read N bytes of the body.
  *
- * @param {Buffer} buf
+ * @param {Buffer} buf - A buffer containing zip data
  * @param {integer} byteLen
  * @returns {string}
  */

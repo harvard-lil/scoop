@@ -1,11 +1,3 @@
-/**
- * Mischief
- * @module exporters.mischiefToWarc
- * @author The Harvard Library Innovation Lab
- * @license MIT
- * @description Mischief to WARC exporter.
- */
-
 import crypto from 'crypto'
 import { Blob } from 'buffer'
 

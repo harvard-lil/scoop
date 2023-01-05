@@ -3,7 +3,7 @@
  * @module parsers.MischiefHTTPParser
  * @author The Harvard Library Innovation Lab
  * @license MIT
- * @description Utility class for parsing intercepted HTTP exchanges.
+ * @description Utilities for parsing intercepted HTTP exchanges.
  */
 import zlib from 'node:zlib'
 import { promisify } from 'util'

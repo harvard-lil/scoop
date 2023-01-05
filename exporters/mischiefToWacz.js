@@ -1,10 +1,3 @@
-/**
- * Mischief
- * @module exporters.mischiefToWacz
- * @author The Harvard Library Innovation Lab
- * @license MIT
- * @description Mischief to WACZ exporter.
- */
 import { Readable } from 'stream'
 
 import { Mischief } from '../Mischief.js'
