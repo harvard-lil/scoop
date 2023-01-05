@@ -1,10 +1,3 @@
-/**
- * Mischief
- * @module Mischief
- * @author The Harvard Library Innovation Lab
- * @license MIT
- */
-
 import os from 'os'
 import util from 'util'
 import { readFile, writeFile, rm, readdir, mkdir, mkdtemp, access } from 'fs/promises'
@@ -164,7 +157,8 @@ export class Mischief {
 
   /**
    * @param {string} url - Must be a valid HTTP(S) url.
-   * @param {object} [options={}] - See `MischiefOptions.defaults` for details.
+   * @param {object} [options={}] - See {@link MischiefOptions#defaults} for details.
+   * @see MischiefOptions#defaults
    */
   constructor (url, options = {}) {
     this.options = MischiefOptions.filterOptions(options)
