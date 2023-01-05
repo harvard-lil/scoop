@@ -8,7 +8,8 @@
     "postinstall": "bash postinstall.sh",
     "standard-fix": "standard --fix",
     "test": "standard && node --test",
-    "generate-docs": "./node_modules/.bin/jsdoc -c jsdoc_config.json -r ."
+    "generate-html-docs": "jsdoc -c jsdoc_config.json -r .",
+    "generate-md-docs": "jsdoc2md -c jsdoc_config.json '!(node_modules|coverage)/**/*.js' > docs.md"
   },
   "repository": {
     "type": "git",
@@ -45,6 +46,7 @@
     "eslint-plugin-n": "^15.6.0",
     "eslint-plugin-promise": "^6.1.1",
     "jsdoc": "^4.0.0",
+    "jsdoc-to-markdown": "^8.0.0",
     "standard": "*"
   }
 }
