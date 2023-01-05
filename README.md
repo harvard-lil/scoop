@@ -28,3 +28,8 @@ const myArchive = await myCapture.toWarc();
 ``` javascript
 node --test
 ```
+
+## Documentation
+``` sh
+npm run generate-docs
+```
