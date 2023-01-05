@@ -3,7 +3,8 @@
  * @module exchanges.MischiefGeneratedExchange
  * @author The Harvard Library Innovation Lab
  * @license MIT
- * @description
+ * @description An exchange constructed ad-hoc (vs intercepted),
+ *   typically used to inject additional resources into an archive
 */
 import { MischiefExchange } from './MischiefExchange.js'
 
