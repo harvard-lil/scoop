@@ -1,10 +1,3 @@
-/**
- * Mischief
- * @module exchanges.MischiefProxyExchange
- * @author The Harvard Library Innovation Lab
- * @license MIT
- * @description An HTTP exchange (request and associated response) as intercepted by MischiefProxy
-*/
 import { bodyStartIndex } from '../parsers/MischiefHTTPParser.js'
 
 import { MischiefExchange } from './MischiefExchange.js'

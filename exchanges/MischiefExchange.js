@@ -1,17 +1,9 @@
-/**
- * Mischief
- * @module exchanges.MischiefExchange
- * @author The Harvard Library Innovation Lab
- * @license MIT
- * @description Parent class for HTTP exchanges captured by Mischief.
-*/
+import { v4 as uuidv4 } from 'uuid'
 
 /**
  * Represents an HTTP exchange captured by Mischief, irrespective of how it was captured.
- * To be specialized by interception type (i.e: MischiefProxyExchange).
+ * To be specialized by interception type (i.e: {@link MischiefProxyExchange}).
  */
-import { v4 as uuidv4 } from 'uuid'
-
 export class MischiefExchange {
   /** @type {?string} */
   id = uuidv4()
