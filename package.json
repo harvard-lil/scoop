@@ -8,7 +8,7 @@
     "postinstall": "bash postinstall.sh",
     "standard-fix": "standard --fix",
     "test": "standard && node --test",
-    "generate-docs": "./node_modules/.bin/jsdoc -c docs/config.json -r ."
+    "generate-docs": "./node_modules/.bin/jsdoc -c jsdoc_config.json -r ."
   },
   "repository": {
     "type": "git",
