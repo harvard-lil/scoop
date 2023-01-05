@@ -126,7 +126,7 @@ export class Mischief {
 
   /**
    * A mirror of options.blocklist with IPs parsed for matching
-   * @type {(String|RegEx|Address4|Address6)[]}
+   * @type {Array.<String|RegEx|Address4|Address6>}
    */
   blocklist = []
 
@@ -141,7 +141,7 @@ export class Mischief {
    *   osName: ?string,
    *   osVersion: ?string,
    *   cpuArchitecture: ?string,
-   *   blockedRequests: {url: string, ip: string, rule: string}[],
+   *   blockedRequests: Array.<{url: string, ip: string, rule: string}>,
    *   noArchiveUrls: string[]
    * }}
    */
@@ -193,7 +193,7 @@ export class Mischief {
   async capture () {
     const options = this.options
 
-    /** @type {{name: String, setup: ?function, main: function}[]} */
+    /** @type {Array.<{name: String, setup: ?function, main: function}>} */
     const steps = []
 
     //
@@ -858,7 +858,7 @@ export class Mischief {
    * @param {Buffer} body
    * @param {boolean} isEntryPoint
    * @param {string} description
-   * @returns
+   * @returns {boolean} true if generated exchange is successfully added
    */
   addGeneratedExchange (url, httpHeaders, body, isEntryPoint = false, description = '') {
     const remainingSpace = this.options.maxSize - this.intercepter.byteLength
@@ -867,7 +867,7 @@ export class Mischief {
         body.byteLength >= remainingSpace) {
       this.state = Mischief.states.PARTIAL
       this.warn(`Generated exchange ${url} could not be saved (size limit reached).`)
-      return
+      return false
     }
 
     this.exchanges.push(
@@ -885,6 +885,8 @@ export class Mischief {
         }
       })
     )
+
+    return true
   }
 
   /**
