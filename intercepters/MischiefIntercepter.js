@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert'
 import { parse as parseHTML } from 'node-html-parser'
 
 import { Mischief } from '../Mischief.js'
-import { bodyToString } from '../parsers/MischiefHTTPParser.js'
+import { bodyToString } from '../utils/http.js'
 
 /**
  * @class MischiefIntercepter

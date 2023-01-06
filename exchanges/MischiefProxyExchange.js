@@ -1,4 +1,4 @@
-import { bodyStartIndex } from '../parsers/MischiefHTTPParser.js'
+import { bodyStartIndex } from '../utils/http.js'
 
 import { MischiefExchange } from './MischiefExchange.js'
 import { MischiefHTTPParser } from '../parsers/index.js'

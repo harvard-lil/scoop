@@ -5,7 +5,7 @@ import { Readable } from 'stream'
 import { Mischief } from '../Mischief.js'
 import { MischiefProxyExchange, MischiefGeneratedExchange } from '../exchanges/index.js'
 import { WARCParser } from 'warcio'
-import { versionFromStatusLine } from '../parsers/MischiefHTTPParser.js'
+import { versionFromStatusLine } from '../utils/http.js'
 
 /**
  * Reconstructs a Mischief capture from a WACZ
