@@ -1,8 +1,6 @@
 /**
  * Mischief
  * @module CONSTANTS
- * @author The Harvard Library Innovation Lab
- * @license MIT
  * @description Constants used across the library.
  */
 

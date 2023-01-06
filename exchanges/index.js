@@ -1,8 +1,6 @@
 /**
  * Mischief
  * @module exchanges
- * @author The Harvard Library Innovation Lab
- * @license MIT
  * @description Entry point for the exchanges module.
  */
 

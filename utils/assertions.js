@@ -1,8 +1,6 @@
 /**
  * Mischief
  * @module utils.assertions
- * @author The Harvard Library Innovation Lab
- * @license MIT
  * @description Assertion helpers
  */
 
