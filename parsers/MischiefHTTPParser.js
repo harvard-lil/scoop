@@ -26,7 +26,7 @@ export class MischiefHTTPParser {
   static headersToMap (headers) {
     return Object.fromEntries(
       headers.reduce(
-        (result, value, index, sourceArray) =>
+        (result, _value, index, sourceArray) =>
           index % 2 === 0 ? [...result, sourceArray.slice(index, index + 2)] : result,
         []
       )
