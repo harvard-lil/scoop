@@ -23,12 +23,6 @@ import * as importers from './importers/index.js'
 const exec = util.promisify(execCB)
 
 /**
- * Path to "assets" folder.
- * @constant
- */
-export const ASSETS_DIR = './assets/'
-
-/**
  * Experimental single-page web archiving library using Playwright.
  * Uses a proxy to allow for comprehensive and raw network interception.
  *
@@ -689,7 +683,7 @@ export class Mischief {
     // Generate summary page
     //
     try {
-      const html = nunjucks.render(`${ASSETS_DIR}video-extracted-summary.njk`, {
+      const html = nunjucks.render(`${CONSTANTS.ASSETS_DIR}video-extracted-summary.njk`, {
         url: this.url,
         now: new Date().toISOString(),
         videoSaved,
@@ -827,7 +821,7 @@ export class Mischief {
 
     // Generate summary page
     try {
-      const html = nunjucks.render(`${ASSETS_DIR}provenance-summary.njk`, {
+      const html = nunjucks.render(`${CONSTANTS.ASSETS_DIR}provenance-summary.njk`, {
         ...this.provenanceInfo,
         date: this.startedAt.toISOString(),
         url: this.url
