@@ -1,7 +1,7 @@
 /**
  * Mischief
  * @module utils.http
- * @description Helper functions for working with raw HTTP exchanges
+ * @description Helper functions for working with raw HTTP exchanges.
  */
 
 import zlib from 'node:zlib'
