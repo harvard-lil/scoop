@@ -4,7 +4,7 @@ import { createHash } from 'crypto'
 
 import { CDXIndexer } from 'warcio'
 import * as assertions from './assertions.js'
-import CONSTANTS from '../constants.js'
+import * as CONSTANTS from './constants.js'
 import * as zip from '../utils/zip.js'
 
 /**
