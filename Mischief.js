@@ -29,12 +29,13 @@ const exec = util.promisify(execCB)
  * Experimental single-page web archiving library using Playwright.
  * Uses a proxy to allow for comprehensive and raw network interception.
  *
- * @example
+ * ```javascript
  * import { Mischief } from "mischief";
  *
  * const myCapture = new Mischief("https://example.com");
  * await myCapture.capture();
  * const myArchive = await myCapture.toWarc();
+ * ```
  */
 export class Mischief {
   id = uuidv4()
