@@ -23,6 +23,9 @@ import * as importers from './importers/index.js'
 const exec = util.promisify(execCB)
 
 /**
+ * @class Mischief
+ *
+ * @classdesc
  * Experimental single-page web archiving library using Playwright.
  * Uses a proxy to allow for comprehensive and raw network interception.
  *
