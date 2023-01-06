@@ -8,7 +8,7 @@
 import zlib from 'node:zlib'
 import { promisify } from 'util'
 
-import { HTTPParser as _HTTPParser } from 'http-parser-js'
+import { HTTPParser } from 'http-parser-js'
 
 const inflate = promisify(zlib.inflate)
 const gunzip = promisify(zlib.gunzip)
@@ -34,7 +34,7 @@ export class MischiefHTTPParser {
   }
 
   static parseRequest (input) {
-    const parser = new _HTTPParser(_HTTPParser.REQUEST)
+    const parser = new HTTPParser(HTTPParser.REQUEST)
     let complete = false
     let shouldKeepAlive
     let upgrade
@@ -46,26 +46,26 @@ export class MischiefHTTPParser {
     let trailers = []
     const bodyChunks = []
 
-    parser[_HTTPParser.kOnHeadersComplete] = function (req) {
+    parser[HTTPParser.kOnHeadersComplete] = function (req) {
       shouldKeepAlive = req.shouldKeepAlive
       upgrade = req.upgrade
-      method = _HTTPParser.methods[req.method]
+      method = HTTPParser.methods[req.method]
       url = req.url
       versionMajor = req.versionMajor
       versionMinor = req.versionMinor
       headers = req.headers
     }
 
-    parser[_HTTPParser.kOnBody] = function (chunk, offset, length) {
+    parser[HTTPParser.kOnBody] = function (chunk, offset, length) {
       bodyChunks.push(chunk.slice(offset, offset + length))
     }
 
     // This is actually the event for trailers, go figure.
-    parser[_HTTPParser.kOnHeaders] = function (t) {
+    parser[HTTPParser.kOnHeaders] = function (t) {
       trailers = t
     }
 
-    parser[_HTTPParser.kOnMessageComplete] = function () {
+    parser[HTTPParser.kOnMessageComplete] = function () {
       complete = true
     }
 
@@ -101,7 +101,7 @@ export class MischiefHTTPParser {
    * @returns {MischiefHTTPParserResponse}
    */
   static parseResponse (input) {
-    const parser = new _HTTPParser(_HTTPParser.RESPONSE)
+    const parser = new HTTPParser(HTTPParser.RESPONSE)
     let complete = false // eslint-disable-line
     let shouldKeepAlive
     let upgrade
@@ -113,7 +113,7 @@ export class MischiefHTTPParser {
     let trailers = []
     const bodyChunks = []
 
-    parser[_HTTPParser.kOnHeadersComplete] = function (res) {
+    parser[HTTPParser.kOnHeadersComplete] = function (res) {
       shouldKeepAlive = res.shouldKeepAlive
       upgrade = res.upgrade
       statusCode = res.statusCode
@@ -123,16 +123,16 @@ export class MischiefHTTPParser {
       headers = res.headers
     }
 
-    parser[_HTTPParser.kOnBody] = function (chunk, offset, length) {
+    parser[HTTPParser.kOnBody] = function (chunk, offset, length) {
       bodyChunks.push(chunk.slice(offset, offset + length))
     }
 
     // This is actually the event for trailers, go figure.
-    parser[_HTTPParser.kOnHeaders] = function (t) {
+    parser[HTTPParser.kOnHeaders] = function (t) {
       trailers = t
     }
 
-    parser[_HTTPParser.kOnMessageComplete] = function () {
+    parser[HTTPParser.kOnMessageComplete] = function () {
       complete = true
     }
 
