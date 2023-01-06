@@ -15,7 +15,12 @@ const gunzip = promisify(zlib.gunzip)
 const brotliDecompress = promisify(zlib.brotliDecompress)
 
 /**
- * Via: https://github.com/creationix/http-parser-js/blob/master/standalone-example.js
+ * @class MischiefHTTPParser
+ *
+ * @classdesc
+ * Parser for raw HTTP exchanges
+ *
+ * @see {@link https://github.com/creationix/http-parser-js/blob/master/standalone-example.js}
  */
 export class MischiefHTTPParser {
   static headersToMap (headers) {

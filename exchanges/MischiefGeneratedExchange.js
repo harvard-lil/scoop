@@ -1,6 +1,9 @@
 import { MischiefExchange } from './MischiefExchange.js'
 
 /**
+ * @class MischiefGeneratedExchange
+ *
+ * @classdesc
  * An exchange constructed ad-hoc (vs intercepted),
  * typically used to inject additional resources into an archive
 */
