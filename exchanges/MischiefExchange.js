@@ -1,9 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 
 /**
- * @class MischiefExchange
- *
- * @classdesc
  * Represents an HTTP exchange captured by Mischief, irrespective of how it was captured.
  * To be specialized by interception type (i.e: {@link MischiefProxyExchange}).
  */

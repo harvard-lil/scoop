@@ -5,9 +5,6 @@ import { Mischief } from '../Mischief.js'
 import { bodyToString } from '../utils/http.js'
 
 /**
- * @class MischiefIntercepter
- *
- * @classdesc
  * Abstract class for intercepter implementations to capture HTTP traffic.
  */
 export class MischiefIntercepter {

@@ -4,9 +4,6 @@ import { statSync } from 'fs'
 // We're using `MischiefOptions.filterOptions()` in `Mischief()`, which cannot be async.
 
 /**
- * @class MischiefOptions
- *
- * @classdesc
  * Helper class to filter and validate options passed to a Mischief instance.
  */
 export class MischiefOptions {

@@ -8,9 +8,6 @@ import * as CONSTANTS from '../constants.js'
 import * as zip from '../utils/zip.js'
 
 /**
- * @class WACZ
- *
- * @classdesc
  * WACZ builder
  */
 export class WACZ {
