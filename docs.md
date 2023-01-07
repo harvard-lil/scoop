@@ -5,25 +5,47 @@
 <dd><p>Constants used across the library.</p>
 </dd>
 <dt><a href="#module_exchanges">exchanges</a></dt>
-<dd><p>Entry point for the exchanges module.</p>
+<dd><p>Entry point for the exchanges module.
+An exchange encapsulate a request and associated response.</p>
+<ul>
+<li><a href="#MischiefExchange">MischiefExchange</a></li>
+<li><a href="#MischiefProxyExchange">MischiefProxyExchange</a></li>
+<li><a href="#MischiefGeneratedExchange">MischiefGeneratedExchange</a></li>
+</ul>
 </dd>
 <dt><a href="#module_exporters">exporters</a></dt>
-<dd><p>Entry point for the exporters module. Functions in this module are meant to be used to convert a Mischief instance into an archive format (i.e: WARC, WBN).</p>
+<dd><p>Entry point for the exporters module.
+Functions in this module are meant to be used to convert
+a Mischief instance into an archive format (i.e: WARC, WBN).</p>
+<ul>
+<li><a href="#mischiefToWarc">mischiefToWarc</a></li>
+<li><a href="#mischiefToWacz">mischiefToWacz</a></li>
+</ul>
 </dd>
 <dt><a href="#module_importers">importers</a></dt>
-<dd><p>Entry point for the importers module.</p>
+<dd><p>Entry point for the importers module
+providing the following functions:</p>
+<ul>
+<li><a href="#waczToMischief">waczToMischief</a></li>
+</ul>
 </dd>
 <dt><a href="#module_intercepters">intercepters</a></dt>
-<dd><p>Entry point for the scribes module.</p>
+<dd><p>Entry point for the intercepters module
+providing the following classes:</p>
+<ul>
+<li><a href="#MischiefIntercepter">MischiefIntercepter</a></li>
+<li><a href="#MischiefProxy">MischiefProxy</a></li>
+</ul>
 </dd>
 <dt><a href="#module_parsers">parsers</a></dt>
-<dd><p>Entry point for the parsers module. Classes in this module are meant to be used to parse raw network traffic (i.e. HTTP).</p>
+<dd><p>Entry point for the parsers module.
+Classes in this module are meant to be used to parse raw network traffic (i.e. HTTP).</p>
+<ul>
+<li><a href="#MischiefHTTPParser">MischiefHTTPParser</a></li>
+</ul>
 </dd>
-<dt><a href="#parsers.module_MischiefHTTPParser">MischiefHTTPParser</a></dt>
-<dd><p>Utilities for parsing intercepted HTTP exchanges.</p>
-</dd>
-<dt><a href="#utils.module_assertions">assertions</a></dt>
-<dd><p>Assertion helpers</p>
+<dt><a href="#utils.module_blocklist">blocklist</a></dt>
+<dd><p>Helper functions for matching items in a blocklist.</p>
 </dd>
 </dl>
 
@@ -41,12 +63,28 @@ typically used to inject additional resources into an archive</p>
 <dt><a href="#MischiefProxyExchange">MischiefProxyExchange</a></dt>
 <dd><p>Represents an HTTP exchange captured via MischiefProxy.</p>
 </dd>
+<dt><a href="#MischiefIntercepter">MischiefIntercepter</a></dt>
+<dd><p>Abstract class for intercepter implementations to capture HTTP traffic.</p>
+</dd>
+<dt><a href="#MischiefProxy">MischiefProxy</a></dt>
+<dd><p>A proxy based intercepter that captures raw HTTP exchanges
+without parsing, preserving headers et al as delivered.</p>
+</dd>
 <dt><a href="#Mischief">Mischief</a></dt>
 <dd><p>Experimental single-page web archiving library using Playwright.
 Uses a proxy to allow for comprehensive and raw network interception.</p>
+<pre><code class="language-javascript">import { Mischief } from &quot;mischief&quot;;
+
+const myCapture = new Mischief(&quot;https://example.com&quot;);
+await myCapture.capture();
+const myArchive = await myCapture.toWarc();
+</code></pre>
 </dd>
 <dt><a href="#MischiefOptions">MischiefOptions</a></dt>
 <dd><p>Helper class to filter and validate options passed to a Mischief instance.</p>
+</dd>
+<dt><a href="#MischiefHTTPParser">MischiefHTTPParser</a></dt>
+<dd><p>Parser for raw HTTP exchanges</p>
 </dd>
 <dt><a href="#WACZ">WACZ</a></dt>
 <dd><p>WACZ builder</p>
@@ -94,22 +132,6 @@ containing raw http traffic data.</p>
 <dd><p>Retrieves the raw requests and responses and initializes
 them into MischiefProxyExchanges</p>
 </dd>
-<dt><a href="#castBlocklistMatcher">castBlocklistMatcher(val)</a> ⇒ <code>RegExp</code> | <code>String</code> | <code>Address4</code> | <code>Address6</code></dt>
-<dd><p>Parses a blocklist entry for later matching.
-All entries are strings that we attempt to parse
-as IPs and CIDR ranges, then RegExp, before being
-returned as-is if unsuccessful.</p>
-</dd>
-<dt><a href="#matchAgainst">matchAgainst(test)</a> ⇒ <code>function</code></dt>
-<dd><p>Returns a function that accepts a value to test
-against a blocklist matcher and returns true|false
-based on that matcher</p>
-</dd>
-<dt><a href="#searchBlocklistFor">searchBlocklistFor(...args)</a> ⇒ <code>function</code></dt>
-<dd><p>Accepts any number of IP addresses or URLs as strings
-and returns a function that accepts a blocklist matcher
-and returns true when any one of those IPs|URLs matches</p>
-</dd>
 <dt><a href="#dirEmpty">dirEmpty(files, dir)</a> ⇒ <code>boolean</code></dt>
 <dd><p>Checks whether any files have been added to
 the specified directory</p>
@@ -124,31 +146,6 @@ the specified directory</p>
 <dd><p>Format a MischiefExchange as needed for
 the pages JSON-Lines</p>
 </dd>
-<dt><a href="#isZip">isZip(buf)</a> ⇒ <code>boolean</code></dt>
-<dd><p>Sniffs a buffer to loosely infer whether it&#39;s a zip file.</p>
-<p>Note: this is an imperfect method.</p>
-</dd>
-<dt><a href="#usesStoreCompression">usesStoreCompression(buf)</a> ⇒ <code>boolean</code></dt>
-<dd><p>Checks the header of a zip buffer
-to see if STORE compression was used</p>
-</dd>
-<dt><a href="#fileNameLen">fileNameLen(buf)</a> ⇒ <code>integer</code></dt>
-<dd><p>Checks the header of a zip buffer to see
-how long the file name is in the header.
-Used to seek past the header to the body.</p>
-</dd>
-<dt><a href="#extraFieldLen">extraFieldLen(buf)</a> ⇒ <code>integer</code></dt>
-<dd><p>Checks the header of a zip buffer to see
-how long the &quot;extra field&quot; is in the header.
-Used to seek past the header to the body.</p>
-</dd>
-<dt><a href="#readBodyAsString">readBodyAsString(buf, byteLen)</a> ⇒ <code>string</code></dt>
-<dd><p>A convenience function to seek past the header
-of a zip buffer and read N bytes of the body.</p>
-</dd>
-<dt><a href="#create">create(files, [store])</a> ⇒ <code>Promise.&lt;Buffer&gt;</code></dt>
-<dd><p>Creates a zip file, in memory, from a list of files</p>
-</dd>
 </dl>
 
 <a name="module_CONSTANTS"></a>
@@ -156,8 +153,6 @@ of a zip buffer and read N bytes of the body.</p>
 ## CONSTANTS
 Constants used across the library.
 
-**Author**: The Harvard Library Innovation Lab  
-**License**: MIT  
 
 * [CONSTANTS](#module_CONSTANTS)
     * [.SOFTWARE](#module_CONSTANTS.SOFTWARE)
@@ -207,419 +202,160 @@ Colors used by the logging function
 
 ## exchanges
 Entry point for the exchanges module.
+An exchange encapsulate a request and associated response.
 
-**Author**: The Harvard Library Innovation Lab  
-**License**: MIT  
+* [MischiefExchange](#MischiefExchange)
+* [MischiefProxyExchange](#MischiefProxyExchange)
+* [MischiefGeneratedExchange](#MischiefGeneratedExchange)
+
 <a name="module_exporters"></a>
 
 ## exporters
-Entry point for the exporters module. Functions in this module are meant to be used to convert a Mischief instance into an archive format (i.e: WARC, WBN).
+Entry point for the exporters module.
+Functions in this module are meant to be used to convert
+a Mischief instance into an archive format (i.e: WARC, WBN).
 
-**Author**: The Harvard Library Innovation Lab  
-**License**: MIT  
+* [mischiefToWarc](#mischiefToWarc)
+* [mischiefToWacz](#mischiefToWacz)
+
 <a name="module_importers"></a>
 
 ## importers
-Entry point for the importers module.
+Entry point for the importers module
+providing the following functions:
 
-**Author**: The Harvard Library Innovation Lab  
-**License**: MIT  
+* [waczToMischief](#waczToMischief)
+
 <a name="module_intercepters"></a>
 
 ## intercepters
-Entry point for the scribes module.
+Entry point for the intercepters module
+providing the following classes:
 
-**Author**: The Harvard Library Innovation Lab  
-**License**: MIT  
+* [MischiefIntercepter](#MischiefIntercepter)
+* [MischiefProxy](#MischiefProxy)
+
 <a name="module_parsers"></a>
 
 ## parsers
-Entry point for the parsers module. Classes in this module are meant to be used to parse raw network traffic (i.e. HTTP).
+Entry point for the parsers module.
+Classes in this module are meant to be used to parse raw network traffic (i.e. HTTP).
 
-**Author**: The Harvard Library Innovation Lab  
-**License**: MIT  
-<a name="parsers.module_MischiefHTTPParser"></a>
+* [MischiefHTTPParser](#MischiefHTTPParser)
 
-## MischiefHTTPParser
-Utilities for parsing intercepted HTTP exchanges.
+<a name="utils.module_blocklist"></a>
 
-**Author**: The Harvard Library Innovation Lab  
-**License**: MIT  
+## blocklist
+Helper functions for matching items in a blocklist.
 
-* [MischiefHTTPParser](#parsers.module_MischiefHTTPParser)
+
+* [blocklist](#utils.module_blocklist)
     * _static_
-        * [.MischiefHTTPParser](#parsers.module_MischiefHTTPParser.MischiefHTTPParser)
-            * [.parseResponse(input)](#parsers.module_MischiefHTTPParser.MischiefHTTPParser.parseResponse) ⇒ <code>MischiefHTTPParserResponse</code>
-        * [.versionFromStatusLine(statusLine)](#parsers.module_MischiefHTTPParser.versionFromStatusLine) ⇒ <code>array</code>
-        * [.bodyToString(body, [contentEncoding])](#parsers.module_MischiefHTTPParser.bodyToString) ⇒ <code>string</code>
+        * [.castBlocklistMatcher(val)](#utils.module_blocklist.castBlocklistMatcher) ⇒ <code>RegExp</code> \| <code>String</code> \| <code>Address4</code> \| <code>Address6</code>
+        * [.searchBlocklistFor(...args)](#utils.module_blocklist.searchBlocklistFor) ⇒ <code>function</code>
     * _inner_
-        * [~CRLFx2](#parsers.module_MischiefHTTPParser..CRLFx2) ⇒ <code>integer</code>
+        * [~matchAgainst(test)](#utils.module_blocklist..matchAgainst) ⇒ <code>function</code>
 
-<a name="parsers.module_MischiefHTTPParser.MischiefHTTPParser"></a>
+<a name="utils.module_blocklist.castBlocklistMatcher"></a>
 
-### MischiefHTTPParser.MischiefHTTPParser
-Via: https://github.com/creationix/http-parser-js/blob/master/standalone-example.js
+### blocklist.castBlocklistMatcher(val) ⇒ <code>RegExp</code> \| <code>String</code> \| <code>Address4</code> \| <code>Address6</code>
+Parses a blocklist entry for later matching.
+All entries are strings that we attempt to parse
+as IPs and CIDR ranges, then RegExp, before being
+returned as-is if unsuccessful.
 
-**Kind**: static class of [<code>MischiefHTTPParser</code>](#parsers.module_MischiefHTTPParser)  
-<a name="parsers.module_MischiefHTTPParser.MischiefHTTPParser.parseResponse"></a>
-
-#### MischiefHTTPParser.parseResponse(input) ⇒ <code>MischiefHTTPParserResponse</code>
-**Kind**: static method of [<code>MischiefHTTPParser</code>](#parsers.module_MischiefHTTPParser.MischiefHTTPParser)  
-
-| Param | Type |
-| --- | --- |
-| input | <code>\*</code> | 
-
-<a name="parsers.module_MischiefHTTPParser.versionFromStatusLine"></a>
-
-### MischiefHTTPParser.versionFromStatusLine(statusLine) ⇒ <code>array</code>
-Extracts the protocol version from an HTTP status line
-
-**Kind**: static method of [<code>MischiefHTTPParser</code>](#parsers.module_MischiefHTTPParser)  
-**Returns**: <code>array</code> - -  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| statusLine | <code>string</code> | - |
-
-<a name="parsers.module_MischiefHTTPParser.bodyToString"></a>
-
-### MischiefHTTPParser.bodyToString(body, [contentEncoding]) ⇒ <code>string</code>
-Utility for turning an HTTP body into a string.
-Handles "deflate", "gzip" and "br" decompression.
-
-**Kind**: static method of [<code>MischiefHTTPParser</code>](#parsers.module_MischiefHTTPParser)  
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| body | <code>Buffer</code> |  |  |
-| [contentEncoding] | <code>string</code> | <code>null</code> | Can be "br", "deflate" or "gzip" |
-
-<a name="parsers.module_MischiefHTTPParser..CRLFx2"></a>
-
-### MischiefHTTPParser~CRLFx2 ⇒ <code>integer</code>
-Locates the beginning of an HTTP response body
-
-The HTTP spec requires an empty line
-with a CRLF (\r\n) before the body starts, but apparently
-some poorly configured servers only use LF (\n) so we
-look for the first pair we can find.
-
-Ref: https://stackoverflow.com/a/11254057
-
-**Kind**: inner constant of [<code>MischiefHTTPParser</code>](#parsers.module_MischiefHTTPParser)  
-**Returns**: <code>integer</code> - -  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| buffer | <code>Buffer</code> | - |
-
-<a name="utils.module_assertions"></a>
-
-## assertions
-Assertion helpers
-
-**Author**: The Harvard Library Innovation Lab  
-**License**: MIT  
-
-* [assertions](#utils.module_assertions)
-    * [.assertString(val)](#utils.module_assertions.assertString)
-    * [.assertISO8861Date(val)](#utils.module_assertions.assertISO8861Date)
-    * [.assertBase64(val)](#utils.module_assertions.assertBase64)
-    * [.assertSHA256WithPrefix(val)](#utils.module_assertions.assertSHA256WithPrefix)
-    * [.assertPEMCertificateChain(val)](#utils.module_assertions.assertPEMCertificateChain)
-    * [.assertDomainName(val)](#utils.module_assertions.assertDomainName)
-
-<a name="utils.module_assertions.assertString"></a>
-
-### assertions.assertString(val)
-Asserts that the given value is a string
-
-**Kind**: static method of [<code>assertions</code>](#utils.module_assertions)  
+**Kind**: static method of [<code>blocklist</code>](#utils.module_blocklist)  
+**Returns**: <code>RegExp</code> \| <code>String</code> \| <code>Address4</code> \| <code>Address6</code> - - The parsed matcher  
 **Throws**:
 
-- Error
+- <code>Error</code> - Throws if datatype does not match String or RegExp
 
 
 | Param | Type | Description |
 | --- | --- | --- |
-| val | <code>any</code> | The value to test |
+| val | <code>String</code> | a blocklist matcher |
 
-<a name="utils.module_assertions.assertISO8861Date"></a>
+<a name="utils.module_blocklist.searchBlocklistFor"></a>
 
-### assertions.assertISO8861Date(val)
-Asserts that the given value is a date string
-that conforms to ISO 8861
+### blocklist.searchBlocklistFor(...args) ⇒ <code>function</code>
+Accepts any number of IP addresses or URLs as strings
+and returns a function that accepts a blocklist matcher
+and returns true when any one of those IPs|URLs matches
 
-**Kind**: static method of [<code>assertions</code>](#utils.module_assertions)  
-**Throws**:
-
-- Error
-
+**Kind**: static method of [<code>blocklist</code>](#utils.module_blocklist)  
+**Returns**: <code>function</code> - - A curried function to be used in an array search  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| val | <code>any</code> | The value to test |
+| ...args | <code>string</code> | An IP address or URL |
 
-<a name="utils.module_assertions.assertBase64"></a>
+<a name="utils.module_blocklist..matchAgainst"></a>
 
-### assertions.assertBase64(val)
-Asserts that the given value is a Base64 encoded string
+### blocklist~matchAgainst(test) ⇒ <code>function</code>
+Returns a function that accepts a value to test
+against a blocklist matcher and returns true|false
+based on that matcher
 
-**Kind**: static method of [<code>assertions</code>](#utils.module_assertions)  
-**Throws**:
-
-- Error
-
-
-| Param | Type | Description |
-| --- | --- | --- |
-| val | <code>any</code> | The value to test |
-
-<a name="utils.module_assertions.assertSHA256WithPrefix"></a>
-
-### assertions.assertSHA256WithPrefix(val)
-Asserts that the given value is a SHA256 hash prefixed with "sha:"
-
-**Kind**: static method of [<code>assertions</code>](#utils.module_assertions)  
-**Throws**:
-
-- Error
-
+**Kind**: inner method of [<code>blocklist</code>](#utils.module_blocklist)  
+**Returns**: <code>function</code> - - A curried function to be used in an array search  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| val | <code>any</code> | The value to test |
+| test | <code>string</code> \| <code>RegExp</code> \| <code>Address4</code> \| <code>Address6</code> | A blocklist matcher to test against |
 
-<a name="utils.module_assertions.assertPEMCertificateChain"></a>
+<a name="MischiefProxy"></a>
 
-### assertions.assertPEMCertificateChain(val)
-Asserts that the given value is a PEM certificate
-
-**Kind**: static method of [<code>assertions</code>](#utils.module_assertions)  
-**Throws**:
-
-- Error
-
-
-| Param | Type | Description |
-| --- | --- | --- |
-| val | <code>any</code> | The value to test |
-
-<a name="utils.module_assertions.assertDomainName"></a>
-
-### assertions.assertDomainName(val)
-Asserts that the given value is a domain name
-
-**Kind**: static method of [<code>assertions</code>](#utils.module_assertions)  
-**Throws**:
-
-- Error
-
-
-| Param | Type | Description |
-| --- | --- | --- |
-| val | <code>any</code> | The value to test |
-
-<a name="Mischief"></a>
-
-## Mischief
-Experimental single-page web archiving library using Playwright.
-Uses a proxy to allow for comprehensive and raw network interception.
+## MischiefProxy
+A proxy based intercepter that captures raw HTTP exchanges
+without parsing, preserving headers et al as delivered.
 
 **Kind**: global class  
 
-* [Mischief](#Mischief)
-    * [.Mischief](#Mischief+Mischief)
-        * [new exports.Mischief(url, [options])](#new_Mischief+Mischief_new)
-    * [.state](#Mischief+state) : <code>number</code>
-    * [.url](#Mischief+url) : <code>string</code>
-    * [.options](#Mischief+options) : <code>object</code>
-    * [.exchanges](#Mischief+exchanges) : [<code>Array.&lt;MischiefExchange&gt;</code>](#MischiefExchange)
-    * [.log](#Mischief+log) : <code>log.Logger</code>
-    * [.captureTmpFolderPath](#Mischief+captureTmpFolderPath) : <code>string</code>
-    * [.startedAt](#Mischief+startedAt) : <code>Date</code>
-    * [.intercepter](#Mischief+intercepter) : <code>intercepters.MischiefIntercepter</code>
-    * [.blocklist](#Mischief+blocklist) : <code>Array.&lt;(String\|RegEx\|Address4\|Address6)&gt;</code>
-    * [.provenanceInfo](#Mischief+provenanceInfo) : <code>Object</code>
-    * [.pageInfo](#Mischief+pageInfo) : <code>Object</code>
-    * [.states](#Mischief+states) : <code>enum</code>
-    * [.capture()](#Mischief+capture) ⇒ <code>Promise.&lt;boolean&gt;</code>
-    * [.setup()](#Mischief+setup) ⇒ <code>Promise.&lt;boolean&gt;</code>
-    * [.teardown()](#Mischief+teardown) ⇒ <code>Promise.&lt;boolean&gt;</code>
-    * [.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description)](#Mischief+addGeneratedExchange) ⇒ <code>boolean</code>
-    * [.filterUrl(url)](#Mischief+filterUrl)
-    * [.extractGeneratedExchanges()](#Mischief+extractGeneratedExchanges) ⇒ <code>Object.&lt;string, MischiefGeneratedExchange&gt;</code>
-    * [.toWarc()](#Mischief+toWarc) ⇒ <code>Promise.&lt;ArrayBuffer&gt;</code>
-    * [.toWacz([includeRaw], signingServer)](#Mischief+toWacz) ⇒ <code>Promise.&lt;ArrayBuffer&gt;</code>
+* [MischiefProxy](#MischiefProxy)
+    * [.getOrInitExchange(id, type)](#MischiefProxy+getOrInitExchange)
+    * [.checkRequestAgainstBlocklist(session)](#MischiefProxy+checkRequestAgainstBlocklist) ⇒ <code>boolean</code>
+    * [.intercept(type, data, session)](#MischiefProxy+intercept)
 
-<a name="Mischief+Mischief"></a>
+<a name="MischiefProxy+getOrInitExchange"></a>
 
-### mischief.Mischief
-**Kind**: instance class of [<code>Mischief</code>](#Mischief)  
-**See**: MischiefOptions#defaults  
-<a name="new_Mischief+Mischief_new"></a>
+### mischiefProxy.getOrInitExchange(id, type)
+Returns an exchange based on the session id and type ("request" or "response").
+If the type is a request and there's already been a response on that same session,
+create a new exchange. Otherwise append to continue the exchange.
 
-#### new exports.Mischief(url, [options])
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| url | <code>string</code> |  | Must be a valid HTTP(S) url. |
-| [options] | <code>object</code> | <code>{}</code> | See [defaults](#MischiefOptions+defaults) for details. |
-
-<a name="Mischief+state"></a>
-
-### mischief.state : <code>number</code>
-Current state of the capture.
-Should only contain states defined in `states`.
-
-**Kind**: instance property of [<code>Mischief</code>](#Mischief)  
-<a name="Mischief+url"></a>
-
-### mischief.url : <code>string</code>
-URL to capture.
-
-**Kind**: instance property of [<code>Mischief</code>](#Mischief)  
-<a name="Mischief+options"></a>
-
-### mischief.options : <code>object</code>
-Current settings.
-Should only contain keys defined in `MischiefOptions`.
-
-**Kind**: instance property of [<code>Mischief</code>](#Mischief)  
-<a name="Mischief+exchanges"></a>
-
-### mischief.exchanges : [<code>Array.&lt;MischiefExchange&gt;</code>](#MischiefExchange)
-Array of HTTP exchanges that constitute the capture.
-Only contains generated exchanged until `teardown()`.
-
-**Kind**: instance property of [<code>Mischief</code>](#Mischief)  
-<a name="Mischief+log"></a>
-
-### mischief.log : <code>log.Logger</code>
-Logger.
-Logging level controlled via `MischiefOptions.logLevel`.
-
-**Kind**: instance property of [<code>Mischief</code>](#Mischief)  
-<a name="Mischief+captureTmpFolderPath"></a>
-
-### mischief.captureTmpFolderPath : <code>string</code>
-Path to the capture-specific temporary folder created by `setup()`.
-Will be a child folder of the path defined in `this.options.tmpFolderPath`.
-
-**Kind**: instance property of [<code>Mischief</code>](#Mischief)  
-<a name="Mischief+startedAt"></a>
-
-### mischief.startedAt : <code>Date</code>
-The time at which the page was crawled.
-
-**Kind**: instance property of [<code>Mischief</code>](#Mischief)  
-<a name="Mischief+intercepter"></a>
-
-### mischief.intercepter : <code>intercepters.MischiefIntercepter</code>
-Reference to the intercepter chosen for capture.
-
-**Kind**: instance property of [<code>Mischief</code>](#Mischief)  
-<a name="Mischief+blocklist"></a>
-
-### mischief.blocklist : <code>Array.&lt;(String\|RegEx\|Address4\|Address6)&gt;</code>
-A mirror of options.blocklist with IPs parsed for matching
-
-**Kind**: instance property of [<code>Mischief</code>](#Mischief)  
-<a name="Mischief+provenanceInfo"></a>
-
-### mischief.provenanceInfo : <code>Object</code>
-Will only be populated if `options.provenanceSummary` is `true`.
-
-**Kind**: instance property of [<code>Mischief</code>](#Mischief)  
-<a name="Mischief+pageInfo"></a>
-
-### mischief.pageInfo : <code>Object</code>
-Info extracted by the browser about the page on initial load
-
-**Kind**: instance property of [<code>Mischief</code>](#Mischief)  
-<a name="Mischief+states"></a>
-
-### mischief.states : <code>enum</code>
-Enum-like states that the capture occupies.
-
-**Kind**: instance enum of [<code>Mischief</code>](#Mischief)  
-**Read only**: true  
-<a name="Mischief+capture"></a>
-
-### mischief.capture() ⇒ <code>Promise.&lt;boolean&gt;</code>
-Main capture process.
-
-**Kind**: instance method of [<code>Mischief</code>](#Mischief)  
-<a name="Mischief+setup"></a>
-
-### mischief.setup() ⇒ <code>Promise.&lt;boolean&gt;</code>
-Sets up the proxy and Playwright resources, creates capture-specific temporary folder.
-
-**Kind**: instance method of [<code>Mischief</code>](#Mischief)  
-<a name="Mischief+teardown"></a>
-
-### mischief.teardown() ⇒ <code>Promise.&lt;boolean&gt;</code>
-Tears down Playwright, intercepter resources, and capture-specific temporary folder.
-
-**Kind**: instance method of [<code>Mischief</code>](#Mischief)  
-<a name="Mischief+addGeneratedExchange"></a>
-
-### mischief.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description) ⇒ <code>boolean</code>
-Generates a MischiefGeneratedExchange for generated content and adds it to `exchanges` unless time limit was reached.
-
-**Kind**: instance method of [<code>Mischief</code>](#Mischief)  
-**Returns**: <code>boolean</code> - true if generated exchange is successfully added  
-
-| Param | Type | Default |
-| --- | --- | --- |
-| url | <code>string</code> |  | 
-| httpHeaders | <code>object</code> |  | 
-| body | <code>Buffer</code> |  | 
-| isEntryPoint | <code>boolean</code> | <code>false</code> | 
-| description | <code>string</code> |  | 
-
-<a name="Mischief+filterUrl"></a>
-
-### mischief.filterUrl(url)
-Filters a url to ensure it's suitable for capture.
-This function throws if:
-- `url` is not a valid url
-- `url` is not an http / https url
-- `url` matches a blocklist rule
-
-**Kind**: instance method of [<code>Mischief</code>](#Mischief)  
+**Kind**: instance method of [<code>MischiefProxy</code>](#MischiefProxy)  
 
 | Param | Type |
 | --- | --- |
-| url | <code>string</code> | 
+| id | <code>string</code> | 
+| type | <code>string</code> | 
 
-<a name="Mischief+extractGeneratedExchanges"></a>
+<a name="MischiefProxy+checkRequestAgainstBlocklist"></a>
 
-### mischief.extractGeneratedExchanges() ⇒ <code>Object.&lt;string, MischiefGeneratedExchange&gt;</code>
-Returns a map of "generated" exchanges.
-Generated exchanges = anything generated directly by Mischief (PDF snapshot, full-page screenshot, videos ...)
+### mischiefProxy.checkRequestAgainstBlocklist(session) ⇒ <code>boolean</code>
+Checks an outgoing request against the blocklist. Interrupts the request it needed.
+Keeps trace of blocked requests in `Mischief.provenanceInfo`.
 
-**Kind**: instance method of [<code>Mischief</code>](#Mischief)  
-<a name="Mischief+toWarc"></a>
+**Kind**: instance method of [<code>MischiefProxy</code>](#MischiefProxy)  
+**Returns**: <code>boolean</code> - - `true` if request was interrupted  
 
-### mischief.toWarc() ⇒ <code>Promise.&lt;ArrayBuffer&gt;</code>
-(Shortcut) Export this Mischief capture to WARC.
+| Param | Type | Description |
+| --- | --- | --- |
+| session | <code>object</code> | ProxyServer session |
 
-**Kind**: instance method of [<code>Mischief</code>](#Mischief)  
-<a name="Mischief+toWacz"></a>
+<a name="MischiefProxy+intercept"></a>
 
-### mischief.toWacz([includeRaw], signingServer) ⇒ <code>Promise.&lt;ArrayBuffer&gt;</code>
-(Shortcut) Export this Mischief capture to WACZ.
+### mischiefProxy.intercept(type, data, session)
+Collates network data (both requests and responses) from the proxy.
+Post-capture checks and capture size enforcement happens here.
 
-**Kind**: instance method of [<code>Mischief</code>](#Mischief)  
+**Kind**: instance method of [<code>MischiefProxy</code>](#MischiefProxy)  
 
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| [includeRaw] | <code>boolean</code> | <code>true</code> | Include a copy of RAW Http exchanges to the wacz (under `/raw`)? |
-| signingServer | <code>object</code> |  | Optional server information for signing the WACZ |
-| signingServer.url | <code>string</code> |  | url of the signing server |
-| signingServer.token | <code>string</code> |  | Optional token to be passed to the signing server via the Authorization header |
+| Param | Type |
+| --- | --- |
+| type | <code>string</code> | 
+| data | <code>Buffer</code> | 
+| session | <code>Session</code> | 
 
 <a name="MischiefOptions"></a>
 
@@ -686,6 +422,22 @@ Will use defaults for missing properties.
 | Param | Type |
 | --- | --- |
 | newOptions | <code>object</code> | 
+
+<a name="MischiefHTTPParser"></a>
+
+## MischiefHTTPParser
+Parser for raw HTTP exchanges
+
+**Kind**: global class  
+**See**: [https://github.com/creationix/http-parser-js/blob/master/standalone-example.js](https://github.com/creationix/http-parser-js/blob/master/standalone-example.js)  
+<a name="MischiefHTTPParser.parseResponse"></a>
+
+### MischiefHTTPParser.parseResponse(input) ⇒ <code>MischiefHTTPParserResponse</code>
+**Kind**: static method of [<code>MischiefHTTPParser</code>](#MischiefHTTPParser)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>\*</code> | 
 
 <a name="mischiefToWacz"></a>
 
@@ -787,53 +539,6 @@ them into MischiefProxyExchanges
 | --- | --- |
 | zip | <code>StreamZipAsync</code> | 
 
-<a name="castBlocklistMatcher"></a>
-
-## castBlocklistMatcher(val) ⇒ <code>RegExp</code> \| <code>String</code> \| <code>Address4</code> \| <code>Address6</code>
-Parses a blocklist entry for later matching.
-All entries are strings that we attempt to parse
-as IPs and CIDR ranges, then RegExp, before being
-returned as-is if unsuccessful.
-
-**Kind**: global function  
-**Returns**: <code>RegExp</code> \| <code>String</code> \| <code>Address4</code> \| <code>Address6</code> - - The parsed matcher  
-**Throws**:
-
-- <code>Error</code> - Throws if datatype does not match String or RegExp
-
-
-| Param | Type | Description |
-| --- | --- | --- |
-| val | <code>String</code> | a blocklist matcher |
-
-<a name="matchAgainst"></a>
-
-## matchAgainst(test) ⇒ <code>function</code>
-Returns a function that accepts a value to test
-against a blocklist matcher and returns true|false
-based on that matcher
-
-**Kind**: global function  
-**Returns**: <code>function</code> - - A curried function to be used in an array search  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| test | <code>string</code> \| <code>RegExp</code> \| <code>Address4</code> \| <code>Address6</code> | A blocklist matcher to test against |
-
-<a name="searchBlocklistFor"></a>
-
-## searchBlocklistFor(...args) ⇒ <code>function</code>
-Accepts any number of IP addresses or URLs as strings
-and returns a function that accepts a blocklist matcher
-and returns true when any one of those IPs|URLs matches
-
-**Kind**: global function  
-**Returns**: <code>function</code> - - A curried function to be used in an array search  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| ...args | <code>string</code> | An IP address or URL |
-
 <a name="dirEmpty"></a>
 
 ## dirEmpty(files, dir) ⇒ <code>boolean</code>
@@ -882,83 +587,4 @@ the pages JSON-Lines
 | Param | Type |
 | --- | --- |
 | exchange | [<code>MischiefExchange</code>](#MischiefExchange) | 
-
-<a name="isZip"></a>
-
-## isZip(buf) ⇒ <code>boolean</code>
-Sniffs a buffer to loosely infer whether it's a zip file.
-
-Note: this is an imperfect method.
-
-**Kind**: global function  
-**Returns**: <code>boolean</code> - True if buffer appears to be a zip file.  
-**See**: [https://stackoverflow.com/a/1887113](https://stackoverflow.com/a/1887113)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| buf | <code>Buffer</code> | The buffer to check |
-
-<a name="usesStoreCompression"></a>
-
-## usesStoreCompression(buf) ⇒ <code>boolean</code>
-Checks the header of a zip buffer
-to see if STORE compression was used
-
-**Kind**: global function  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| buf | <code>Buffer</code> | A buffer containing zip data |
-
-<a name="fileNameLen"></a>
-
-## fileNameLen(buf) ⇒ <code>integer</code>
-Checks the header of a zip buffer to see
-how long the file name is in the header.
-Used to seek past the header to the body.
-
-**Kind**: global function  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| buf | <code>Buffer</code> | A buffer containing zip data |
-
-<a name="extraFieldLen"></a>
-
-## extraFieldLen(buf) ⇒ <code>integer</code>
-Checks the header of a zip buffer to see
-how long the "extra field" is in the header.
-Used to seek past the header to the body.
-
-**Kind**: global function  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| buf | <code>Buffer</code> | A buffer containing zip data |
-
-<a name="readBodyAsString"></a>
-
-## readBodyAsString(buf, byteLen) ⇒ <code>string</code>
-A convenience function to seek past the header
-of a zip buffer and read N bytes of the body.
-
-**Kind**: global function  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| buf | <code>Buffer</code> | A buffer containing zip data |
-| byteLen | <code>integer</code> |  |
-
-<a name="create"></a>
-
-## create(files, [store]) ⇒ <code>Promise.&lt;Buffer&gt;</code>
-Creates a zip file, in memory, from a list of files
-
-**Kind**: global function  
-**Returns**: <code>Promise.&lt;Buffer&gt;</code> - - a buffer containing the zipped data  
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| files | <code>object</code> |  | an object whose keys are the file paths and values are the file data |
-| [store] | <code>boolean</code> | <code>true</code> | should store compression be used? |
 
