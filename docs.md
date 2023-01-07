@@ -265,7 +265,7 @@ as IPs and CIDR ranges, then RegExp, before being
 returned as-is if unsuccessful.
 
 **Kind**: static method of [<code>blocklist</code>](#utils.module_blocklist)  
-**Returns**: <code>RegExp</code> \| <code>String</code> \| <code>Address4</code> \| <code>Address6</code> - - The parsed matcher  
+**Returns**: <code>RegExp</code> \| <code>String</code> \| <code>Address4</code> \| <code>Address6</code> - The parsed matcher  
 **Throws**:
 
 - <code>Error</code> - Throws if datatype does not match String or RegExp
@@ -283,7 +283,7 @@ and returns a function that accepts a blocklist matcher
 and returns true when any one of those IPs|URLs matches
 
 **Kind**: static method of [<code>blocklist</code>](#utils.module_blocklist)  
-**Returns**: <code>function</code> - - A curried function to be used in an array search  
+**Returns**: <code>function</code> - A curried function to be used in an array search  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -297,7 +297,7 @@ against a blocklist matcher and returns true|false
 based on that matcher
 
 **Kind**: inner method of [<code>blocklist</code>](#utils.module_blocklist)  
-**Returns**: <code>function</code> - - A curried function to be used in an array search  
+**Returns**: <code>function</code> - A curried function to be used in an array search  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -496,7 +496,7 @@ Reconstructs a Mischief capture from a WACZ
 containing raw http traffic data.
 
 **Kind**: global function  
-**Returns**: [<code>Promise.&lt;Mischief&gt;</code>](#Mischief) - - a reconstructred Mischief capture object  
+**Returns**: [<code>Promise.&lt;Mischief&gt;</code>](#Mischief) - a reconstructed Mischief capture object  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -508,7 +508,7 @@ containing raw http traffic data.
 Retrieves the pages.jsonl data from the WARC and parses it
 
 **Kind**: global function  
-**Returns**: <code>Array.&lt;object&gt;</code> - - an array of page entry objects  
+**Returns**: <code>Array.&lt;object&gt;</code> - an array of page entry objects  
 
 | Param | Type |
 | --- | --- |
@@ -520,7 +520,7 @@ Retrieves the pages.jsonl data from the WARC and parses it
 Retrieves the datapackage.json data from the WARC and parses it
 
 **Kind**: global function  
-**Returns**: <code>object</code> - -  
+**Returns**: <code>object</code> - datapackage data  
 
 | Param | Type |
 | --- | --- |
@@ -533,7 +533,7 @@ Retrieves the raw requests and responses and initializes
 them into MischiefProxyExchanges
 
 **Kind**: global function  
-**Returns**: [<code>Array.&lt;MischiefProxyExchange&gt;</code>](#MischiefProxyExchange) - - an array of reconstructed MischiefProxyExchanges  
+**Returns**: [<code>Array.&lt;MischiefProxyExchange&gt;</code>](#MischiefProxyExchange) - an array of reconstructed MischiefProxyExchanges  
 
 | Param | Type |
 | --- | --- |
