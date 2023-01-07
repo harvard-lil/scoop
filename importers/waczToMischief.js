@@ -12,7 +12,7 @@ import { versionFromStatusLine } from '../utils/http.js'
  * containing raw http traffic data.
  *
  * @param {string} zipPath - path to the zipped WACZ
- * @returns {Promise<Mischief>} - a reconstructred Mischief capture object
+ * @returns {Promise<Mischief>} a reconstructed Mischief capture object
  */
 export async function waczToMischief (zipPath) {
   const zip = new StreamZip.async({ file: zipPath }) // eslint-disable-line
@@ -35,7 +35,7 @@ export async function waczToMischief (zipPath) {
  * Retrieves the pages.jsonl data from the WARC and parses it
  *
  * @param {StreamZipAsync} zip
- * @returns {object[]} - an array of page entry objects
+ * @returns {object[]} an array of page entry objects
  */
 const getPagesJSON = async (zip) => {
   const data = await zip.entryData('pages/pages.jsonl')
@@ -46,7 +46,7 @@ const getPagesJSON = async (zip) => {
  * Retrieves the datapackage.json data from the WARC and parses it
  *
  * @param {StreamZipAsync} zip
- * @returns {object} -
+ * @returns {object} datapackage data
  */
 const getDataPackage = async (zip) => {
   return JSON.parse(await zip.entryData('datapackage.json'))
@@ -57,7 +57,7 @@ const getDataPackage = async (zip) => {
  * them into MischiefProxyExchanges
  *
  * @param {StreamZipAsync} zip
- * @returns {MischiefProxyExchange[]} - an array of reconstructed MischiefProxyExchanges
+ * @returns {MischiefProxyExchange[]} an array of reconstructed MischiefProxyExchanges
  */
 const getExchanges = async (zip) => {
   const exchanges = []
