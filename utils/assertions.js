@@ -2,6 +2,7 @@
  * Mischief
  * @module utils.assertions
  * @description Assertion helpers
+ * @private
  */
 
 import { X509Certificate } from 'crypto'

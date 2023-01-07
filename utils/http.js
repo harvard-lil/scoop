@@ -2,6 +2,7 @@
  * Mischief
  * @module utils.http
  * @description Helper functions for working with raw HTTP exchanges.
+ * @private
  */
 
 import zlib from 'node:zlib'
