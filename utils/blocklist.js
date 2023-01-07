@@ -45,7 +45,7 @@ export function castBlocklistMatcher (val) {
  * based on that matcher
  *
  * @param {(string | RegExp | Address4 | Address6)} test - A blocklist matcher to test against
- * @returns {function} A curried function to be used in an array search
+ * @returns {function(val):Boolean} A curried function to be used in an array search
  */
 function matchAgainst (matcher) {
   return (val) => {
@@ -69,7 +69,7 @@ function matchAgainst (matcher) {
  * and returns true when any one of those IPs|URLs matches
  *
  * @param {...string} args - An IP address or URL
- * @returns {function} A curried function to be used in an array search
+ * @returns {function(val):Boolean} A curried function to be used in an array search
  */
 export function searchBlocklistFor (...args) {
   return (matcher) => args.find(matchAgainst(matcher))
