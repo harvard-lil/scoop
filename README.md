@@ -31,5 +31,5 @@ node --test
 
 ## Documentation
 ``` sh
-npm run generate-docs
+npm run docs:md
 ```

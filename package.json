@@ -8,8 +8,8 @@
     "postinstall": "bash postinstall.sh",
     "standard-fix": "standard --fix",
     "test": "standard && node --test",
-    "generate-html-docs": "jsdoc -c jsdoc_config.json -r .",
-    "generate-md-docs": "jsdoc2md -c jsdoc_config.json '**/*.js' > docs.md"
+    "docs:html": "jsdoc -c jsdoc_config.json -r .",
+    "docs:md": "jsdoc2md -c jsdoc_config.json '**/*.js' > docs.md"
   },
   "repository": {
     "type": "git",
