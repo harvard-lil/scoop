@@ -26,7 +26,7 @@ const LFx2 = '\n\n'
  * Ref: https://stackoverflow.com/a/11254057
  *
  * @param {Buffer} buffer -
- * @returns {integer} -
+ * @returns {integer}
  */
 export function bodyStartIndex (buffer) {
   return [CRLFx2, LFx2].reduce((prevEnd, delimiter) => {
@@ -40,7 +40,7 @@ export function bodyStartIndex (buffer) {
  * Extracts the protocol version from an HTTP status line
  *
  * @param {string} statusLine -
- * @returns {array} -
+ * @returns {array}
  */
 export function versionFromStatusLine (statusLine) {
   return statusLine.match(/\/([\d.]+)/)[1].split('.').map(n => parseInt(n))
