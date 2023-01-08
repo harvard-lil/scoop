@@ -336,7 +336,8 @@ export class WACZ {
  *
  * @param {object} files - an object whose keys are the file paths and values are the file data
  * @param {string} dir - the directory to check
- * @returns {boolean}
+ * @returns {boolean} True if the directory is empty
+ * @private
  */
 const dirEmpty = (files, dir) => {
   const regex = new RegExp(`^${dir}/.+`)
@@ -348,6 +349,7 @@ const dirEmpty = (files, dir) => {
  *
  * @param {any} obj - an JS object
  * @returns {string} a JSON string
+ * @private
  */
 const stringify = (obj) => JSON.stringify(obj, null, 2)
 
@@ -377,6 +379,14 @@ export function mischiefExchangeToPageLine (exchange) {
   }
 }
 
+/**
+ * Asserts that the given data conforms to the WACZ signature data format spec.
+ *
+ * @param {Object} resp - a JSON object returned from a signing server
+ * @throws {Error}
+ * @see {@link https://specs.webrecorder.net/wacz-auth/0.1.0/#signature-data-format}
+ * @private
+ */
 function assertValidSignatureResponse (resp) {
   const generalProps = {
     hash: assertions.assertSHA256WithPrefix,

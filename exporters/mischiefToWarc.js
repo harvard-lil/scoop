@@ -107,7 +107,8 @@ export async function mischiefToWarc (capture) {
  *
  * @param {MischiefExchange} exchange
  * @param {string} [type="response"]
- * @returns {string}
+ * @returns {string} The HTTP status line as expected by Warcio
+ * @private
  */
 function prepareExchangeStatusLine (exchange, type = 'response') {
   let statusLine = ''

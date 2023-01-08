@@ -2,6 +2,7 @@
  * Mischief
  * @module utils.blocklist
  * @description Helper functions for matching items in a blocklist.
+ * @private
  */
 
 // NOTE: we're using a fork of ip-address for ESM compatibility.
