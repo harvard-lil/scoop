@@ -10,7 +10,8 @@ import logPrefix from 'loglevel-plugin-prefix'
 import nunjucks from 'nunjucks'
 import { Address4, Address6 } from '@laverdet/beaugunderson-ip-address'
 import { v4 as uuidv4 } from 'uuid'
-import { chromium } from 'playwright'
+// Page is imported for JSDoc purposes
+import { chromium, Page } from 'playwright' // eslint-disable-line no-unused-vars
 import { getOSInfo } from 'get-os-info'
 
 import { MischiefGeneratedExchange } from './exchanges/index.js'
@@ -175,7 +176,7 @@ export class Mischief {
   /**
    * Main capture process.
    *
-   * @returns {Promise<boolean>}
+   * @returns {Promise}
    */
   async capture () {
     const options = this.options
@@ -371,7 +372,7 @@ export class Mischief {
   /**
    * Sets up the proxy and Playwright resources, creates capture-specific temporary folder.
    *
-   * @returns {Promise<boolean>}
+   * @returns {Promise<Page>} Resolves to a Playwright [Page]{@link https://playwright.dev/docs/api/class-page} object
    */
   async setup () {
     this.startedAt = new Date()
@@ -449,7 +450,7 @@ export class Mischief {
 
   /**
    * Tears down Playwright, intercepter resources, and capture-specific temporary folder.
-   * @returns {Promise<boolean>}
+   * @returns {Promise}
    */
   async teardown () {
     this.log.info('Closing browser and intercepter.')
@@ -466,7 +467,8 @@ export class Mischief {
    * Captures page title, description, url and favicon url directly from the browser.
    * Will attempt to find the favicon in intercepted exchanges if running in headfull mode, and request it out-of-band otherwise.
    *
-   * @param {object} page - Playwright "Page" object
+   * @param {Page} page - A Playwright [Page]{@link https://playwright.dev/docs/api/class-page} object
+   * @returns {Promise}
    * @private
    */
   async #capturePageInfo (page) {
@@ -526,6 +528,7 @@ export class Mischief {
    * These elements are added as "attachments" to the archive, for context / playback fallback purposes.
    * A summary file and entry point, `file:///video-extracted-summary.html`, will be generated in the process.
    *
+   * @returns {Promise}
    * @private
    */
   async #captureVideoAsAttachment () {
@@ -710,8 +713,8 @@ export class Mischief {
    * If `ghostscript` is available, will try to compress the resulting PDF.
    * Dimensions of the PDF are based on current document width and height.
    *
-   * @param {object} page - Playwright "Page" object
-   * @private
+   * @param {Page} page - Playwright "Page" object
+   * @returns {Promise}
    */
   async #takePdfSnapshot (page) {
     let pdf = null
@@ -775,7 +778,7 @@ export class Mischief {
    * - Mischief version
    * - Mischief options object used during capture
    *
-   * @param {object} page - Playwright "Page" object
+   * @param {Page} page - A Playwright [Page]{@link https://playwright.dev/docs/api/class-page} object
    * @private
    */
   async #captureProvenanceInfo (page) {
@@ -840,6 +843,7 @@ export class Mischief {
 
   /**
    * Generates a MischiefGeneratedExchange for generated content and adds it to `exchanges` unless time limit was reached.
+   *
    * @param {string} url
    * @param {object} httpHeaders
    * @param {Buffer} body
