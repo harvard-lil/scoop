@@ -36,6 +36,7 @@ export async function waczToMischief (zipPath) {
  *
  * @param {StreamZipAsync} zip
  * @returns {object[]} an array of page entry objects
+ * @private
  */
 const getPagesJSON = async (zip) => {
   const data = await zip.entryData('pages/pages.jsonl')
@@ -47,6 +48,7 @@ const getPagesJSON = async (zip) => {
  *
  * @param {StreamZipAsync} zip
  * @returns {object} datapackage data
+ * @private
  */
 const getDataPackage = async (zip) => {
   return JSON.parse(await zip.entryData('datapackage.json'))
@@ -58,6 +60,7 @@ const getDataPackage = async (zip) => {
  *
  * @param {StreamZipAsync} zip
  * @returns {MischiefProxyExchange[]} an array of reconstructed MischiefProxyExchanges
+ * @private
  */
 const getExchanges = async (zip) => {
   const exchanges = []

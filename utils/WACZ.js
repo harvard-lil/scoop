@@ -358,6 +358,7 @@ const stringify = (obj) => JSON.stringify(obj, null, 2)
  *
  * @param {Buffer} buffer
  * @returns {string} a sha256 hash prefixed with "sha256:"
+ * @private
  */
 export function hash (buffer) {
   return 'sha256:' + createHash('sha256').update(buffer).digest('hex')
@@ -369,6 +370,7 @@ export function hash (buffer) {
  *
  * @param {MischiefExchange} exchange
  * @returns {object}
+ * @private
  */
 export function mischiefExchangeToPageLine (exchange) {
   return {
