@@ -713,7 +713,7 @@ export class Mischief {
    * If `ghostscript` is available, will try to compress the resulting PDF.
    * Dimensions of the PDF are based on current document width and height.
    *
-   * @param {Page} page - Playwright "Page" object
+   * @param {Page} page - A Playwright [Page]{@link https://playwright.dev/docs/api/class-page} object
    * @returns {Promise}
    */
   async #takePdfSnapshot (page) {
