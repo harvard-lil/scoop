@@ -9,3 +9,4 @@ __*.js
 *.mp4
 executables/
 tmp/
+docs/_build/
