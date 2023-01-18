@@ -27,15 +27,9 @@ import CONSTANTS from './constants.js'
 import * as intercepters from './intercepters/index.js'
 import * as exporters from './exporters/index.js'
 import * as importers from './importers/index.js'
-import { defaultOptions, filterOptions } from './options.js'
+import { filterOptions } from './options.js'
 
 const exec = util.promisify(execCB)
-
-/**
- * Path to "assets" folder.
- * @constant
- */
-export const ASSETS_DIR = './assets/'
 
 /**
  * Experimental single-page web archiving library using Playwright.
@@ -103,7 +97,7 @@ export class Mischief {
 
   /**
    * Path to the capture-specific temporary folder created by `setup()`.
-   * Will be a child folder of the path defined in `this.options.tmpFolderPath`.
+   * Will be a child folder of the path defined in `CONSTANTS.TMP_PATH`.
    * @type {?string}
    */
   captureTmpFolderPath = null
@@ -394,28 +388,28 @@ export class Mischief {
     const options = this.options
 
     // Create "base" temporary folder if it doesn't exist
-    let tmpFolderPathExists = false
+    let tmpDirExists = false
     try {
-      await access(this.options.tmpFolderPath)
-      tmpFolderPathExists = true
+      await access(CONSTANTS.TMP_PATH)
+      tmpDirExists = true
     } catch (_err) {
-      this.log.info(`Base temporary folder ${this.options.tmpFolderPath} does not exist or cannot be accessed. Mischief will attempt to create it.`)
+      this.log.info(`Base temporary folder ${CONSTANTS.TMP_PATH} does not exist or cannot be accessed. Mischief will attempt to create it.`)
     }
 
-    if (!tmpFolderPathExists) {
+    if (!tmpDirExists) {
       try {
-        await mkdir(this.options.tmpFolderPath)
-        await access(this.options.tmpFolderPath, fsConstants.W_OK)
-        tmpFolderPathExists = true
+        await mkdir(CONSTANTS.TMP_PATH)
+        await access(CONSTANTS.TMP_PATH, fsConstants.W_OK)
+        tmpDirExists = true
       } catch (err) {
-        this.log.warn(`Error while creating base temporary folder ${this.options.tmpFolderPath}.`)
+        this.log.warn(`Error while creating base temporary folder ${CONSTANTS.TMP_PATH}.`)
         this.log.trace(err)
       }
     }
 
     // Create captures-specific temporary folder under base temporary folder
     try {
-      this.captureTmpFolderPath = await mkdtemp(this.options.tmpFolderPath)
+      this.captureTmpFolderPath = await mkdtemp(CONSTANTS.TMP_PATH)
       this.captureTmpFolderPath += '/'
       await access(this.captureTmpFolderPath, fsConstants.W_OK)
 
@@ -697,7 +691,7 @@ export class Mischief {
     // Generate summary page
     //
     try {
-      const html = nunjucks.render(`${ASSETS_DIR}video-extracted-summary.njk`, {
+      const html = nunjucks.render(`${CONSTANTS.TEMPLATES_IDR}video-extracted-summary.njk`, {
         url: this.url,
         now: new Date().toISOString(),
         videoSaved,
@@ -835,7 +829,7 @@ export class Mischief {
 
     // Generate summary page
     try {
-      const html = nunjucks.render(`${ASSETS_DIR}provenance-summary.njk`, {
+      const html = nunjucks.render(`${CONSTANTS.TEMPLATES_PATH}provenance-summary.njk`, {
         ...this.provenanceInfo,
         date: this.startedAt.toISOString(),
         url: this.url

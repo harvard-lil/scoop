@@ -19,7 +19,7 @@ export async function waczToMischief (zipPath) {
   const pageJSON = await getPagesJSON(zip)
   const datapackage = await getDataPackage(zip)
 
-  const capture = new Mischief(pageJSON.url, datapackage.extras?.provenanceInfo?.mischiefOptions)
+  const capture = new Mischief(pageJSON.url, datapackage.extras?.provenanceInfo?.options)
   Object.assign(capture, {
     id: pageJSON.id,
     startedAt: new Date(pageJSON.ts),

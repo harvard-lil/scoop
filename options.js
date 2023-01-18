@@ -4,7 +4,6 @@
  * @author The Harvard Library Innovation Lab
  * @license MIT
  */
-import path from 'path'
 import { statSync } from 'fs'
 // Note: used `statSync` instead of `stat` from `fs/promises` here for convenience.
 // We're using `filter()` in `Mischief()`, which cannot be async.
@@ -40,7 +39,6 @@ import { statSync } from 'fs'
  * @property {string} userAgentSuffix - String to append to the user agent. Defaults to an empty string.
  * @property {boolean} provenanceSummary - If `true`, information about the capture process (public IP address, User Agent, software version ...) will be gathered and summarized under `file:///provenance-summary.html`. WACZ exports will also hold that information at `datapackage.json` level, under `extras`. Defaults to `true`.
  * @property {string} publicIpResolverEndpoint - URL to be used to retrieve the client's public IP address for `provenanceSummary`. Endpoint requirements: must simply return a IPv4 or IPv6 address as text. Defaults to "https://myip.lil.tools".
- * @property {string} tmpFolderPath - Path to the temporary folder Mischief uses. Defaults to `./tmp`.
  * @property {string[]} blocklist - a list of patterns, to be matched against each request's URL and IP address, and subsequently blocked during capture. Valid entries include url strings, CIDR strings, and regular expressions.
  */
 export const defaultOptions = {
@@ -71,7 +69,6 @@ export const defaultOptions = {
   userAgentSuffix: '',
   provenanceSummary: true,
   publicIpResolverEndpoint: 'https://myip.lil.tools',
-  tmpFolderPath: `${process.env.PWD}/tmp/`,
   blocklist: [
     '/https?:\/\/localhost/', // eslint-disable-line
     '0.0.0.0/8',
@@ -114,15 +111,15 @@ export const defaultOptions = {
  */
 export function filterOptions (newOptions) {
   const options = {}
-  const defaults = defaultOptions
 
-  // Create new option object from `newOptions` and `defaults`:
-  // - Only pull entries from `newOptions` that are defined in `defaults`
+  // Create new option object from `newOptions` and `defaultOptions`:
+  // - Only pull entries from `newOptions` that are defined in `defaultOptions`
   // - Apply basic type casting based on type of defaults
-  for (const key of Object.keys(defaults)) {
-    options[key] = key in newOptions ? newOptions[key] : defaults[key]
+  for (const key of Object.keys(defaultOptions)) {
+    options[key] = key in newOptions ? newOptions[key] : defaultOptions[key]
 
-    const constructor = defaults[key].constructor
+    const constructor = defaultOptions[key].constructor
+
     switch (constructor) {
       case Boolean:
       case Number:
@@ -145,10 +142,6 @@ export function filterOptions (newOptions) {
   // Check that paths are valid
   if (!statSync(options.ytDlpPath).isFile()) {
     throw new Error('"ytDlpPath" must be a path to a file.')
-  }
-
-  if (options.tmpFolderPath !== path.normalize(options.tmpFolderPath)) {
-    throw new Error('"tmpFolderPath" must be a path to a directory.')
   }
 
   return options
