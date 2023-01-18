@@ -109,14 +109,20 @@ export const defaultOptions = {
  * @param {object} newOptions
  * @returns {object}
  */
-export function filterOptions (newOptions) {
+export function filterOptions (newOptions = {}) {
   const options = {}
 
   // Create new option object from `newOptions` and `defaultOptions`:
   // - Only pull entries from `newOptions` that are defined in `defaultOptions`
   // - Apply basic type casting based on type of defaults
   for (const key of Object.keys(defaultOptions)) {
-    options[key] = key in newOptions ? newOptions[key] : defaultOptions[key]
+    // options[key] = key in newOptions ? newOptions[key] : defaultOptions[key]
+
+    try {
+      options[key] = key in newOptions ? newOptions[key] : defaultOptions[key]
+    } catch (_err) { // `key in newOptions` may throw if `newOptions` is not object-like
+      options[key] = defaultOptions[key]
+    }
 
     const constructor = defaultOptions[key].constructor
 
