@@ -19,6 +19,8 @@
     "monospaceLinks": false
   },
   "opts": {
-    "destination": "./docs/"
+    "destination": "./docs/",
+    "template": "node_modules/docdash",
+    "readme": "jsdoc_readme.md"
   }
 }
