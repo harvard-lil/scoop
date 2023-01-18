@@ -88,6 +88,7 @@ export class WACZ {
    *
    * @param {string} fpath
    * @param {Buffer} fdata
+   * @private
    */
   assertWarc (fpath, fdata) {
     const buf = Buffer.from(fdata)
@@ -118,6 +119,7 @@ export class WACZ {
    *
    * @param {string} fpath
    * @param {Buffer} fdata
+   * @private
    */
   assertIndex (fpath, fdata) {
     // CDXJ's are newline delineated
@@ -137,6 +139,7 @@ export class WACZ {
    *
    * @param {string} fpath
    * @param {Buffer} fdata
+   * @private
    */
   assertPages (fpath, fdata) {
     // Parse the lines of JSON data
