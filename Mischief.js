@@ -1,3 +1,8 @@
+/**
+ * @author Harvard LIL
+ * @version 0.0.1
+ */
+
 import os from 'os'
 import util from 'util'
 import { readFile, writeFile, rm, readdir, mkdir, mkdtemp, access } from 'fs/promises'
@@ -24,18 +29,42 @@ import * as importers from './importers/index.js'
 const exec = util.promisify(execCB)
 
 /**
+ * @class Mischief
+ *
+ * @classdesc
  * Experimental single-page web archiving library using Playwright.
  * Uses a proxy to allow for comprehensive and raw network interception.
  *
- * ```javascript
+ * @param {string} url - Must be a valid HTTP(S) url.
+ * @param {object} [options={}] - See :func:`MischiefOptions.defaults` for details.
+ *
+ * @example
  * import { Mischief } from "mischief";
  *
  * const myCapture = new Mischief("https://example.com");
  * await myCapture.capture();
  * const myArchive = await myCapture.toWarc();
- * ```
  */
 export class Mischief {
+  constructor (url, options = {}) {
+    this.options = MischiefOptions.filterOptions(options)
+    this.blocklist = this.options.blocklist.map(castBlocklistMatcher)
+    this.url = this.filterUrl(url)
+
+    // Logging setup (level, output formatting)
+    logPrefix.reg(this.log)
+    logPrefix.apply(log, {
+      format (level, _name, timestamp) {
+        const timestampColor = CONSTANTS.LOGGING_COLORS.DEFAULT
+        const msgColor = CONSTANTS.LOGGING_COLORS[level.toUpperCase()]
+        return `${timestampColor(`[${timestamp}]`)} ${msgColor(level)}`
+      }
+    })
+    this.log.setLevel(this.options.logLevel)
+
+    this.intercepter = new intercepters[this.options.intercepter](this)
+  }
+
   id = uuidv4()
 
   /**
@@ -148,30 +177,6 @@ export class Mischief {
    * }}
    */
   pageInfo = {}
-
-  /**
-   * @param {string} url - Must be a valid HTTP(S) url.
-   * @param {object} [options={}] - See {@link MischiefOptions#defaults} for details.
-   * @see MischiefOptions#defaults
-   */
-  constructor (url, options = {}) {
-    this.options = MischiefOptions.filterOptions(options)
-    this.blocklist = this.options.blocklist.map(castBlocklistMatcher)
-    this.url = this.filterUrl(url)
-
-    // Logging setup (level, output formatting)
-    logPrefix.reg(this.log)
-    logPrefix.apply(log, {
-      format (level, _name, timestamp) {
-        const timestampColor = CONSTANTS.LOGGING_COLORS.DEFAULT
-        const msgColor = CONSTANTS.LOGGING_COLORS[level.toUpperCase()]
-        return `${timestampColor(`[${timestamp}]`)} ${msgColor(level)}`
-      }
-    })
-    this.log.setLevel(this.options.logLevel)
-
-    this.intercepter = new intercepters[this.options.intercepter](this)
-  }
 
   /**
    * Main capture process.
