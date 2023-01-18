@@ -4,7 +4,7 @@ import jsdoc2md from 'jsdoc-to-markdown'
 
 const jsDocOpts = {
   files: '**/*.js',
-  configure: 'jsdoc_config.json'
+  configure: 'jsdoc/config.json'
 }
 
 /* get template data */
