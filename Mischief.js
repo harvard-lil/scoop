@@ -21,12 +21,14 @@ import { chromium } from 'playwright'
 import { getOSInfo } from 'get-os-info'
 
 import { MischiefGeneratedExchange } from './exchanges/index.js'
-import { MischiefOptions } from './MischiefOptions.js'
 import { castBlocklistMatcher, searchBlocklistFor } from './utils/blocklist.js'
+
 import CONSTANTS from './constants.js'
 import * as intercepters from './intercepters/index.js'
 import * as exporters from './exporters/index.js'
 import * as importers from './importers/index.js'
+import { defaultOptions, filterOptions } from './options.js'
+
 const exec = util.promisify(execCB)
 
 /**
@@ -80,7 +82,7 @@ export class Mischief {
 
   /**
    * Current settings.
-   * Should only contain keys defined in `MischiefOptions`.
+   * Should only contain keys defined in `options.defaultOptions`.
    * @type {object}
    */
   options = {}
@@ -94,7 +96,7 @@ export class Mischief {
 
   /**
    * Logger.
-   * Logging level controlled via `MischiefOptions.logLevel`.
+   * Logging level controlled via the `logLevel` option.
    * @type {?log.Logger}
    */
   log = log
@@ -164,10 +166,10 @@ export class Mischief {
 
   /**
    * @param {string} url - Must be a valid HTTP(S) url.
-   * @param {object} [options={}] - See `MischiefOptions.defaults` for details.
+   * @param {object} [options={}] - See `options.defaults` for details.
    */
   constructor (url, options = {}) {
-    this.options = MischiefOptions.filterOptions(options)
+    this.options = filterOptions(options)
     this.blocklist = this.options.blocklist.map(castBlocklistMatcher)
     this.url = this.filterUrl(url)
 
@@ -783,7 +785,7 @@ export class Mischief {
    * That property is also be used by `mischiefToWacz()` to populate the `extras` field of `datapackage.json`.
    *
    * Provenance info collected:
-   * - Capture client IP, resolved using the endpoint provided in `MischiefOptions.publicIpResolverEndpoint`.
+   * - Capture client IP, resolved using the endpoint provided in the `publicIpResolverEndpoint` option.
    * - Operating system details (type, name, major version, CPU architecture)
    * - Mischief version
    * - Mischief options object used during capture
@@ -828,7 +830,7 @@ export class Mischief {
       osName: osInfo.name,
       osVersion: osInfo.version,
       cpuArchitecture: os.machine(),
-      mischiefOptions: structuredClone(this.options)
+      options: structuredClone(this.options)
     }
 
     // Generate summary page

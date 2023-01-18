@@ -4,9 +4,9 @@
 ![](mischief.png)
 
 ```javascript
-import { Mischief, MischiefOptions } from "mischief";
+import { Mischief, defaultOptions } from "mischief";
 
-const myCapture = new Mischief("https://example.com", { blocklist: [/unsafedomain.com/, ...MischiefOptions.default.blocklist] });
+const myCapture = new Mischief("https://example.com", { blocklist: [/unsafedomain.com/, ...defaultOptions.blocklist] });
 await myCapture.capture();
 const myArchive = await myCapture.toWarc();
 ```
