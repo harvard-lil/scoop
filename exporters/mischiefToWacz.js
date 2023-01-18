@@ -5,6 +5,10 @@ import { WACZ, mischiefExchangeToPageLine, hash } from '../utils/WACZ.js'
 import { WARCParser } from 'warcio'
 
 /**
+ * @function mischiefToWacz
+ * @memberof module:exporters
+ *
+ * @description
  * Mischief capture to WACZ converter.
  *
  * Note:

@@ -13,6 +13,10 @@ if (!globalThis.crypto) {
 }
 
 /**
+ * @function mischiefToWarc
+ * @memberof module:exporters
+ *
+ * @description
  * Mischief capture to WARC converter.
  *
  * Note:

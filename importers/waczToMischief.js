@@ -8,6 +8,10 @@ import { WARCParser } from 'warcio'
 import { versionFromStatusLine } from '../utils/http.js'
 
 /**
+ * @function waczToMischief
+ * @memberof module:importers
+ *
+ * @description
  * Reconstructs a Mischief capture from a WACZ
  * containing raw http traffic data.
  *
