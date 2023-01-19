@@ -3,7 +3,7 @@
  *
  * @description
  * Entry point for the exchanges module.
- * An exchange encapsulate a request and associated response.
+ * An exchange encapsulates a request and associated response.
  *
  * Classes:
  * * {@link MischiefExchange}
