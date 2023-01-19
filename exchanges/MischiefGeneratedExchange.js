@@ -12,7 +12,7 @@ export class MischiefGeneratedExchange extends MischiefExchange {
   description
 
   /**
-   * @param {object} props - Object containing any of the properties of `this`.
+   * @param {object} [props={}] - Object containing any of the properties of `this`.
    */
   constructor (props = {}) {
     super(props)

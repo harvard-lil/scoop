@@ -17,19 +17,23 @@ export class MischiefProxyExchange extends MischiefExchange {
   /** @type {?Buffer} */
   _requestRaw
 
+  /** @type {?Buffer} */
   get requestRaw () {
     return this._requestRaw
   }
 
+  /** @type {?Buffer} */
   set requestRaw (val) {
     this._request = null
     this._requestRaw = val
   }
 
+  /** @type {?Buffer} */
   get requestRawHeaders () {
     return this.requestRaw.subarray(0, bodyStartIndex(this.requestRaw))
   }
 
+  /** @type {?Buffer} */
   get requestRawBody () {
     return this.requestRaw.subarray(bodyStartIndex(this.requestRaw))
   }
@@ -37,23 +41,28 @@ export class MischiefProxyExchange extends MischiefExchange {
   /** @type {?Buffer} */
   _responseRaw
 
+  /** @type {?Buffer} */
   get responseRaw () {
     return this._responseRaw
   }
 
+  /** @type {?Buffer} */
   set responseRaw (val) {
     this._response = null
     this._responseRaw = val
   }
 
+  /** @type {Buffer} */
   get responseRawHeaders () {
     return this.responseRaw.subarray(0, bodyStartIndex(this.responseRaw))
   }
 
+  /** @type {Buffer} */
   get responseRawBody () {
     return this.responseRaw.subarray(bodyStartIndex(this.responseRaw))
   }
 
+  /** @type {?object} */
   get request () {
     if (!this._request && this.requestRaw) {
       this._request = MischiefHTTPParser.parseRequest(this.requestRaw)
@@ -67,10 +76,12 @@ export class MischiefProxyExchange extends MischiefExchange {
     return this._request
   }
 
+  /** @type {?object} */
   set request (val) {
     this._request = val
   }
 
+  /** @type {?object} */
   get response () {
     if (!this._response && this.responseRaw) {
       this._response = MischiefHTTPParser.parseResponse(this.responseRaw)
@@ -80,12 +91,13 @@ export class MischiefProxyExchange extends MischiefExchange {
     return this._response
   }
 
+  /** @type {?object} */
   set response (val) {
     this._response = val
   }
 
   /**
-   * @param {object} props - Object containing any of the properties of `this`.
+   * @param {object} [props={}] - Object containing any of the properties of `this`.
    */
   constructor (props = {}) {
     super(props)

@@ -8,7 +8,7 @@ import { statSync } from 'fs'
 // Note: used `statSync` instead of `stat` from `fs/promises` here for convenience.
 // We're using `filter()` in `Mischief()`, which cannot be async.
 
-import CONSTANTS from './constants.js'
+import * as CONSTANTS from './constants.js'
 
 /**
  * Available options and defaults for Mischief.
