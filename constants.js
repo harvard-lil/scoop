@@ -1,5 +1,4 @@
 /**
- * Mischief
  * @module CONSTANTS
  * @description Constants used across the library.
  */
@@ -9,12 +8,13 @@ import { fileURLToPath } from 'url'
 import chalk from 'chalk'
 
 /**
- * Description of this software
+ * Description of this software.
+ * Used in provenance data to indicate which softare made the capture.
  */
 export const SOFTWARE = 'Mischief @ Harvard Library Innovation Lab'
 
 /**
- * The current version of Mischief
+ * The current version of Mischief. Also used in provenance data.
  */
 export const VERSION = 'v0.0.1 DEV'
 
@@ -29,32 +29,32 @@ export const WARC_VERSION = '1.1'
 export const WACZ_VERSION = '1.1.1'
 
 /**
- * Library directory
+ * Path to the Mischief library.
  */
 export const BASE_PATH = dirname(fileURLToPath(import.meta.url))
 
 /**
- * Location of the assets folder.
+ * Location of the directory in which assets may be rendered (ex: the provenance summary)
  */
 export const ASSETS_PATH = `${BASE_PATH}/assets/`
 
 /**
- * Location of the directory in which assets may be rendered (ex: the provenance summary)
+ * Path to the templates folder.
  */
 export const TEMPLATES_PATH = `${BASE_PATH}/assets/templates/`
 
 /**
- * Location of the temporary folder in which Mischief may add and delete files
- */
-export const TMP_PATH = `${BASE_PATH}/tmp/`
-
-/**
- * Location of the directory in which self-contained dependencies are stored
+ * Path to the executables folder.
  */
 export const EXECUTABLES_PATH = `${BASE_PATH}/executables/`
 
 /**
- * Colors used by the logging function.
+ * Path to the temporary folder.
+ */
+export const TMP_PATH = `${BASE_PATH}/tmp/`
+
+/**
+ * Colors used by the logging function
  */
 export const LOGGING_COLORS = {
   DEFAULT: chalk.gray,
