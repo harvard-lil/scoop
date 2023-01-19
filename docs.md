@@ -1,590 +1,649 @@
-## Modules
+# Mischief
 
-<dl>
-<dt><a href="#module_CONSTANTS">CONSTANTS</a></dt>
-<dd><p>Constants used across the library.</p>
-</dd>
-<dt><a href="#module_exchanges">exchanges</a></dt>
-<dd><p>Entry point for the exchanges module.
-An exchange encapsulate a request and associated response.</p>
-<ul>
-<li><a href="#MischiefExchange">MischiefExchange</a></li>
-<li><a href="#MischiefProxyExchange">MischiefProxyExchange</a></li>
-<li><a href="#MischiefGeneratedExchange">MischiefGeneratedExchange</a></li>
-</ul>
-</dd>
-<dt><a href="#module_exporters">exporters</a></dt>
-<dd><p>Entry point for the exporters module.
-Functions in this module are meant to be used to convert
-a Mischief instance into an archive format (i.e: WARC, WBN).</p>
-<ul>
-<li><a href="#mischiefToWarc">mischiefToWarc</a></li>
-<li><a href="#mischiefToWacz">mischiefToWacz</a></li>
-</ul>
-</dd>
-<dt><a href="#module_importers">importers</a></dt>
-<dd><p>Entry point for the importers module
-providing the following functions:</p>
-<ul>
-<li><a href="#waczToMischief">waczToMischief</a></li>
-</ul>
-</dd>
-<dt><a href="#module_intercepters">intercepters</a></dt>
-<dd><p>Entry point for the intercepters module
-providing the following classes:</p>
-<ul>
-<li><a href="#MischiefIntercepter">MischiefIntercepter</a></li>
-<li><a href="#MischiefProxy">MischiefProxy</a></li>
-</ul>
-</dd>
-<dt><a href="#module_parsers">parsers</a></dt>
-<dd><p>Entry point for the parsers module.
-Classes in this module are meant to be used to parse raw network traffic (i.e. HTTP).</p>
-<ul>
-<li><a href="#MischiefHTTPParser">MischiefHTTPParser</a></li>
-</ul>
-</dd>
-<dt><a href="#utils.module_blocklist">blocklist</a></dt>
-<dd><p>Helper functions for matching items in a blocklist.</p>
-</dd>
-</dl>
+This is some header material that will be injected into both the HTML and Markdown exports of the docs.
+
+## Modules
+Module | Description
+------ | -----------
+[CONSTANTS] | <p>Constants used across the library.</p>
+[exchanges] | <p>Entry point for the exchanges module. An exchange encapsulates a request and associated response.</p> <p>Classes:</p> <ul> <li>[MischiefExchange]</li> <li>[MischiefProxyExchange]</li> <li>[MischiefGeneratedExchange]</li> </ul>
+[exporters] | <p>Entry point for the exporters module. Functions in this module are meant to be used to convert a Mischief instance into an archive format (i.e: WARC, WBN).</p>
+[importers] | <p>Entry point for the importers module.</p>
+[intercepters] | <p>Entry point for the intercepters module.</p> <p>Classes:</p> <ul> <li>[MischiefIntercepter]</li> <li>[MischiefProxy]</li> </ul>
+[options] | 
+[parsers] | <p>Entry point for the parsers module. Classes in this module are meant to be used to parse raw network traffic (i.e. HTTP).</p> <p>Classes:</p> <ul> <li>[MischiefHTTPParser]</li> </ul>
 
 ## Classes
 
-<dl>
-<dt><a href="#MischiefExchange">MischiefExchange</a></dt>
-<dd><p>Represents an HTTP exchange captured by Mischief, irrespective of how it was captured.
-To be specialized by interception type (i.e: <a href="#MischiefProxyExchange">MischiefProxyExchange</a>).</p>
-</dd>
-<dt><a href="#MischiefGeneratedExchange">MischiefGeneratedExchange</a></dt>
-<dd><p>An exchange constructed ad-hoc (vs intercepted),
-typically used to inject additional resources into an archive</p>
-</dd>
-<dt><a href="#MischiefProxyExchange">MischiefProxyExchange</a></dt>
-<dd><p>Represents an HTTP exchange captured via MischiefProxy.</p>
-</dd>
-<dt><a href="#MischiefIntercepter">MischiefIntercepter</a></dt>
-<dd><p>Abstract class for intercepter implementations to capture HTTP traffic.</p>
-</dd>
-<dt><a href="#MischiefProxy">MischiefProxy</a></dt>
-<dd><p>A proxy based intercepter that captures raw HTTP exchanges
-without parsing, preserving headers et al as delivered.</p>
-</dd>
-<dt><a href="#Mischief">Mischief</a></dt>
-<dd><p>Experimental single-page web archiving library using Playwright.
-Uses a proxy to allow for comprehensive and raw network interception.</p>
-<pre><code class="language-javascript">import { Mischief } from &quot;mischief&quot;;
+Name | Description
+------ | -----------
+[Mischief] | <p>Experimental single-page web archiving library using Playwright. Uses a proxy to allow for comprehensive and raw network interception.</p>
+[MischiefExchange] | <p>Represents an HTTP exchange captured by Mischief, irrespective of how it was captured. To be specialized by interception type (i.e: [MischiefProxyExchange].</p>
+[MischiefGeneratedExchange] | <p>An exchange constructed ad-hoc (vs intercepted), typically used to inject additional resources into an archive</p>
+[MischiefHTTPParser] | <p>Parser for raw HTTP exchanges</p>
+[MischiefIntercepter] | <p>Abstract class for intercepter implementations to capture HTTP traffic.</p>
+[MischiefProxy] | <p>A proxy based intercepter that captures raw HTTP exchanges without parsing, preserving headers et al as delivered.</p>
+[MischiefProxyExchange] | <p>Represents an HTTP exchange captured via MischiefProxy.</p>
+[WACZ] | <p>WACZ builder</p>
 
-const myCapture = new Mischief(&quot;https://example.com&quot;);
+## Constants
+
+Name | Description
+------ | -----------
+[mock] | <p>Dump of a sample MischiefProxyExchange instance as JSON.</p>
+
+
+## Mischief
+
+<p>Experimental single-page web archiving library using Playwright.
+Uses a proxy to allow for comprehensive and raw network interception.</p>
+
+**Kind**: global class  
+
+* [Mischief]
+    * [new Mischief(url, \[options\])]
+    * [.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description)]
+    * [.blocklist]
+    * [.capture()]
+    * [.captureTmpFolderPath]
+    * [.exchanges]
+    * [.extractGeneratedExchanges()]
+    * [.filterUrl(url)]
+    * [.intercepter]
+    * [.log]
+    * [.options]
+    * [.pageInfo]
+    * [.provenanceInfo]
+    * [.setup()]
+    * [.startedAt]
+    * [.state]
+    * [.states]
+    * [.teardown()]
+    * [.toWacz(\[includeRaw\], signingServer)]
+    * [.toWarc()]
+    * [.url]
+
+
+### new Mischief(url, \[options\])
+
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| url | `string` |  | <p>Must be a valid HTTP(S) url.</p> |
+| \[options\] | `object` | `{}` | <p>See :func:<code>MischiefOptions.defaults</code> for details.</p> |
+
+**Example**  
+```js
+import { Mischief } from "mischief";
+
+const myCapture = new Mischief("https://example.com");
 await myCapture.capture();
 const myArchive = await myCapture.toWarc();
-</code></pre>
-</dd>
-<dt><a href="#MischiefOptions">MischiefOptions</a></dt>
-<dd><p>Helper class to filter and validate options passed to a Mischief instance.</p>
-</dd>
-<dt><a href="#MischiefHTTPParser">MischiefHTTPParser</a></dt>
-<dd><p>Parser for raw HTTP exchanges</p>
-</dd>
-<dt><a href="#WACZ">WACZ</a></dt>
-<dd><p>WACZ builder</p>
-</dd>
-</dl>
+```
 
-## Functions
+### mischief.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description)
 
-<dl>
-<dt><a href="#mischiefToWacz">mischiefToWacz(capture, [includeRaw], signingServer)</a> ⇒ <code>Promise.&lt;ArrayBuffer&gt;</code></dt>
-<dd><p>Mischief capture to WACZ converter.</p>
-<p>Note:</p>
-<ul>
-<li>Logs are added to capture object via <code>Mischief.log</code>.</li>
-</ul>
-</dd>
-<dt><a href="#mischiefToWarc">mischiefToWarc(capture)</a> ⇒ <code>Promise.&lt;ArrayBuffer&gt;</code></dt>
-<dd><p>Mischief capture to WARC converter.</p>
-<p>Note:</p>
-<ul>
-<li>Logs are added to capture object via <code>Mischief.log</code>.</li>
-</ul>
-</dd>
-<dt><a href="#prepareExchangeStatusLine">prepareExchangeStatusLine(exchange, [type])</a> ⇒ <code>string</code></dt>
-<dd><p>Prepares an HTTP status line string for a given MischiefExchange.</p>
-<p>Warcio expects the method to be prepended to the request statusLine.
-Reference:</p>
-<ul>
-<li><a href="https://github.com/webrecorder/pywb/pull/636#issue-869181282">https://github.com/webrecorder/pywb/pull/636#issue-869181282</a></li>
-<li><a href="https://github.com/webrecorder/warcio.js/blob/d5dcaec38ffb0a905fd7151273302c5f478fe5d9/src/statusandheaders.js#L69-L74">https://github.com/webrecorder/warcio.js/blob/d5dcaec38ffb0a905fd7151273302c5f478fe5d9/src/statusandheaders.js#L69-L74</a></li>
-<li><a href="https://github.com/webrecorder/warcio.js/blob/fdb68450e2e011df24129bac19691073ab6b2417/test/testSerializer.js#L212">https://github.com/webrecorder/warcio.js/blob/fdb68450e2e011df24129bac19691073ab6b2417/test/testSerializer.js#L212</a></li>
-</ul>
-</dd>
-<dt><a href="#waczToMischief">waczToMischief(zipPath)</a> ⇒ <code><a href="#Mischief">Promise.&lt;Mischief&gt;</a></code></dt>
-<dd><p>Reconstructs a Mischief capture from a WACZ
-containing raw http traffic data.</p>
-</dd>
-<dt><a href="#getPagesJSON">getPagesJSON(zip)</a> ⇒ <code>Array.&lt;object&gt;</code></dt>
-<dd><p>Retrieves the pages.jsonl data from the WARC and parses it</p>
-</dd>
-<dt><a href="#getDataPackage">getDataPackage(zip)</a> ⇒ <code>object</code></dt>
-<dd><p>Retrieves the datapackage.json data from the WARC and parses it</p>
-</dd>
-<dt><a href="#getExchanges">getExchanges(zip)</a> ⇒ <code><a href="#MischiefProxyExchange">Array.&lt;MischiefProxyExchange&gt;</a></code></dt>
-<dd><p>Retrieves the raw requests and responses and initializes
-them into MischiefProxyExchanges</p>
-</dd>
-<dt><a href="#dirEmpty">dirEmpty(files, dir)</a> ⇒ <code>boolean</code></dt>
-<dd><p>Checks whether any files have been added to
-the specified directory</p>
-</dd>
-<dt><a href="#stringify">stringify(obj)</a> ⇒ <code>string</code></dt>
-<dd><p>Converts an object to a string using standarized spacing</p>
-</dd>
-<dt><a href="#hash">hash(buffer)</a> ⇒ <code>string</code></dt>
-<dd><p>Hashes a buffer to conform to the WACZ spec</p>
-</dd>
-<dt><a href="#mischiefExchangeToPageLine">mischiefExchangeToPageLine(exchange)</a> ⇒ <code>object</code></dt>
-<dd><p>Format a MischiefExchange as needed for
-the pages JSON-Lines</p>
-</dd>
-</dl>
+<p>Generates a MischiefGeneratedExchange for generated content and adds it to <code>exchanges</code> unless time limit was reached.</p>
 
-<a name="module_CONSTANTS"></a>
+**Kind**: instance method of [`Mischief`]  
+**Returns**: `boolean` - <p>true if generated exchange is successfully added</p>  
 
-## CONSTANTS
-Constants used across the library.
-
-
-* [CONSTANTS](#module_CONSTANTS)
-    * [.SOFTWARE](#module_CONSTANTS.SOFTWARE)
-    * [.VERSION](#module_CONSTANTS.VERSION)
-    * [.WARC_VERSION](#module_CONSTANTS.WARC_VERSION)
-    * [.WACZ_VERSION](#module_CONSTANTS.WACZ_VERSION)
-    * [.ASSETS_DIR](#module_CONSTANTS.ASSETS_DIR)
-    * [.LOGGING_COLORS](#module_CONSTANTS.LOGGING_COLORS)
-
-<a name="module_CONSTANTS.SOFTWARE"></a>
-
-### CONSTANTS.SOFTWARE
-Description of this software
-
-**Kind**: static constant of [<code>CONSTANTS</code>](#module_CONSTANTS)  
-<a name="module_CONSTANTS.VERSION"></a>
-
-### CONSTANTS.VERSION
-The current version of Mischief
-
-**Kind**: static constant of [<code>CONSTANTS</code>](#module_CONSTANTS)  
-<a name="module_CONSTANTS.WARC_VERSION"></a>
-
-### CONSTANTS.WARC\_VERSION
-The version of WARC this library exports
-
-**Kind**: static constant of [<code>CONSTANTS</code>](#module_CONSTANTS)  
-<a name="module_CONSTANTS.WACZ_VERSION"></a>
-
-### CONSTANTS.WACZ\_VERSION
-The version of WACZ this library exports
-
-**Kind**: static constant of [<code>CONSTANTS</code>](#module_CONSTANTS)  
-<a name="module_CONSTANTS.ASSETS_DIR"></a>
-
-### CONSTANTS.ASSETS\_DIR
-Location of the directory in which assets may be rendered (ex: the provinance summary)
-
-**Kind**: static constant of [<code>CONSTANTS</code>](#module_CONSTANTS)  
-<a name="module_CONSTANTS.LOGGING_COLORS"></a>
-
-### CONSTANTS.LOGGING\_COLORS
-Colors used by the logging function
-
-**Kind**: static constant of [<code>CONSTANTS</code>](#module_CONSTANTS)  
-<a name="module_exchanges"></a>
-
-## exchanges
-Entry point for the exchanges module.
-An exchange encapsulate a request and associated response.
-
-* [MischiefExchange](#MischiefExchange)
-* [MischiefProxyExchange](#MischiefProxyExchange)
-* [MischiefGeneratedExchange](#MischiefGeneratedExchange)
-
-<a name="module_exporters"></a>
-
-## exporters
-Entry point for the exporters module.
-Functions in this module are meant to be used to convert
-a Mischief instance into an archive format (i.e: WARC, WBN).
-
-* [mischiefToWarc](#mischiefToWarc)
-* [mischiefToWacz](#mischiefToWacz)
-
-<a name="module_importers"></a>
-
-## importers
-Entry point for the importers module
-providing the following functions:
-
-* [waczToMischief](#waczToMischief)
-
-<a name="module_intercepters"></a>
-
-## intercepters
-Entry point for the intercepters module
-providing the following classes:
-
-* [MischiefIntercepter](#MischiefIntercepter)
-* [MischiefProxy](#MischiefProxy)
-
-<a name="module_parsers"></a>
-
-## parsers
-Entry point for the parsers module.
-Classes in this module are meant to be used to parse raw network traffic (i.e. HTTP).
-
-* [MischiefHTTPParser](#MischiefHTTPParser)
-
-<a name="utils.module_blocklist"></a>
-
-## blocklist
-Helper functions for matching items in a blocklist.
-
-
-* [blocklist](#utils.module_blocklist)
-    * _static_
-        * [.castBlocklistMatcher(val)](#utils.module_blocklist.castBlocklistMatcher) ⇒ <code>RegExp</code> \| <code>String</code> \| <code>Address4</code> \| <code>Address6</code>
-        * [.searchBlocklistFor(...args)](#utils.module_blocklist.searchBlocklistFor) ⇒ <code>function</code>
-    * _inner_
-        * [~matchAgainst(test)](#utils.module_blocklist..matchAgainst) ⇒ <code>function</code>
-
-<a name="utils.module_blocklist.castBlocklistMatcher"></a>
-
-### blocklist.castBlocklistMatcher(val) ⇒ <code>RegExp</code> \| <code>String</code> \| <code>Address4</code> \| <code>Address6</code>
-Parses a blocklist entry for later matching.
-All entries are strings that we attempt to parse
-as IPs and CIDR ranges, then RegExp, before being
-returned as-is if unsuccessful.
-
-**Kind**: static method of [<code>blocklist</code>](#utils.module_blocklist)  
-**Returns**: <code>RegExp</code> \| <code>String</code> \| <code>Address4</code> \| <code>Address6</code> - The parsed matcher  
-**Throws**:
-
-- <code>Error</code> - Throws if datatype does not match String or RegExp
-
-
-| Param | Type | Description |
+| Param | Type | Default |
 | --- | --- | --- |
-| val | <code>String</code> | a blocklist matcher |
+| url | `string` |  | 
+| httpHeaders | `object` |  | 
+| body | `Buffer` |  | 
+| isEntryPoint | `boolean` | `false` | 
+| description | `string` |  | 
 
-<a name="utils.module_blocklist.searchBlocklistFor"></a>
 
-### blocklist.searchBlocklistFor(...args) ⇒ <code>function</code>
-Accepts any number of IP addresses or URLs as strings
-and returns a function that accepts a blocklist matcher
-and returns true when any one of those IPs|URLs matches
+### mischief.blocklist
 
-**Kind**: static method of [<code>blocklist</code>](#utils.module_blocklist)  
-**Returns**: <code>function</code> - A curried function to be used in an array search  
+<p>A mirror of options.blocklist with IPs parsed for matching</p>
 
-| Param | Type | Description |
-| --- | --- | --- |
-| ...args | <code>string</code> | An IP address or URL |
+**Kind**: instance property of [`Mischief`]  
 
-<a name="utils.module_blocklist..matchAgainst"></a>
+### mischief.capture()
 
-### blocklist~matchAgainst(test) ⇒ <code>function</code>
-Returns a function that accepts a value to test
-against a blocklist matcher and returns true|false
-based on that matcher
+<p>Main capture process.</p>
 
-**Kind**: inner method of [<code>blocklist</code>](#utils.module_blocklist)  
-**Returns**: <code>function</code> - A curried function to be used in an array search  
+**Kind**: instance method of [`Mischief`]  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| test | <code>string</code> \| <code>RegExp</code> \| <code>Address4</code> \| <code>Address6</code> | A blocklist matcher to test against |
+### mischief.captureTmpFolderPath
 
-<a name="MischiefProxy"></a>
+<p>Path to the capture-specific temporary folder created by <code>setup()</code>.
+Will be a child folder of the path defined in <code>CONSTANTS.TMP_PATH</code>.</p>
+
+**Kind**: instance property of [`Mischief`]  
+
+### mischief.exchanges
+
+<p>Array of HTTP exchanges that constitute the capture.
+Only contains generated exchanged until <code>teardown()</code>.</p>
+
+**Kind**: instance property of [`Mischief`]  
+
+### mischief.extractGeneratedExchanges()
+
+<p>Returns a map of &quot;generated&quot; exchanges.
+Generated exchanges = anything generated directly by Mischief (PDF snapshot, full-page screenshot, videos ...)</p>
+
+**Kind**: instance method of [`Mischief`]  
+
+### mischief.filterUrl(url)
+
+<p>Filters a url to ensure it's suitable for capture.
+This function throws if:</p>
+<ul>
+<li><code>url</code> is not a valid url</li>
+<li><code>url</code> is not an http / https url</li>
+<li><code>url</code> matches a blocklist rule</li>
+</ul>
+
+**Kind**: instance method of [`Mischief`]  
+
+| Param | Type |
+| --- | --- |
+| url | `string` | 
+
+
+### mischief.intercepter
+
+<p>Reference to the intercepter chosen for capture.</p>
+
+**Kind**: instance property of [`Mischief`]  
+
+### mischief.log
+
+<p>Logger.
+Logging level controlled via the <code>logLevel</code> option.</p>
+
+**Kind**: instance property of [`Mischief`]  
+
+### mischief.options
+
+<p>Current settings.
+Should only contain keys defined in [options.defaultOptions].</p>
+
+**Kind**: instance property of [`Mischief`]  
+
+### mischief.pageInfo
+
+<p>Info extracted by the browser about the page on initial load</p>
+
+**Kind**: instance property of [`Mischief`]  
+
+### mischief.provenanceInfo
+
+<p>Will only be populated if <code>options.provenanceSummary</code> is <code>true</code>.</p>
+
+**Kind**: instance property of [`Mischief`]  
+
+### mischief.setup()
+
+<p>Sets up the proxy and Playwright resources, creates capture-specific temporary folder.</p>
+
+**Kind**: instance method of [`Mischief`]  
+**Returns**: `Promise.<Page>` - <p>Resolves to a Playwright [Page] object</p>  
+
+### mischief.startedAt
+
+<p>The time at which the page was crawled.</p>
+
+**Kind**: instance property of [`Mischief`]  
+
+### mischief.state
+
+<p>Current state of the capture.
+Should only contain states defined in <code>states</code>.</p>
+
+**Kind**: instance property of [`Mischief`]  
+
+### mischief.states
+
+<p>Enum-like states that the capture occupies.</p>
+
+**Kind**: instance enum of [`Mischief`]  
+**Read only**: true  
+
+### mischief.teardown()
+
+<p>Tears down Playwright, intercepter resources, and capture-specific temporary folder.</p>
+
+**Kind**: instance method of [`Mischief`]  
+
+### mischief.toWacz(\[includeRaw\], signingServer)
+
+<p>(Shortcut) Export this Mischief capture to WACZ.</p>
+
+**Kind**: instance method of [`Mischief`]  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| \[includeRaw\] | `boolean` | `true` | <p>Include a copy of RAW Http exchanges to the wacz (under <code>/raw</code>)?</p> |
+| signingServer | `object` |  | <p>Optional server information for signing the WACZ</p> |
+| signingServer.url | `string` |  | <p>url of the signing server</p> |
+| signingServer.token | `string` |  | <p>Optional token to be passed to the signing server via the Authorization header</p> |
+
+
+### mischief.toWarc()
+
+<p>(Shortcut) Export this Mischief capture to WARC.</p>
+
+**Kind**: instance method of [`Mischief`]  
+
+### mischief.url
+
+<p>URL to capture.</p>
+
+**Kind**: instance property of [`Mischief`]  
+
+## MischiefHTTPParser
+
+<p>Parser for raw HTTP exchanges</p>
+
+**Kind**: global class  
+**See**: [https://github.com/creationix/http-parser-js/blob/master/standalone-example.js]  
+
+### MischiefHTTPParser.parseResponse(input)
+
+**Kind**: static method of [`MischiefHTTPParser`]  
+
+| Param | Type |
+| --- | --- |
+| input | `*` | 
+
 
 ## MischiefProxy
-A proxy based intercepter that captures raw HTTP exchanges
-without parsing, preserving headers et al as delivered.
+
+<p>A proxy based intercepter that captures raw HTTP exchanges
+without parsing, preserving headers et al as delivered.</p>
 
 **Kind**: global class  
 
-* [MischiefProxy](#MischiefProxy)
-    * [.getOrInitExchange(id, type)](#MischiefProxy+getOrInitExchange)
-    * [.checkRequestAgainstBlocklist(session)](#MischiefProxy+checkRequestAgainstBlocklist) ⇒ <code>boolean</code>
-    * [.intercept(type, data, session)](#MischiefProxy+intercept)
+* [MischiefProxy]
+    * [.checkRequestAgainstBlocklist(session)]
+    * [.contextOptions]
+    * [.getOrInitExchange(id, type)]
+    * [.intercept(type, data, session)]
+    * [.setup()]
+    * [.teardown()]
 
-<a name="MischiefProxy+getOrInitExchange"></a>
 
-### mischiefProxy.getOrInitExchange(id, type)
-Returns an exchange based on the session id and type ("request" or "response").
-If the type is a request and there's already been a response on that same session,
-create a new exchange. Otherwise append to continue the exchange.
+### mischiefProxy.checkRequestAgainstBlocklist(session)
 
-**Kind**: instance method of [<code>MischiefProxy</code>](#MischiefProxy)  
+<p>Checks an outgoing request against the blocklist. Interrupts the request it needed.
+Keeps trace of blocked requests in <code>Mischief.provenanceInfo</code>.</p>
 
-| Param | Type |
-| --- | --- |
-| id | <code>string</code> | 
-| type | <code>string</code> | 
-
-<a name="MischiefProxy+checkRequestAgainstBlocklist"></a>
-
-### mischiefProxy.checkRequestAgainstBlocklist(session) ⇒ <code>boolean</code>
-Checks an outgoing request against the blocklist. Interrupts the request it needed.
-Keeps trace of blocked requests in `Mischief.provenanceInfo`.
-
-**Kind**: instance method of [<code>MischiefProxy</code>](#MischiefProxy)  
-**Returns**: <code>boolean</code> - - `true` if request was interrupted  
+**Kind**: instance method of [`MischiefProxy`]  
+**Returns**: `boolean` - <ul>
+<li><code>true</code> if request was interrupted</li>
+</ul>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| session | <code>object</code> | ProxyServer session |
+| session | `object` | <p>ProxyServer session</p> |
 
-<a name="MischiefProxy+intercept"></a>
 
-### mischiefProxy.intercept(type, data, session)
-Collates network data (both requests and responses) from the proxy.
-Post-capture checks and capture size enforcement happens here.
+### mischiefProxy.contextOptions
 
-**Kind**: instance method of [<code>MischiefProxy</code>](#MischiefProxy)  
+<p>The proxy info to be consumed by Playwright.
+Includes a flag to ignore certificate errors introduced by proxying.</p>
 
-| Param | Type |
-| --- | --- |
-| type | <code>string</code> | 
-| data | <code>Buffer</code> | 
-| session | <code>Session</code> | 
-
-<a name="MischiefOptions"></a>
-
-## MischiefOptions
-Helper class to filter and validate options passed to a Mischief instance.
-
-**Kind**: global class  
-
-* [MischiefOptions](#MischiefOptions)
-    * _instance_
-        * [.defaults](#MischiefOptions+defaults)
-    * _static_
-        * [.filterOptions(newOptions)](#MischiefOptions.filterOptions)
-
-<a name="MischiefOptions+defaults"></a>
-
-### mischiefOptions.defaults
-Available options and defaults for Mischief.
-Unless specified otherwise at constructor level, Mischief will run with these settings.
-
-**Kind**: instance property of [<code>MischiefOptions</code>](#MischiefOptions)  
+**Kind**: instance property of [`MischiefProxy`]  
 **Properties**
 
 | Name | Type | Default | Description |
 | --- | --- | --- | --- |
-| logLevel | <code>boolean</code> | <code>&quot;info&quot;</code> | Determines the logging level of this instance. Can be "silent", "trace", "debug", "info", "warn" or "error". See https://github.com/pimterry/loglevel for more information. |
-| headless | <code>boolean</code> | <code>false</code> | Should Playwright run in headless mode? |
-| proxyHost | <code>string</code> | <code>&quot;\&quot;localhost\&quot;&quot;</code> | What host should Playwright proxy through for capture? |
-| proxyPort | <code>number</code> | <code>9000</code> | What port should Playwright proxy through for capture? |
-| proxyVerbose | <code>boolean</code> | <code>false</code> | Should log entries from the proxy be printed? |
-| totalTimeout | <code>number</code> | <code>300000</code> | How long should Mischief wait for all steps in the capture to complete, in ms? |
-| loadTimeout | <code>number</code> | <code>30000</code> | How long should Mischief wait for the page to load, in ms? |
-| networkIdleTimeout | <code>number</code> | <code>30000</code> | How long should Mischief wait for network events to complete, in ms. |
-| behaviorsTimeout | <code>number</code> | <code>60000</code> | How long should Mischief wait for media to play, secondary resources, and site specific behaviors (in total), in ms? |
-| keepPartialResponses | <code>boolean</code> | <code>true</code> | Should Mischief keep partially downloaded resources? |
-| maxSize | <code>number</code> | <code>209715200</code> | Maximum size, in bytes, for the exchanges list. |
-| screenshot | <code>boolean</code> | <code>true</code> | Should Mischief try to make a screenshot? Screenshot will be added as `file:///screenshot.png` in the exchanges list. |
-| domSnapshot | <code>boolean</code> | <code>true</code> | Should Mischief save a snapshot of the rendered DOM? Added as `file:///dom-snapshot.html` in the exchanges list. |
-| pdfSnapshot | <code>boolean</code> | <code>false</code> | Should Mischief save a PDF of the rendered page? Only available in headless mode. Added as `file:///pdf-snapshot.pedf` in the exchanges list. |
-| captureVideoAsAttachment | <code>boolean</code> | <code>true</code> | If `true`, will try to capture the main video that may be present in this page as `file:///video-extracted.mp4`. Will also save associated meta data as `file:///video-extracted-metadata.json`. This capture happens out of the browser. |
-| captureVideoAsAttachmentTimeout | <code>number</code> | <code>30000</code> | How long should Mischief wait for `captureVideoAsAttachment` to finish. |
-| ytDlpPath | <code>string</code> | <code>&quot;\&quot;./executables\&quot;&quot;</code> | Path to the yt-dlp executable to be used. |
-| captureWindowX | <code>number</code> | <code>1600</code> | Browser window resolution in pixels: X axis. |
-| captureWindowY | <code>number</code> | <code>900</code> | Browser window resolution in pixels: Y axis. |
-| autoScroll | <code>boolean</code> | <code>true</code> | Should Mischief try to scroll through the page? |
-| autoPlayMedia | <code>boolean</code> | <code>true</code> | Should Mischief try to autoplay `<audio>` and `<video>` tags? |
-| grabSecondaryResources | <code>boolean</code> | <code>true</code> | Should Mischief try to download img srcsets and secondary stylesheets? |
-| runSiteSpecificBehaviors | <code>boolean</code> | <code>true</code> | Should Mischief run behaviors tailored to specific sites (ex: Twitter) in an attempt to better grab the page? |
-| intercepter | <code>string</code> | <code>&quot;\&quot;MischiefProxy\&quot;&quot;</code> | Network interception method to be used. Available at the moment: "MischiefProxy". |
-| userAgentSuffix | <code>string</code> | <code>&quot;\&quot;\&quot;&quot;</code> | String to append to the user agent. |
-| provenanceSummary | <code>boolean</code> | <code>true</code> | If `true`, information about the capture process (public IP address, User Agent, software version ...) will be gathered and summarized under `file:///provenance-summary.html`. WACZ exports will also hold that information at `datapackage.json` level, under `extras`. |
-| publicIpResolverEndpoint | <code>string</code> | <code>&quot;\&quot;https://myip.lil.tools\&quot;&quot;</code> | URL to be used to retrieve the client's public IP address for `provenanceSummary`. Endpoint requirements: must simply return a IPv4 or IPv6 address as text. |
-| tmpFolderPath | <code>string</code> | <code>&quot;\&quot;./tmp\&quot;&quot;</code> | Path to the temporary folder Mischief uses. |
-| blocklist | <code>Array.&lt;string&gt;</code> |  | a list of patterns, to be matched against each request's URL and IP address, and subsequently blocked during capture. Valid entries include url strings, CIDR strings, and regular expressions in string form. |
+| proxy | `object` |  |  |
+| proxy.server | `string` |  | <p>The proxy url</p> |
+| ignoreHTTPSErrors | `boolean` | `true` |  |
 
-<a name="MischiefOptions.filterOptions"></a>
 
-### MischiefOptions.filterOptions(newOptions)
-Filters an options object by comparing it with `MischiefOptions`.
-Will use defaults for missing properties.
+### mischiefProxy.getOrInitExchange(id, type)
 
-**Kind**: static method of [<code>MischiefOptions</code>](#MischiefOptions)  
+<p>Returns an exchange based on the session id and type (&quot;request&quot; or &quot;response&quot;).
+If the type is a request and there's already been a response on that same session,
+create a new exchange. Otherwise append to continue the exchange.</p>
+
+**Kind**: instance method of [`MischiefProxy`]  
 
 | Param | Type |
 | --- | --- |
-| newOptions | <code>object</code> | 
+| id | `string` | 
+| type | `string` | 
 
-<a name="MischiefHTTPParser"></a>
 
-## MischiefHTTPParser
-Parser for raw HTTP exchanges
+### mischiefProxy.intercept(type, data, session)
 
-**Kind**: global class  
-**See**: [https://github.com/creationix/http-parser-js/blob/master/standalone-example.js](https://github.com/creationix/http-parser-js/blob/master/standalone-example.js)  
-<a name="MischiefHTTPParser.parseResponse"></a>
+<p>Collates network data (both requests and responses) from the proxy.
+Post-capture checks and capture size enforcement happens here.</p>
 
-### MischiefHTTPParser.parseResponse(input) ⇒ <code>MischiefHTTPParserResponse</code>
-**Kind**: static method of [<code>MischiefHTTPParser</code>](#MischiefHTTPParser)  
+**Kind**: instance method of [`MischiefProxy`]  
 
 | Param | Type |
 | --- | --- |
-| input | <code>\*</code> | 
+| type | `string` | 
+| data | `Buffer` | 
+| session | `Session` | 
 
-<a name="mischiefToWacz"></a>
 
-## mischiefToWacz(capture, [includeRaw], signingServer) ⇒ <code>Promise.&lt;ArrayBuffer&gt;</code>
-Mischief capture to WACZ converter.
+### mischiefProxy.setup()
 
-Note:
-- Logs are added to capture object via `Mischief.log`.
+<p>Initializes the proxy server</p>
 
-**Kind**: global function  
+**Kind**: instance method of [`MischiefProxy`]  
+
+### mischiefProxy.teardown()
+
+<p>Closes the proxy server</p>
+
+**Kind**: instance method of [`MischiefProxy`]  
+
+## mock
+
+<p>Dump of a sample MischiefProxyExchange instance as JSON.</p>
+
+**Kind**: global constant  
+
+## CONSTANTS
+
+<p>Constants used across the library.</p>
+
+
+* [CONSTANTS]
+    * [.ASSETS_PATH]
+    * [.BASE_PATH]
+    * [.EXECUTABLES_PATH]
+    * [.LOGGING_COLORS]
+    * [.SOFTWARE]
+    * [.TEMPLATES_PATH]
+    * [.TMP_PATH]
+    * [.VERSION]
+    * [.WACZ_VERSION]
+    * [.WARC_VERSION]
+
+
+### CONSTANTS.ASSETS_PATH
+
+<p>Location of the directory in which assets may be rendered (ex: the provenance summary)</p>
+
+**Kind**: static constant of [`CONSTANTS`]  
+
+### CONSTANTS.BASE_PATH
+
+<p>Path to the Mischief library.</p>
+
+**Kind**: static constant of [`CONSTANTS`]  
+
+### CONSTANTS.EXECUTABLES_PATH
+
+<p>Path to the executables folder.</p>
+
+**Kind**: static constant of [`CONSTANTS`]  
+
+### CONSTANTS.LOGGING_COLORS
+
+<p>Colors used by the logging function</p>
+
+**Kind**: static constant of [`CONSTANTS`]  
+
+### CONSTANTS.SOFTWARE
+
+<p>Description of this software.
+Used in provenance data to indicate which softare made the capture.</p>
+
+**Kind**: static constant of [`CONSTANTS`]  
+
+### CONSTANTS.TEMPLATES_PATH
+
+<p>Path to the templates folder.</p>
+
+**Kind**: static constant of [`CONSTANTS`]  
+
+### CONSTANTS.TMP_PATH
+
+<p>Path to the temporary folder.</p>
+
+**Kind**: static constant of [`CONSTANTS`]  
+
+### CONSTANTS.VERSION
+
+<p>The current version of Mischief. Also used in provenance data.</p>
+
+**Kind**: static constant of [`CONSTANTS`]  
+
+### CONSTANTS.WACZ_VERSION
+
+<p>The version of WACZ this library exports</p>
+
+**Kind**: static constant of [`CONSTANTS`]  
+
+### CONSTANTS.WARC_VERSION
+
+<p>The version of WARC this library exports</p>
+
+**Kind**: static constant of [`CONSTANTS`]  
+
+## exchanges
+
+<p>Entry point for the exchanges module.
+An exchange encapsulates a request and associated response.</p>
+<p>Classes:</p>
+<ul>
+<li>[MischiefExchange]</li>
+<li>[MischiefProxyExchange]</li>
+<li>[MischiefGeneratedExchange]</li>
+</ul>
+
+
+## exporters
+
+<p>Entry point for the exporters module.
+Functions in this module are meant to be used to convert
+a Mischief instance into an archive format (i.e: WARC, WBN).</p>
+
+
+* [exporters]
+    * [.mischiefToWacz(capture, \[includeRaw\], signingServer)]
+    * [.mischiefToWarc(capture)]
+
+
+### exporters.mischiefToWacz(capture, \[includeRaw\], signingServer)
+
+<p>Mischief capture to WACZ converter.</p>
+<p>Note:</p>
+<ul>
+<li>Logs are added to capture object via <code>Mischief.log</code>.</li>
+</ul>
+
+**Kind**: static method of [`exporters`]  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| capture | [<code>Mischief</code>](#Mischief) |  |  |
-| [includeRaw] | <code>boolean</code> | <code>false</code> | If `true`, includes the raw http exchanges in the WACZ. |
-| signingServer | <code>object</code> |  | Optional server information for signing the WACZ |
-| signingServer.url | <code>string</code> |  | url of the signing server |
-| signingServer.token | <code>string</code> |  | Optional token to be passed to the signing server via the Authorization header |
+| capture | [`Mischief`] |  |  |
+| \[includeRaw\] | `boolean` | `false` | <p>If <code>true</code>, includes the raw http exchanges in the WACZ.</p> |
+| signingServer | `object` |  | <p>Optional server information for signing the WACZ</p> |
+| signingServer.url | `string` |  | <p>url of the signing server</p> |
+| signingServer.token | `string` |  | <p>Optional token to be passed to the signing server via the Authorization header</p> |
 
-<a name="mischiefToWarc"></a>
 
-## mischiefToWarc(capture) ⇒ <code>Promise.&lt;ArrayBuffer&gt;</code>
-Mischief capture to WARC converter.
+### exporters.mischiefToWarc(capture)
 
-Note:
-- Logs are added to capture object via `Mischief.log`.
+<p>Mischief capture to WARC converter.</p>
+<p>Note:</p>
+<ul>
+<li>Logs are added to capture object via <code>Mischief.log</code>.</li>
+</ul>
 
-**Kind**: global function  
+**Kind**: static method of [`exporters`]  
 
 | Param | Type |
 | --- | --- |
-| capture | [<code>Mischief</code>](#Mischief) | 
+| capture | [`Mischief`] | 
 
-<a name="prepareExchangeStatusLine"></a>
 
-## prepareExchangeStatusLine(exchange, [type]) ⇒ <code>string</code>
-Prepares an HTTP status line string for a given MischiefExchange.
+## importers
 
-Warcio expects the method to be prepended to the request statusLine.
-Reference:
-- https://github.com/webrecorder/pywb/pull/636#issue-869181282
-- https://github.com/webrecorder/warcio.js/blob/d5dcaec38ffb0a905fd7151273302c5f478fe5d9/src/statusandheaders.js#L69-L74
-- https://github.com/webrecorder/warcio.js/blob/fdb68450e2e011df24129bac19691073ab6b2417/test/testSerializer.js#L212
+<p>Entry point for the importers module.</p>
 
-**Kind**: global function  
 
-| Param | Type | Default |
-| --- | --- | --- |
-| exchange | [<code>MischiefExchange</code>](#MischiefExchange) |  | 
-| [type] | <code>string</code> | <code>&quot;\&quot;response\&quot;&quot;</code> | 
+### importers.waczToMischief(zipPath)
 
-<a name="waczToMischief"></a>
+<p>Reconstructs a Mischief capture from a WACZ
+containing raw http traffic data.</p>
 
-## waczToMischief(zipPath) ⇒ [<code>Promise.&lt;Mischief&gt;</code>](#Mischief)
-Reconstructs a Mischief capture from a WACZ
-containing raw http traffic data.
-
-**Kind**: global function  
-**Returns**: [<code>Promise.&lt;Mischief&gt;</code>](#Mischief) - a reconstructed Mischief capture object  
+**Kind**: static method of [`importers`]  
+**Returns**: `Promise.<Mischief>` - <p>a reconstructed Mischief capture object</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| zipPath | <code>string</code> | path to the zipped WACZ |
+| zipPath | `string` | <p>path to the zipped WACZ</p> |
 
-<a name="getPagesJSON"></a>
 
-## getPagesJSON(zip) ⇒ <code>Array.&lt;object&gt;</code>
-Retrieves the pages.jsonl data from the WARC and parses it
+## intercepters
 
-**Kind**: global function  
-**Returns**: <code>Array.&lt;object&gt;</code> - an array of page entry objects  
+<p>Entry point for the intercepters module.</p>
+<p>Classes:</p>
+<ul>
+<li>[MischiefIntercepter]</li>
+<li>[MischiefProxy]</li>
+</ul>
 
-| Param | Type |
-| --- | --- |
-| zip | <code>StreamZipAsync</code> | 
 
-<a name="getDataPackage"></a>
+## options
 
-## getDataPackage(zip) ⇒ <code>object</code>
-Retrieves the datapackage.json data from the WARC and parses it
 
-**Kind**: global function  
-**Returns**: <code>object</code> - datapackage data  
+* [options]
+    * [.defaultOptions]
+    * [.filterOptions(newOptions)]
 
-| Param | Type |
-| --- | --- |
-| zip | <code>StreamZipAsync</code> | 
 
-<a name="getExchanges"></a>
+### options.defaultOptions
 
-## getExchanges(zip) ⇒ [<code>Array.&lt;MischiefProxyExchange&gt;</code>](#MischiefProxyExchange)
-Retrieves the raw requests and responses and initializes
-them into MischiefProxyExchanges
+<p>Available options and defaults for Mischief.
+Unless specified otherwise at constructor level, Mischief will run with these settings.</p>
 
-**Kind**: global function  
-**Returns**: [<code>Array.&lt;MischiefProxyExchange&gt;</code>](#MischiefProxyExchange) - an array of reconstructed MischiefProxyExchanges  
+**Kind**: static constant of [`options`]  
+**Properties**
 
-| Param | Type |
-| --- | --- |
-| zip | <code>StreamZipAsync</code> | 
+| Name | Type | Default | Description |
+| --- | --- | --- | --- |
+| logLevel | `boolean` | `&quot;info&quot;` | <p>Determines the logging level of this instance. Can be &quot;silent&quot;, &quot;trace&quot;, &quot;debug&quot;, &quot;info&quot;, &quot;warn&quot; or &quot;error&quot;. See https://github.com/pimterry/loglevel for more information.</p> |
+| headless | `boolean` | `false` | <p>Should Playwright run in headless mode?</p> |
+| proxyHost | `string` | `'&quot;localhost&quot;'` | <p>What host should Playwright proxy through for capture?</p> |
+| proxyPort | `number` | `9000` | <p>What port should Playwright proxy through for capture?</p> |
+| proxyVerbose | `boolean` | `false` | <p>Should log entries from the proxy be printed?</p> |
+| totalTimeout | `number` | `300000` | <p>How long should Mischief wait for all steps in the capture to complete, in ms?</p> |
+| loadTimeout | `number` | `30000` | <p>How long should Mischief wait for the page to load, in ms?</p> |
+| networkIdleTimeout | `number` | `30000` | <p>How long should Mischief wait for network events to complete, in ms.</p> |
+| behaviorsTimeout | `number` | `60000` | <p>How long should Mischief wait for media to play, secondary resources, and site specific behaviors (in total), in ms?</p> |
+| keepPartialResponses | `boolean` | `true` | <p>Should Mischief keep partially downloaded resources?</p> |
+| maxSize | `number` | `209715200` | <p>Maximum size, in bytes, for the exchanges list.</p> |
+| screenshot | `boolean` | `true` | <p>Should Mischief try to make a screenshot? Screenshot will be added as <code>file:///screenshot.png</code> in the exchanges list.</p> |
+| domSnapshot | `boolean` | `true` | <p>Should Mischief save a snapshot of the rendered DOM? Added as <code>file:///dom-snapshot.html</code> in the exchanges list.</p> |
+| pdfSnapshot | `boolean` | `false` | <p>Should Mischief save a PDF of the rendered page? Only available in headless mode. Added as <code>file:///pdf-snapshot.pedf</code> in the exchanges list.</p> |
+| captureVideoAsAttachment | `boolean` | `true` | <p>If <code>true</code>, will try to capture the main video that may be present in this page as <code>file:///video-extracted.mp4</code>. Will also save associated meta data as <code>file:///video-extracted-metadata.json</code>. This capture happens out of the browser.</p> |
+| captureVideoAsAttachmentTimeout | `number` | `30000` | <p>How long should Mischief wait for <code>captureVideoAsAttachment</code> to finish.</p> |
+| ytDlpPath | `string` | `'&quot;./executables/yt-dlp&quot;'` | <p>Path to the yt-dlp executable to be used.</p> |
+| captureWindowX | `number` | `1600` | <p>Browser window resolution in pixels: X axis.</p> |
+| captureWindowY | `number` | `900` | <p>Browser window resolution in pixels: Y axis.</p> |
+| autoScroll | `boolean` | `true` | <p>Should Mischief try to scroll through the page?</p> |
+| autoPlayMedia | `boolean` | `true` | <p>Should Mischief try to autoplay <code>&lt;audio&gt;</code> and <code>&lt;video&gt;</code> tags?</p> |
+| grabSecondaryResources | `boolean` | `true` | <p>Should Mischief try to download img srcsets and secondary stylesheets?</p> |
+| runSiteSpecificBehaviors | `boolean` | `true` | <p>Should Mischief run behaviors tailored to specific sites (ex: Twitter) in an attempt to better grab the page?</p> |
+| intercepter | `string` | `'&quot;MischiefProxy&quot;'` | <p>Network interception method to be used. Available at the moment: &quot;MischiefProxy&quot;.</p> |
+| userAgentSuffix | `string` | `'&quot;&quot;'` | <p>String to append to the user agent.</p> |
+| provenanceSummary | `boolean` | `true` | <p>If <code>true</code>, information about the capture process (public IP address, User Agent, software version ...) will be gathered and summarized under <code>file:///provenance-summary.html</code>. WACZ exports will also hold that information at <code>datapackage.json</code> level, under <code>extras</code>.</p> |
+| publicIpResolverEndpoint | `string` | `'&quot;https://myip.lil.tools&quot;'` | <p>URL to be used to retrieve the client's public IP address for <code>provenanceSummary</code>. Endpoint requirements: must simply return a IPv4 or IPv6 address as text.</p> |
+| blocklist | `Array.<string>` |  | <p>a list of patterns, to be matched against each request's URL and IP address, and subsequently blocked during capture. Valid entries include url strings, CIDR strings, and regular expressions in string form.</p> |
 
-<a name="dirEmpty"></a>
 
-## dirEmpty(files, dir) ⇒ <code>boolean</code>
-Checks whether any files have been added to
-the specified directory
+### options.filterOptions(newOptions)
 
-**Kind**: global function  
+<p>Filters a new options object by comparing it with defaults.
+Will use defaults for missing properties.</p>
 
-| Param | Type | Description |
-| --- | --- | --- |
-| files | <code>object</code> | an object whose keys are the file paths and values are the file data |
-| dir | <code>string</code> | the directory to check |
-
-<a name="stringify"></a>
-
-## stringify(obj) ⇒ <code>string</code>
-Converts an object to a string using standarized spacing
-
-**Kind**: global function  
-**Returns**: <code>string</code> - a JSON string  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| obj | <code>any</code> | an JS object |
-
-<a name="hash"></a>
-
-## hash(buffer) ⇒ <code>string</code>
-Hashes a buffer to conform to the WACZ spec
-
-**Kind**: global function  
-**Returns**: <code>string</code> - a sha256 hash prefixed with "sha256:"  
+**Kind**: static method of [`options`]  
 
 | Param | Type |
 | --- | --- |
-| buffer | <code>Buffer</code> | 
+| newOptions | `object` | 
 
-<a name="mischiefExchangeToPageLine"></a>
 
-## mischiefExchangeToPageLine(exchange) ⇒ <code>object</code>
-Format a MischiefExchange as needed for
-the pages JSON-Lines
+## parsers
 
-**Kind**: global function  
+<p>Entry point for the parsers module.
+Classes in this module are meant to be used to parse raw network traffic (i.e. HTTP).</p>
+<p>Classes:</p>
+<ul>
+<li>[MischiefHTTPParser]</li>
+</ul>
 
-| Param | Type |
-| --- | --- |
-| exchange | [<code>MischiefExchange</code>](#MischiefExchange) | 
+<!-- LINKS -->
 
+[CONSTANTS]:#constants
+[exchanges]:#exchanges
+[MischiefExchange]:#MischiefExchange
+[MischiefProxyExchange]:#MischiefProxyExchange
+[MischiefGeneratedExchange]:#MischiefGeneratedExchange
+[exporters]:#exporters
+[importers]:#importers
+[intercepters]:#intercepters
+[MischiefIntercepter]:#MischiefIntercepter
+[MischiefProxy]:#MischiefProxy
+[options]:#options
+[parsers]:#parsers
+[MischiefHTTPParser]:#MischiefHTTPParser
+[Mischief]:#mischief
+[WACZ]:#waczwacz
+[mock]:#mock
+[.blocklist]:#mischiefblocklist
+[.captureTmpFolderPath]:#mischiefcapturetmpfolderpath
+[.exchanges]:#mischiefexchanges
+[.intercepter]:#mischiefintercepter
+[.log]:#mischieflog
+[.options]:#mischiefoptions
+[.pageInfo]:#mischiefpageinfo
+[.provenanceInfo]:#mischiefprovenanceinfo
+[.startedAt]:#mischiefstartedat
+[.state]:#mischiefstate
+[.states]:#mischiefstates
+[.url]:#mischiefurl
+[`Mischief`]:#new-mischiefurl-options
+[options.defaultOptions]:options.defaultOptions
+[Page]:https://playwright.dev/docs/api/class-page
+[https://github.com/creationix/http-parser-js/blob/master/standalone-example.js]:https://github.com/creationix/http-parser-js/blob/master/standalone-example.js
+[`MischiefHTTPParser`]:#mischiefhttpparser
+[.contextOptions]:#mischiefproxycontextoptions
+[`MischiefProxy`]:#mischiefproxy
+[.ASSETS_PATH]:#constantsassets_path
+[.BASE_PATH]:#constantsbase_path
+[.EXECUTABLES_PATH]:#constantsexecutables_path
+[.LOGGING_COLORS]:#constantslogging_colors
+[.SOFTWARE]:#constantssoftware
+[.TEMPLATES_PATH]:#constantstemplates_path
+[.TMP_PATH]:#constantstmp_path
+[.VERSION]:#constantsversion
+[.WACZ_VERSION]:#constantswacz_version
+[.WARC_VERSION]:#constantswarc_version
+[`CONSTANTS`]:#constants
+[`exporters`]:#exporters
+[`importers`]:#importers
+[.defaultOptions]:#optionsdefaultoptions
+[`options`]:#options
+[new Mischief(url, \[options\])]:#new-mischiefurl-options
+[.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description)]:#mischiefaddgeneratedexchangeurl-httpheaders-body-isentrypoint-description
+[.capture()]:#mischiefcapture
+[.extractGeneratedExchanges()]:#mischiefextractgeneratedexchanges
+[.filterUrl(url)]:#mischieffilterurlurl
+[.setup()]:#mischiefproxysetup
+[.teardown()]:#mischiefproxyteardown
+[.toWacz(\[includeRaw\], signingServer)]:#mischieftowaczincluderaw-signingserver
+[.toWarc()]:#mischieftowarc
+[.checkRequestAgainstBlocklist(session)]:#mischiefproxycheckrequestagainstblocklistsession
+[.getOrInitExchange(id, type)]:#mischiefproxygetorinitexchangeid-type
+[.intercept(type, data, session)]:#mischiefproxyintercepttype-data-session
+[.mischiefToWacz(capture, \[includeRaw\], signingServer)]:#exportersmischieftowaczcapture-includeraw-signingserver
+[.mischiefToWarc(capture)]:#exportersmischieftowarccapture
+[.filterOptions(newOptions)]:#optionsfilteroptionsnewoptions
