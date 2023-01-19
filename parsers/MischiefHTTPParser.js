@@ -1,27 +1,15 @@
-/**
- * Mischief
- * @module parsers.MischiefHTTPParser
- * @author The Harvard Library Innovation Lab
- * @license MIT
- * @description Utility class for parsing intercepted HTTP exchanges.
- */
-import zlib from 'node:zlib'
-import { promisify } from 'util'
-
-import { HTTPParser as _HTTPParser } from 'http-parser-js'
-
-const inflate = promisify(zlib.inflate)
-const gunzip = promisify(zlib.gunzip)
-const brotliDecompress = promisify(zlib.brotliDecompress)
+import { HTTPParser } from 'http-parser-js'
 
 /**
- * Via: https://github.com/creationix/http-parser-js/blob/master/standalone-example.js
+ * Parser for raw HTTP exchanges
+ *
+ * @see {@link https://github.com/creationix/http-parser-js/blob/master/standalone-example.js}
  */
 export class MischiefHTTPParser {
   static headersToMap (headers) {
     return Object.fromEntries(
       headers.reduce(
-        (result, value, index, sourceArray) =>
+        (result, _value, index, sourceArray) =>
           index % 2 === 0 ? [...result, sourceArray.slice(index, index + 2)] : result,
         []
       )
@@ -29,7 +17,7 @@ export class MischiefHTTPParser {
   }
 
   static parseRequest (input) {
-    const parser = new _HTTPParser(_HTTPParser.REQUEST)
+    const parser = new HTTPParser(HTTPParser.REQUEST)
     let complete = false
     let shouldKeepAlive
     let upgrade
@@ -41,26 +29,26 @@ export class MischiefHTTPParser {
     let trailers = []
     const bodyChunks = []
 
-    parser[_HTTPParser.kOnHeadersComplete] = function (req) {
+    parser[HTTPParser.kOnHeadersComplete] = function (req) {
       shouldKeepAlive = req.shouldKeepAlive
       upgrade = req.upgrade
-      method = _HTTPParser.methods[req.method]
+      method = HTTPParser.methods[req.method]
       url = req.url
       versionMajor = req.versionMajor
       versionMinor = req.versionMinor
       headers = req.headers
     }
 
-    parser[_HTTPParser.kOnBody] = function (chunk, offset, length) {
+    parser[HTTPParser.kOnBody] = function (chunk, offset, length) {
       bodyChunks.push(chunk.slice(offset, offset + length))
     }
 
     // This is actually the event for trailers, go figure.
-    parser[_HTTPParser.kOnHeaders] = function (t) {
+    parser[HTTPParser.kOnHeaders] = function (t) {
       trailers = t
     }
 
-    parser[_HTTPParser.kOnMessageComplete] = function () {
+    parser[HTTPParser.kOnMessageComplete] = function () {
       complete = true
     }
 
@@ -96,7 +84,7 @@ export class MischiefHTTPParser {
    * @returns {MischiefHTTPParserResponse}
    */
   static parseResponse (input) {
-    const parser = new _HTTPParser(_HTTPParser.RESPONSE)
+    const parser = new HTTPParser(HTTPParser.RESPONSE)
     let complete = false // eslint-disable-line
     let shouldKeepAlive
     let upgrade
@@ -108,7 +96,7 @@ export class MischiefHTTPParser {
     let trailers = []
     const bodyChunks = []
 
-    parser[_HTTPParser.kOnHeadersComplete] = function (res) {
+    parser[HTTPParser.kOnHeadersComplete] = function (res) {
       shouldKeepAlive = res.shouldKeepAlive
       upgrade = res.upgrade
       statusCode = res.statusCode
@@ -118,16 +106,16 @@ export class MischiefHTTPParser {
       headers = res.headers
     }
 
-    parser[_HTTPParser.kOnBody] = function (chunk, offset, length) {
+    parser[HTTPParser.kOnBody] = function (chunk, offset, length) {
       bodyChunks.push(chunk.slice(offset, offset + length))
     }
 
     // This is actually the event for trailers, go figure.
-    parser[_HTTPParser.kOnHeaders] = function (t) {
+    parser[HTTPParser.kOnHeaders] = function (t) {
       trailers = t
     }
 
-    parser[_HTTPParser.kOnMessageComplete] = function () {
+    parser[HTTPParser.kOnMessageComplete] = function () {
       complete = true
     }
 
@@ -152,63 +140,4 @@ export class MischiefHTTPParser {
       trailers
     }
   }
-}
-
-/**
- * Locates the beginning of an HTTP response body
- *
- * The HTTP spec requires an empty line
- * with a CRLF (\r\n) before the body starts, but apparently
- * some poorly configured servers only use LF (\n) so we
- * look for the first pair we can find.
- *
- * Ref: https://stackoverflow.com/a/11254057
- *
- * @param {Buffer} buffer -
- * @returns {integer} -
- */
-const CRLFx2 = '\r\n\r\n'
-const LFx2 = '\n\n'
-export function bodyStartIndex (buffer) {
-  return [CRLFx2, LFx2].reduce((prevEnd, delimiter) => {
-    const start = buffer.indexOf(delimiter)
-    const end = start + delimiter.length
-    return (start !== -1 && (prevEnd === -1 || end < prevEnd)) ? end : prevEnd
-  }, -1)
-}
-
-/**
- * Extracts the protocol version from an HTTP status line
- *
- * @param {string} statusLine -
- * @returns {array} -
- */
-export function versionFromStatusLine (statusLine) {
-  return statusLine.match(/\/([\d.]+)/)[1].split('.').map(n => parseInt(n))
-}
-
-/**
- * Utility for turning an HTTP body into a string.
- * Handles "deflate", "gzip" and "br" decompression.
- *
- * @param {Buffer} body
- * @param {?string} [contentEncoding=null] - Can be "br", "deflate" or "gzip"
- * @returns {string}
- */
-export async function bodyToString (body, contentEncoding = null) {
-  switch (contentEncoding) {
-    case 'deflate':
-      body = await inflate(body, { finishFlush: zlib.constants.Z_SYNC_FLUSH })
-      break
-
-    case 'gzip':
-      body = await gunzip(body, { finishFlush: zlib.constants.Z_SYNC_FLUSH })
-      break
-
-    case 'br':
-      body = await brotliDecompress(body, { finishFlush: zlib.constants.BROTLI_OPERATION_FLUSH })
-      break
-  }
-
-  return body.toString('utf-8')
 }

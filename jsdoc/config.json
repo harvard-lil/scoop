@@ -1,0 +1,28 @@
+{
+  "plugins": [
+    "plugins/markdown"
+  ],
+  "recurseDepth": 10,
+  "source": {
+    "includePattern": ".+\\.js(doc|x)?$",
+    "excludePattern": "(^|\\/|\\\\)_",
+    "exclude": [
+      "node_modules",
+      "docs"
+    ]
+  },
+  "sourceType": "module",
+  "tags": {
+    "allowUnknownTags": true,
+    "dictionaries": ["jsdoc","closure"]
+  },
+  "templates": {
+    "cleverLinks": false,
+    "monospaceLinks": false
+  },
+  "opts": {
+    "destination": "./docs/",
+    "template": "node_modules/docdash",
+    "readme": "jsdoc/README.md"
+  }
+}

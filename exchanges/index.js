@@ -1,17 +1,16 @@
 /**
- * Mischief
  * @module exchanges
- * @author The Harvard Library Innovation Lab
- * @license MIT
- * @description Entry point for the exchanges module.
+ *
+ * @description
+ * Entry point for the exchanges module.
+ * An exchange encapsulates a request and associated response.
+ *
+ * Classes:
+ * * {@link MischiefExchange}
+ * * {@link MischiefProxyExchange}
+ * * {@link MischiefGeneratedExchange}
  */
 
-import { MischiefExchange } from './MischiefExchange.js'
-import { MischiefProxyExchange } from './MischiefProxyExchange.js'
-import { MischiefGeneratedExchange } from './MischiefGeneratedExchange.js'
-
-export {
-  MischiefExchange,
-  MischiefProxyExchange,
-  MischiefGeneratedExchange
-}
+export * from './MischiefExchange.js'
+export * from './MischiefProxyExchange.js'
+export * from './MischiefGeneratedExchange.js'

@@ -25,6 +25,13 @@ const myArchive = await myCapture.toWarc();
 - [Ghostscript](https://www.ghostscript.com/) for PDF compression.
 
 ## Testing
-``` javascript
+``` sh
 node --test
+```
+
+## Documentation
+
+``` sh
+npm run docs:html
+npm run docs:md
 ```

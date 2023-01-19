@@ -3,11 +3,18 @@ import { MischiefProxyExchange } from '../exchanges/index.js'
 import ProxyServer from 'transparent-proxy'
 import { searchBlocklistFor } from '../utils/blocklist.js'
 
+/**
+ * A proxy based intercepter that captures raw HTTP exchanges
+ * without parsing, preserving headers et al as delivered.
+ */
 export class MischiefProxy extends MischiefIntercepter {
   #connection
 
   exchanges = []
 
+  /**
+   * Initializes the proxy server
+   */
   async setup () {
     this.#connection = new ProxyServer({
       intercept: true,
@@ -24,10 +31,21 @@ export class MischiefProxy extends MischiefIntercepter {
     await new Promise(resolve => setTimeout(resolve, 250))
   }
 
+  /**
+   * Closes the proxy server
+   */
   teardown () {
     this.#connection.close()
   }
 
+  /**
+   * The proxy info to be consumed by Playwright.
+   * Includes a flag to ignore certificate errors introduced by proxying.
+   *
+   * @property {object} proxy
+   * @property {string} proxy.server The proxy url
+   * @property {boolean} ignoreHTTPSErrors=true
+   */
   get contextOptions () {
     return {
       proxy: { server: `http://${this.options.proxyHost}:${this.options.proxyPort}` },

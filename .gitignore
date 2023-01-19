@@ -10,3 +10,4 @@ __*.js
 *.mp4
 executables/
 tmp/
+docs

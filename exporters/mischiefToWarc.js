@@ -1,17 +1,9 @@
-/**
- * Mischief
- * @module exporters.mischiefToWarc
- * @author The Harvard Library Innovation Lab
- * @license MIT
- * @description Mischief to WARC exporter.
- */
-
 import crypto from 'crypto'
 import { Blob } from 'buffer'
 
 import { WARCRecord, WARCSerializer } from 'warcio'
 
-import CONSTANTS from '../constants.js'
+import * as CONSTANTS from '../constants.js'
 import { Mischief } from '../Mischief.js'
 
 // warcio needs the crypto utils suite as a global, but does not import it.
@@ -21,6 +13,10 @@ if (!globalThis.crypto) {
 }
 
 /**
+ * @function mischiefToWarc
+ * @memberof module:exporters
+ *
+ * @description
  * Mischief capture to WARC converter.
  *
  * Note:
@@ -115,7 +111,8 @@ export async function mischiefToWarc (capture) {
  *
  * @param {MischiefExchange} exchange
  * @param {string} [type="response"]
- * @returns {string}
+ * @returns {string} The HTTP status line as expected by Warcio
+ * @private
  */
 function prepareExchangeStatusLine (exchange, type = 'response') {
   let statusLine = ''

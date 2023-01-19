@@ -1,20 +1,15 @@
-/**
- * Mischief
- * @module utils.WACZ
- * @author The Harvard Library Innovation Lab
- * @license MIT
- * @description WACZ builder.
- */
-
 import path from 'path'
 import { Readable, Writable } from 'stream'
 import { createHash } from 'crypto'
 
 import { CDXIndexer } from 'warcio'
 import * as assertions from './assertions.js'
-import CONSTANTS from '../constants.js'
+import * as CONSTANTS from '../constants.js'
 import * as zip from '../utils/zip.js'
 
+/**
+ * WACZ builder
+ */
 export class WACZ {
   validations = [
     [/^archives\//, [this.assertWarc]],
@@ -93,6 +88,7 @@ export class WACZ {
    *
    * @param {string} fpath
    * @param {Buffer} fdata
+   * @private
    */
   assertWarc (fpath, fdata) {
     const buf = Buffer.from(fdata)
@@ -123,6 +119,7 @@ export class WACZ {
    *
    * @param {string} fpath
    * @param {Buffer} fdata
+   * @private
    */
   assertIndex (fpath, fdata) {
     // CDXJ's are newline delineated
@@ -142,6 +139,7 @@ export class WACZ {
    *
    * @param {string} fpath
    * @param {Buffer} fdata
+   * @private
    */
   assertPages (fpath, fdata) {
     // Parse the lines of JSON data
@@ -341,7 +339,8 @@ export class WACZ {
  *
  * @param {object} files - an object whose keys are the file paths and values are the file data
  * @param {string} dir - the directory to check
- * @returns {boolean} -
+ * @returns {boolean} True if the directory is empty
+ * @private
  */
 const dirEmpty = (files, dir) => {
   const regex = new RegExp(`^${dir}/.+`)
@@ -352,7 +351,8 @@ const dirEmpty = (files, dir) => {
  * Converts an object to a string using standarized spacing
  *
  * @param {any} obj - an JS object
- * @returns {string} - a JSON string
+ * @returns {string} a JSON string
+ * @private
  */
 const stringify = (obj) => JSON.stringify(obj, null, 2)
 
@@ -360,7 +360,8 @@ const stringify = (obj) => JSON.stringify(obj, null, 2)
  * Hashes a buffer to conform to the WACZ spec
  *
  * @param {Buffer} buffer
- * @returns {string} - a sha256 hash prefixed with "sha256:"
+ * @returns {string} a sha256 hash prefixed with "sha256:"
+ * @private
  */
 export function hash (buffer) {
   return 'sha256:' + createHash('sha256').update(buffer).digest('hex')
@@ -372,6 +373,7 @@ export function hash (buffer) {
  *
  * @param {MischiefExchange} exchange
  * @returns {object}
+ * @private
  */
 export function mischiefExchangeToPageLine (exchange) {
   return {
@@ -382,6 +384,14 @@ export function mischiefExchangeToPageLine (exchange) {
   }
 }
 
+/**
+ * Asserts that the given data conforms to the WACZ signature data format spec.
+ *
+ * @param {Object} resp - a JSON object returned from a signing server
+ * @throws {Error}
+ * @see {@link https://specs.webrecorder.net/wacz-auth/0.1.0/#signature-data-format}
+ * @private
+ */
 function assertValidSignatureResponse (resp) {
   const generalProps = {
     hash: assertions.assertSHA256WithPrefix,
