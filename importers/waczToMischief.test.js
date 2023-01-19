@@ -1,16 +1,18 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { valueOf, defaultTestCaptureOptions } from '../utils.js'
 
 import { v4 as uuidv4 } from 'uuid'
 import { writeFile, rm } from 'fs/promises'
 
-import { Mischief } from '../../Mischief.js'
-import { MischiefOptions } from '../../MischiefOptions.js'
+import { Mischief } from '../Mischief.js'
+import CONSTANTS from '../constants.js'
+import { valueOf } from '../utils/valueof.js'
 
-test('roundtrip should produce identical mischief', async (_t) => {
-  const fpath = `${MischiefOptions.defaults.tmpFolderPath}${uuidv4()}.wacz`
-  const capture = new Mischief('https://example.com', defaultTestCaptureOptions)
+import { defaultTestOptions } from '../options.test.js'
+
+test('Roundtrip should produce identical Mischief object.', async (_t) => {
+  const fpath = `${CONSTANTS.TMP_PATH}${uuidv4()}.wacz`
+  const capture = new Mischief('https://example.com', defaultTestOptions)
   await capture.capture()
   const wacz = await capture.toWacz()
 

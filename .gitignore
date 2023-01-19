@@ -4,6 +4,7 @@ node_modules/
 *.warc.gz
 *.wacz
 test.js
+tmp.js
 examples/
 __*.js
 *.mp4
