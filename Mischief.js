@@ -1,10 +1,3 @@
-/**
- * Mischief
- * @module Mischief
- * @author The Harvard Library Innovation Lab
- * @license MIT
- */
-
 import os from 'os'
 import util from 'util'
 import { readFile, writeFile, rm, readdir, mkdir, mkdtemp, access } from 'fs/promises'
@@ -32,19 +25,42 @@ import { filterOptions } from './options.js'
 const exec = util.promisify(execCB)
 
 /**
+ * @class Mischief
+ *
+ * @classdesc
  * Experimental single-page web archiving library using Playwright.
  * Uses a proxy to allow for comprehensive and raw network interception.
  *
- * Usage:
- * ```javascript
+ * @param {string} url - Must be a valid HTTP(S) url.
+ * @param {object} [options={}] - See :func:`MischiefOptions.defaults` for details.
+ *
+ * @example
  * import { Mischief } from "mischief";
  *
  * const myCapture = new Mischief("https://example.com");
  * await myCapture.capture();
  * const myArchive = await myCapture.toWarc();
- * ```
  */
 export class Mischief {
+  constructor (url, options = {}) {
+    this.options = filterOptions(options)
+    this.blocklist = this.options.blocklist.map(castBlocklistMatcher)
+    this.url = this.filterUrl(url)
+
+    // Logging setup (level, output formatting)
+    logPrefix.reg(this.log)
+    logPrefix.apply(log, {
+      format (level, _name, timestamp) {
+        const timestampColor = CONSTANTS.LOGGING_COLORS.DEFAULT
+        const msgColor = CONSTANTS.LOGGING_COLORS[level.toUpperCase()]
+        return `${timestampColor(`[${timestamp}]`)} ${msgColor(level)}`
+      }
+    })
+    this.log.setLevel(this.options.logLevel)
+
+    this.intercepter = new intercepters[this.options.intercepter](this)
+  }
+
   id = uuidv4()
 
   /**
@@ -76,7 +92,7 @@ export class Mischief {
 
   /**
    * Current settings.
-   * Should only contain keys defined in `options.defaultOptions`.
+   * Should only contain keys defined in {@link options.defaultOptions}.
    * @type {object}
    */
   options = {}
@@ -122,7 +138,7 @@ export class Mischief {
 
   /**
    * A mirror of options.blocklist with IPs parsed for matching
-   * @type {(String|RegEx|Address4|Address6)[]}
+   * @type {Array.<String|RegEx|Address4|Address6>}
    */
   blocklist = []
 
@@ -137,7 +153,7 @@ export class Mischief {
    *   osName: ?string,
    *   osVersion: ?string,
    *   cpuArchitecture: ?string,
-   *   blockedRequests: {url: string, ip: string, rule: string}[],
+   *   blockedRequests: Array.<{url: string, ip: string, rule: string}>,
    *   noArchiveUrls: string[]
    * }}
    */
@@ -159,37 +175,14 @@ export class Mischief {
   pageInfo = {}
 
   /**
-   * @param {string} url - Must be a valid HTTP(S) url.
-   * @param {object} [options={}] - See `options.defaults` for details.
-   */
-  constructor (url, options = {}) {
-    this.options = filterOptions(options)
-    this.blocklist = this.options.blocklist.map(castBlocklistMatcher)
-    this.url = this.filterUrl(url)
-
-    // Logging setup (level, output formatting)
-    logPrefix.reg(this.log)
-    logPrefix.apply(log, {
-      format (level, _name, timestamp) {
-        const timestampColor = CONSTANTS.LOGGING_COLORS.DEFAULT
-        const msgColor = CONSTANTS.LOGGING_COLORS[level.toUpperCase()]
-        return `${timestampColor(`[${timestamp}]`)} ${msgColor(level)}`
-      }
-    })
-    this.log.setLevel(this.options.logLevel)
-
-    this.intercepter = new intercepters[this.options.intercepter](this)
-  }
-
-  /**
    * Main capture process.
    *
-   * @returns {Promise<boolean>}
+   * @returns {Promise}
    */
   async capture () {
     const options = this.options
 
-    /** @type {{name: String, setup: ?function, main: function}[]} */
+    /** @type {Array.<{name: String, setup: ?function, main: function}>} */
     const steps = []
 
     //
@@ -380,7 +373,7 @@ export class Mischief {
   /**
    * Sets up the proxy and Playwright resources, creates capture-specific temporary folder.
    *
-   * @returns {Promise<boolean>}
+   * @returns {Promise<Page>} Resolves to a Playwright [Page]{@link https://playwright.dev/docs/api/class-page} object
    */
   async setup () {
     this.startedAt = new Date()
@@ -458,7 +451,7 @@ export class Mischief {
 
   /**
    * Tears down Playwright, intercepter resources, and capture-specific temporary folder.
-   * @returns {Promise<boolean>}
+   * @returns {Promise}
    */
   async teardown () {
     this.log.info('Closing browser and intercepter.')
@@ -475,7 +468,8 @@ export class Mischief {
    * Captures page title, description, url and favicon url directly from the browser.
    * Will attempt to find the favicon in intercepted exchanges if running in headfull mode, and request it out-of-band otherwise.
    *
-   * @param {object} page - Playwright "Page" object
+   * @param {Page} page - A Playwright [Page]{@link https://playwright.dev/docs/api/class-page} object
+   * @returns {Promise}
    * @private
    */
   async #capturePageInfo (page) {
@@ -535,6 +529,7 @@ export class Mischief {
    * These elements are added as "attachments" to the archive, for context / playback fallback purposes.
    * A summary file and entry point, `file:///video-extracted-summary.html`, will be generated in the process.
    *
+   * @returns {Promise}
    * @private
    */
   async #captureVideoAsAttachment () {
@@ -719,8 +714,8 @@ export class Mischief {
    * If `ghostscript` is available, will try to compress the resulting PDF.
    * Dimensions of the PDF are based on current document width and height.
    *
-   * @param {object} page - Playwright "Page" object
-   * @private
+   * @param {Page} page - A Playwright [Page]{@link https://playwright.dev/docs/api/class-page} object
+   * @returns {Promise}
    */
   async #takePdfSnapshot (page) {
     let pdf = null
@@ -784,7 +779,7 @@ export class Mischief {
    * - Mischief version
    * - Mischief options object used during capture
    *
-   * @param {object} page - Playwright "Page" object
+   * @param {Page} page - A Playwright [Page]{@link https://playwright.dev/docs/api/class-page} object
    * @private
    */
   async #captureProvenanceInfo (page) {
@@ -849,12 +844,13 @@ export class Mischief {
 
   /**
    * Generates a MischiefGeneratedExchange for generated content and adds it to `exchanges` unless time limit was reached.
+   *
    * @param {string} url
    * @param {object} httpHeaders
    * @param {Buffer} body
    * @param {boolean} isEntryPoint
    * @param {string} description
-   * @returns
+   * @returns {boolean} true if generated exchange is successfully added
    */
   addGeneratedExchange (url, httpHeaders, body, isEntryPoint = false, description = '') {
     const remainingSpace = this.options.maxSize - this.intercepter.byteLength
@@ -863,7 +859,7 @@ export class Mischief {
         body.byteLength >= remainingSpace) {
       this.state = Mischief.states.PARTIAL
       this.warn(`Generated exchange ${url} could not be saved (size limit reached).`)
-      return
+      return false
     }
 
     this.exchanges.push(
@@ -881,6 +877,8 @@ export class Mischief {
         }
       })
     )
+
+    return true
   }
 
   /**

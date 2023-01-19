@@ -1,10 +1,3 @@
-/**
- * Mischief
- * @module exporters.mischiefToWacz
- * @author The Harvard Library Innovation Lab
- * @license MIT
- * @description Mischief to WACZ exporter.
- */
 import { Readable } from 'stream'
 
 import { Mischief } from '../Mischief.js'
@@ -12,6 +5,10 @@ import { WACZ, mischiefExchangeToPageLine, hash } from '../utils/WACZ.js'
 import { WARCParser } from 'warcio'
 
 /**
+ * @function mischiefToWacz
+ * @memberof module:exporters
+ *
+ * @description
  * Mischief capture to WACZ converter.
  *
  * Note:

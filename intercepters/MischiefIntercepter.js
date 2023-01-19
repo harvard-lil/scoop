@@ -2,8 +2,11 @@ import { strict as assert } from 'node:assert'
 import { parse as parseHTML } from 'node-html-parser'
 
 import { Mischief } from '../Mischief.js'
-import { bodyToString } from '../parsers/MischiefHTTPParser.js'
+import { bodyToString } from '../utils/http.js'
 
+/**
+ * Abstract class for intercepter implementations to capture HTTP traffic.
+ */
 export class MischiefIntercepter {
   /**
    * The Mischief capture utilizing this intercepter

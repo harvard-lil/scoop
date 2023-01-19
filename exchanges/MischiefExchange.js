@@ -1,15 +1,8 @@
-/**
- * Mischief
- * @module exchanges.MischiefExchange
- * @author The Harvard Library Innovation Lab
- * @license MIT
- * @description Parent class for HTTP exchanges captured by Mischief.
-*/
 import { v4 as uuidv4 } from 'uuid'
 
 /**
  * Represents an HTTP exchange captured by Mischief, irrespective of how it was captured.
- * To be specialized by interception type (i.e: MischiefProxyExchange).
+ * To be specialized by interception type (i.e: {@link MischiefProxyExchange}).
  */
 export class MischiefExchange {
   /** @type {?string} */
@@ -24,7 +17,10 @@ export class MischiefExchange {
   /** @type {?string} */
   connectionId
 
-  /** @type {?object} */
+  /**
+   * @type {object}
+   * @private
+   */
   _request
 
   /** @type {?object} */
@@ -37,7 +33,10 @@ export class MischiefExchange {
     return this._request
   }
 
-  /** @type {?object} */
+  /**
+   * @type {?object}
+   * @private
+   */
   _response
 
   /** @type {?object} */

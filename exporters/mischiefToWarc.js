@@ -1,11 +1,3 @@
-/**
- * Mischief
- * @module exporters.mischiefToWarc
- * @author The Harvard Library Innovation Lab
- * @license MIT
- * @description Mischief to WARC exporter.
- */
-
 import crypto from 'crypto'
 import { Blob } from 'buffer'
 
@@ -21,6 +13,10 @@ if (!globalThis.crypto) {
 }
 
 /**
+ * @function mischiefToWarc
+ * @memberof module:exporters
+ *
+ * @description
  * Mischief capture to WARC converter.
  *
  * Note:
@@ -115,7 +111,8 @@ export async function mischiefToWarc (capture) {
  *
  * @param {MischiefExchange} exchange
  * @param {string} [type="response"]
- * @returns {string}
+ * @returns {string} The HTTP status line as expected by Warcio
+ * @private
  */
 function prepareExchangeStatusLine (exchange, type = 'response') {
   let statusLine = ''

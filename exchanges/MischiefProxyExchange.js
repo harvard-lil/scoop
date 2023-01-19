@@ -1,11 +1,4 @@
-/**
- * Mischief
- * @module exchanges.MischiefProxyExchange
- * @author The Harvard Library Innovation Lab
- * @license MIT
- * @description
-*/
-import { bodyStartIndex } from '../parsers/MischiefHTTPParser.js'
+import { bodyStartIndex } from '../utils/http.js'
 
 import { MischiefExchange } from './MischiefExchange.js'
 import { MischiefHTTPParser } from '../parsers/index.js'
@@ -14,7 +7,10 @@ import { MischiefHTTPParser } from '../parsers/index.js'
  * Represents an HTTP exchange captured via MischiefProxy.
  */
 export class MischiefProxyExchange extends MischiefExchange {
-  /** @type {?Buffer} */
+  /**
+   * @type {?Buffer}
+   * @private
+   */
   _requestRaw
 
   /** @type {?Buffer} */
@@ -38,7 +34,10 @@ export class MischiefProxyExchange extends MischiefExchange {
     return this.requestRaw.subarray(bodyStartIndex(this.requestRaw))
   }
 
-  /** @type {?Buffer} */
+  /**
+   * @type {?Buffer}
+   * @private
+   */
   _responseRaw
 
   /** @type {?Buffer} */

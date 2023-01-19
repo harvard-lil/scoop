@@ -1,12 +1,9 @@
-/**
- * Mischief
- * @module exchanges.MischiefGeneratedExchange
- * @author The Harvard Library Innovation Lab
- * @license MIT
- * @description
-*/
 import { MischiefExchange } from './MischiefExchange.js'
 
+/**
+ * An exchange constructed ad-hoc (vs intercepted),
+ * typically used to inject additional resources into an archive
+*/
 export class MischiefGeneratedExchange extends MischiefExchange {
   /** @type {?string} */
   description
