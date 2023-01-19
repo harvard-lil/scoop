@@ -37,6 +37,19 @@ test('filterOptions: entries that are not provided should be filled with default
   }
 })
 
+test('filterOptions: entries are typecast based on defaults.', async (_t) => {
+  const newOptions = filterOptions({
+    screenshot: 0,
+    captureWindowX: '1920',
+    captureWindowY: '1080',
+    intercepter: 12
+  })
+
+  for (const key of Object.keys(newOptions)) {
+    assert(newOptions[key].constructor === defaultOptions[key].constructor)
+  }
+})
+
 test('filterOptions: pdfSnapshot cannot be activated in headless mode.', async (_t) => {
   assert.throws(() => {
     filterOptions({ pdfSnapshot: true, headless: false })

@@ -8,6 +8,8 @@ import { statSync } from 'fs'
 // Note: used `statSync` instead of `stat` from `fs/promises` here for convenience.
 // We're using `filter()` in `Mischief()`, which cannot be async.
 
+import CONSTANTS from './constants.js'
+
 /**
  * Available options and defaults for Mischief.
  * Unless specified otherwise at constructor level, Mischief will run with these settings.
@@ -58,7 +60,7 @@ export const defaultOptions = {
   pdfSnapshot: true,
   captureVideoAsAttachment: true,
   captureVideoAsAttachmentTimeout: 30 * 1000,
-  ytDlpPath: `${process.env.PWD}/executables/yt-dlp`,
+  ytDlpPath: `${CONSTANTS.EXECUTABLES_PATH}/yt-dlp`,
   captureWindowX: 1600,
   captureWindowY: 900,
   autoScroll: true,

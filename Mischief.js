@@ -691,7 +691,7 @@ export class Mischief {
     // Generate summary page
     //
     try {
-      const html = nunjucks.render(`${CONSTANTS.TEMPLATES_IDR}video-extracted-summary.njk`, {
+      const html = nunjucks.render(`${CONSTANTS.TEMPLATES_DIR}video-extracted-summary.njk`, {
         url: this.url,
         now: new Date().toISOString(),
         videoSaved,
