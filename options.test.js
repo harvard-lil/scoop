@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import CONSTANTS from './constants.js'
+import * as CONSTANTS from './constants.js'
 import { defaultOptions, filterOptions } from './options.js'
 
 export const defaultTestOptions = {

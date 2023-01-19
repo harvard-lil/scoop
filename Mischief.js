@@ -22,7 +22,7 @@ import { getOSInfo } from 'get-os-info'
 import { MischiefGeneratedExchange } from './exchanges/index.js'
 import { castBlocklistMatcher, searchBlocklistFor } from './utils/blocklist.js'
 
-import CONSTANTS from './constants.js'
+import * as CONSTANTS from './constants.js'
 import * as intercepters from './intercepters/index.js'
 import * as exporters from './exporters/index.js'
 import * as importers from './importers/index.js'

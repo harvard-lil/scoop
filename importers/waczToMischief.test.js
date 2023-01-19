@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { writeFile, rm } from 'fs/promises'
 
 import { Mischief } from '../Mischief.js'
-import CONSTANTS from '../constants.js'
+import * as CONSTANTS from '../constants.js'
 import { valueOf } from '../utils/valueof.js'
 
 import { defaultTestOptions } from '../options.test.js'
