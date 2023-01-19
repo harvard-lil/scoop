@@ -1,5 +1,4 @@
 /**
- * Mischief
  * @module exchanges
  *
  * @description

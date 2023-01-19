@@ -1,5 +1,4 @@
 /**
- * Mischief
  * @module parsers
  *
  * @description

@@ -1,5 +1,4 @@
 /**
- * Mischief
  * @module intercepters
  *
  * @description
