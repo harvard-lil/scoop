@@ -4,8 +4,8 @@
   ],
   "recurseDepth": 10,
   "source": {
-    "includePattern": ".+\\.js(doc|x)?$",
-    "excludePattern": "(^|\\/|\\\\)_",
+    "includePattern": ".+\\.js?$",
+    "excludePattern": ".+\\.test\\.js$",
     "exclude": [
       "node_modules",
       "docs"

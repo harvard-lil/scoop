@@ -26,12 +26,6 @@ Name | Description
 [MischiefProxyExchange] | <p>Represents an HTTP exchange captured via MischiefProxy.</p>
 [WACZ] | <p>WACZ builder</p>
 
-## Constants
-
-Name | Description
------- | -----------
-[mock] | <p>Dump of a sample MischiefProxyExchange instance as JSON.</p>
-
 
 ## Mischief
 
@@ -340,12 +334,6 @@ Post-capture checks and capture size enforcement happens here.</p>
 
 **Kind**: instance method of [`MischiefProxy`]  
 
-## mock
-
-<p>Dump of a sample MischiefProxyExchange instance as JSON.</p>
-
-**Kind**: global constant  
-
 ## CONSTANTS
 
 <p>Constants used across the library.</p>
@@ -597,7 +585,6 @@ Classes in this module are meant to be used to parse raw network traffic (i.e. H
 [MischiefHTTPParser]:#MischiefHTTPParser
 [Mischief]:#mischief
 [WACZ]:#waczwacz
-[mock]:#mock
 [.blocklist]:#mischiefblocklist
 [.captureTmpFolderPath]:#mischiefcapturetmpfolderpath
 [.exchanges]:#mischiefexchanges
