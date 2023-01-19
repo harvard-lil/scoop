@@ -11,7 +11,7 @@ import * as CONSTANTS from '../constants.js'
  * Dump of a sample MischiefProxyExchange instance as JSON.
  */
 const mock = await (async () => {
-  const raw = await readFile(`${CONSTANTS.ASSETS_PATH}/fixtures/MischiefProxyExchange.mock.json`)
+  const raw = await readFile(`${CONSTANTS.ASSETS_PATH}/fixtures/MischiefProxyExchange-html.mock.json`)
   return JSON.parse(await raw.toString('utf-8'))
 })()
 
