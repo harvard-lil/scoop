@@ -1,5 +1,3 @@
-// js2md.js
-'use strict'
 import jsdoc2md from 'jsdoc-to-markdown'
 
 const jsDocOpts = {
@@ -7,28 +5,12 @@ const jsDocOpts = {
   configure: 'jsdoc/config.json'
 }
 
-/* get template data */
-const templateData = await jsdoc2md.getTemplateData(jsDocOpts)
-
-// sort template data
-// see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort
-templateData.sort(function (a, b) {
-  const nameA = a.longname.toUpperCase() // ignore upper and lowercase
-  const nameB = b.longname.toUpperCase() // ignore upper and lowercase
-  if (nameA < nameB) {
-    return -1
-  }
-  if (nameA > nameB) {
-    return 1
-  }
-
-  return 0 // names must be equal
-})
+const data = await jsdoc2md.getTemplateData(jsDocOpts)
+data.sort((a, b) => a.longname.localeCompare(b.longname))
 
 const renderOpts = {
-  data: templateData,
-  'example-lang': 'js',
-  'member-index-format': 'list'
+  data,
+  plugin: '@godaddy/dmd'
 }
 
 const output = await jsdoc2md.render(renderOpts)

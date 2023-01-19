@@ -9,7 +9,7 @@
     "standard-fix": "standard --fix",
     "test": "standard && node --test",
     "docs:html": "jsdoc -c jsdoc/config.json -r .",
-    "docs:md": "jsdoc2md -c jsdoc/config.json '**/*.js' > docs.md"
+    "docs:md": "node jsdoc/jsdoc2md.js | (cat jsdoc/README.md && cat) > docs.md"
   },
   "repository": {
     "type": "git",
@@ -39,6 +39,7 @@
     "warcio": "^2.0.1"
   },
   "devDependencies": {
+    "@godaddy/dmd": "^1.0.4",
     "@types/node": "^18.11.0",
     "docdash": "^2.0.1",
     "eslint": "^8.31.0",
