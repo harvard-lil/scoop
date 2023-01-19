@@ -1,8 +1,3 @@
-/**
- * @author Harvard LIL
- * @version 0.0.1
- */
-
 import os from 'os'
 import util from 'util'
 import { readFile, writeFile, rm, readdir, mkdir, mkdtemp, access } from 'fs/promises'
@@ -15,8 +10,7 @@ import logPrefix from 'loglevel-plugin-prefix'
 import nunjucks from 'nunjucks'
 import { Address4, Address6 } from '@laverdet/beaugunderson-ip-address'
 import { v4 as uuidv4 } from 'uuid'
-// Page is imported for JSDoc purposes
-import { chromium, Page } from 'playwright' // eslint-disable-line no-unused-vars
+import { chromium } from 'playwright'
 import { getOSInfo } from 'get-os-info'
 
 import { MischiefGeneratedExchange } from './exchanges/index.js'
