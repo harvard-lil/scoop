@@ -20,12 +20,14 @@ import { chromium, Page } from 'playwright' // eslint-disable-line no-unused-var
 import { getOSInfo } from 'get-os-info'
 
 import { MischiefGeneratedExchange } from './exchanges/index.js'
-import { MischiefOptions } from './MischiefOptions.js'
 import { castBlocklistMatcher, searchBlocklistFor } from './utils/blocklist.js'
-import * as CONSTANTS from './constants.js'
+
+import CONSTANTS from './constants.js'
 import * as intercepters from './intercepters/index.js'
 import * as exporters from './exporters/index.js'
 import * as importers from './importers/index.js'
+import { filterOptions } from './options.js'
+
 const exec = util.promisify(execCB)
 
 /**
@@ -47,7 +49,7 @@ const exec = util.promisify(execCB)
  */
 export class Mischief {
   constructor (url, options = {}) {
-    this.options = MischiefOptions.filterOptions(options)
+    this.options = filterOptions(options)
     this.blocklist = this.options.blocklist.map(castBlocklistMatcher)
     this.url = this.filterUrl(url)
 
@@ -96,7 +98,7 @@ export class Mischief {
 
   /**
    * Current settings.
-   * Should only contain keys defined in `MischiefOptions`.
+   * Should only contain keys defined in {@link options.defaultOptions}.
    * @type {object}
    */
   options = {}
@@ -110,14 +112,14 @@ export class Mischief {
 
   /**
    * Logger.
-   * Logging level controlled via `MischiefOptions.logLevel`.
+   * Logging level controlled via the `logLevel` option.
    * @type {?log.Logger}
    */
   log = log
 
   /**
    * Path to the capture-specific temporary folder created by `setup()`.
-   * Will be a child folder of the path defined in `this.options.tmpFolderPath`.
+   * Will be a child folder of the path defined in `CONSTANTS.TMP_PATH`.
    * @type {?string}
    */
   captureTmpFolderPath = null
@@ -385,28 +387,28 @@ export class Mischief {
     const options = this.options
 
     // Create "base" temporary folder if it doesn't exist
-    let tmpFolderPathExists = false
+    let tmpDirExists = false
     try {
-      await access(this.options.tmpFolderPath)
-      tmpFolderPathExists = true
+      await access(CONSTANTS.TMP_PATH)
+      tmpDirExists = true
     } catch (_err) {
-      this.log.info(`Base temporary folder ${this.options.tmpFolderPath} does not exist or cannot be accessed. Mischief will attempt to create it.`)
+      this.log.info(`Base temporary folder ${CONSTANTS.TMP_PATH} does not exist or cannot be accessed. Mischief will attempt to create it.`)
     }
 
-    if (!tmpFolderPathExists) {
+    if (!tmpDirExists) {
       try {
-        await mkdir(this.options.tmpFolderPath)
-        await access(this.options.tmpFolderPath, fsConstants.W_OK)
-        tmpFolderPathExists = true
+        await mkdir(CONSTANTS.TMP_PATH)
+        await access(CONSTANTS.TMP_PATH, fsConstants.W_OK)
+        tmpDirExists = true
       } catch (err) {
-        this.log.warn(`Error while creating base temporary folder ${this.options.tmpFolderPath}.`)
+        this.log.warn(`Error while creating base temporary folder ${CONSTANTS.TMP_PATH}.`)
         this.log.trace(err)
       }
     }
 
     // Create captures-specific temporary folder under base temporary folder
     try {
-      this.captureTmpFolderPath = await mkdtemp(this.options.tmpFolderPath)
+      this.captureTmpFolderPath = await mkdtemp(CONSTANTS.TMP_PATH)
       this.captureTmpFolderPath += '/'
       await access(this.captureTmpFolderPath, fsConstants.W_OK)
 
@@ -690,7 +692,7 @@ export class Mischief {
     // Generate summary page
     //
     try {
-      const html = nunjucks.render(`${CONSTANTS.ASSETS_DIR}video-extracted-summary.njk`, {
+      const html = nunjucks.render(`${CONSTANTS.TEMPLATES_DIR}video-extracted-summary.njk`, {
         url: this.url,
         now: new Date().toISOString(),
         videoSaved,
@@ -778,7 +780,7 @@ export class Mischief {
    * That property is also be used by `mischiefToWacz()` to populate the `extras` field of `datapackage.json`.
    *
    * Provenance info collected:
-   * - Capture client IP, resolved using the endpoint provided in `MischiefOptions.publicIpResolverEndpoint`.
+   * - Capture client IP, resolved using the endpoint provided in the `publicIpResolverEndpoint` option.
    * - Operating system details (type, name, major version, CPU architecture)
    * - Mischief version
    * - Mischief options object used during capture
@@ -823,12 +825,12 @@ export class Mischief {
       osName: osInfo.name,
       osVersion: osInfo.version,
       cpuArchitecture: os.machine(),
-      mischiefOptions: structuredClone(this.options)
+      options: structuredClone(this.options)
     }
 
     // Generate summary page
     try {
-      const html = nunjucks.render(`${CONSTANTS.ASSETS_DIR}provenance-summary.njk`, {
+      const html = nunjucks.render(`${CONSTANTS.TEMPLATES_PATH}provenance-summary.njk`, {
         ...this.provenanceInfo,
         date: this.startedAt.toISOString(),
         url: this.url

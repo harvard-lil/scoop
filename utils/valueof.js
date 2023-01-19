@@ -2,11 +2,6 @@ import { Mischief } from '../Mischief.js'
 import { MischiefProxyExchange } from '../exchanges/MischiefProxyExchange.js'
 import { MischiefGeneratedExchange } from '../exchanges/MischiefGeneratedExchange.js'
 
-export const defaultTestCaptureOptions = {
-  headless: true,
-  captureVideoAsAttachment: false
-}
-
 export function valueOf (source) {
   switch (source.constructor) {
     case Array: {
