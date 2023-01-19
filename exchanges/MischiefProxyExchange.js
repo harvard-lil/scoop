@@ -7,7 +7,10 @@ import { MischiefHTTPParser } from '../parsers/index.js'
  * Represents an HTTP exchange captured via MischiefProxy.
  */
 export class MischiefProxyExchange extends MischiefExchange {
-  /** @type {?Buffer} */
+  /**
+   * @type {?Buffer}
+   * @private
+   */
   _requestRaw
 
   get requestRaw () {
@@ -27,7 +30,10 @@ export class MischiefProxyExchange extends MischiefExchange {
     return this.requestRaw.subarray(bodyStartIndex(this.requestRaw))
   }
 
-  /** @type {?Buffer} */
+  /**
+   * @type {?Buffer}
+   * @private
+   */
   _responseRaw
 
   get responseRaw () {

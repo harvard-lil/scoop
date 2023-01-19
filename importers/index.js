@@ -2,7 +2,6 @@
  * @module importers
  *
  * @description
- * Entry point for the importers module
- * providing the following functions:
+ * Entry point for the importers module.
  */
 export * from './waczToMischief.js'

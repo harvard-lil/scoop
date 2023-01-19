@@ -17,7 +17,10 @@ export class MischiefExchange {
   /** @type {?string} */
   connectionId
 
-  /** @type {object} */
+  /**
+   * @type {object}
+   * @private
+   */
   _request
 
   set request (val) {
@@ -28,7 +31,10 @@ export class MischiefExchange {
     return this._request
   }
 
-  /** @type {?object} */
+  /**
+   * @type {?object}
+   * @private
+   */
   _response
 
   set response (val) {

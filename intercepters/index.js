@@ -2,9 +2,9 @@
  * @module intercepters
  *
  * @description
- * Entry point for the intercepters module
- * providing the following classes:
+ * Entry point for the intercepters module.
  *
+ * Classes:
  * * {@link MischiefIntercepter}
  * * {@link MischiefProxy}
  */

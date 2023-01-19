@@ -5,6 +5,7 @@
  * Entry point for the exchanges module.
  * An exchange encapsulate a request and associated response.
  *
+ * Classes:
  * * {@link MischiefExchange}
  * * {@link MischiefProxyExchange}
  * * {@link MischiefGeneratedExchange}
