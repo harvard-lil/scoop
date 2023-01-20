@@ -4,9 +4,25 @@ import { MischiefExchange } from './MischiefExchange.js'
 import { MischiefHTTPParser } from '../parsers/index.js'
 
 /**
+ * @class MischiefProxyExchange
+ * @extends MischiefExchange
+ *
+ * @classdesc
  * Represents an HTTP exchange captured via MischiefProxy.
+ *
+ * @param {object} [props={}] - Object containing any of the properties of `this`.
  */
 export class MischiefProxyExchange extends MischiefExchange {
+  constructor (props = {}) {
+    super(props)
+
+    for (const [key, value] of Object.entries(props)) {
+      if (key in this) {
+        this[key] = value
+      }
+    }
+  }
+
   /**
    * @type {?Buffer}
    * @private
@@ -18,7 +34,6 @@ export class MischiefProxyExchange extends MischiefExchange {
     return this._requestRaw
   }
 
-  /** @type {?Buffer} */
   set requestRaw (val) {
     this._request = null
     this._requestRaw = val
@@ -45,7 +60,6 @@ export class MischiefProxyExchange extends MischiefExchange {
     return this._responseRaw
   }
 
-  /** @type {?Buffer} */
   set responseRaw (val) {
     this._response = null
     this._responseRaw = val
@@ -61,7 +75,7 @@ export class MischiefProxyExchange extends MischiefExchange {
     return this.responseRaw.subarray(bodyStartIndex(this.responseRaw))
   }
 
-  /** @type {?object} */
+  /** @type {?MischiefExchange~RequestOrResponse} */
   get request () {
     if (!this._request && this.requestRaw) {
       this._request = MischiefHTTPParser.parseRequest(this.requestRaw)
@@ -75,12 +89,11 @@ export class MischiefProxyExchange extends MischiefExchange {
     return this._request
   }
 
-  /** @type {?object} */
   set request (val) {
     this._request = val
   }
 
-  /** @type {?object} */
+  /** @type {?MischiefExchange~RequestOrResponse} */
   get response () {
     if (!this._response && this.responseRaw) {
       this._response = MischiefHTTPParser.parseResponse(this.responseRaw)
@@ -90,21 +103,7 @@ export class MischiefProxyExchange extends MischiefExchange {
     return this._response
   }
 
-  /** @type {?object} */
   set response (val) {
     this._response = val
-  }
-
-  /**
-   * @param {object} [props={}] - Object containing any of the properties of `this`.
-   */
-  constructor (props = {}) {
-    super(props)
-
-    for (const [key, value] of Object.entries(props)) {
-      if (key in this) {
-        this[key] = value
-      }
-    }
   }
 }

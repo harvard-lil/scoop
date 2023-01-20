@@ -18,10 +18,10 @@ Module | Description
 Name | Description
 ------ | -----------
 [Mischief] | <p>Experimental single-page web archiving library using Playwright. Uses a proxy to allow for comprehensive and raw network interception.</p>
-[MischiefExchange] | <p>Represents an HTTP exchange captured by Mischief, irrespective of how it was captured. To be specialized by interception type (i.e: [MischiefProxyExchange].</p>
+*[MischiefExchange]* | <p>Represents an HTTP exchange captured by Mischief, irrespective of how it was captured. To be specialized by interception type (i.e: [MischiefProxyExchange].</p>
 [MischiefGeneratedExchange] | <p>An exchange constructed ad-hoc (vs intercepted), typically used to inject additional resources into an archive</p>
 [MischiefHTTPParser] | <p>Parser for raw HTTP exchanges</p>
-[MischiefIntercepter] | <p>Abstract class for intercepter implementations to capture HTTP traffic.</p>
+*[MischiefIntercepter]* | <p>Abstract class for intercepter implementations to capture HTTP traffic.</p>
 [MischiefProxy] | <p>A proxy based intercepter that captures raw HTTP exchanges without parsing, preserving headers et al as delivered.</p>
 [MischiefProxyExchange] | <p>Represents an HTTP exchange captured via MischiefProxy.</p>
 [WACZ] | <p>WACZ builder</p>
@@ -232,6 +232,131 @@ Should only contain states defined in <code>states</code>.</p>
 
 **Kind**: instance property of [`Mischief`]  
 
+## *MischiefExchange*
+
+<p>Represents an HTTP exchange captured by Mischief, irrespective of how it was captured.
+To be specialized by interception type (i.e: [MischiefProxyExchange].</p>
+
+**Kind**: global abstract class  
+
+* *[MischiefExchange]*
+    * *[new MischiefExchange(\[props\])]*
+    * _instance_
+        * *[.connectionId]*
+        * *[.date]*
+        * *[.id]*
+        * *[.isEntryPoint]*
+        * *[.request]*
+        * *[.response]*
+    * _inner_
+        * *[~RequestOrResponse]*
+
+
+### *new MischiefExchange(\[props\])*
+
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| \[props\] | `object` | `{}` | <p>Object containing any of the properties of <code>this</code>.</p> |
+
+
+### *mischiefExchange.connectionId*
+
+**Kind**: instance property of [`MischiefExchange`]  
+
+### *mischiefExchange.date*
+
+**Kind**: instance property of [`MischiefExchange`]  
+
+### *mischiefExchange.id*
+
+**Kind**: instance property of [`MischiefExchange`]  
+
+### *mischiefExchange.isEntryPoint*
+
+**Kind**: instance property of [`MischiefExchange`]  
+
+### *mischiefExchange.request*
+
+**Kind**: instance property of [`MischiefExchange`]  
+
+### *mischiefExchange.response*
+
+**Kind**: instance property of [`MischiefExchange`]  
+
+### *MischiefExchange~RequestOrResponse*
+
+**Kind**: inner typedef of [`MischiefExchange`]  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| shouldKeepAlive | `boolean` | 
+| upgrade | `boolean` | 
+| method | `string` | 
+| url | `string` | 
+| versionMajor | `number` | 
+| versionMinor | `number` | 
+| headers | `object` | 
+| body | `Buffer` | 
+| trailers | `Array` | 
+
+
+## MischiefGeneratedExchange
+
+<p>An exchange constructed ad-hoc (vs intercepted),
+typically used to inject additional resources into an archive</p>
+
+**Kind**: global class  
+**Extends**: [`MischiefExchange`]  
+
+* [MischiefGeneratedExchange]
+    * [new MischiefGeneratedExchange(\[props\])]
+    * [.connectionId]
+    * [.date]
+    * [.description]
+    * [.id]
+    * [.isEntryPoint]
+    * [.request]
+    * [.response]
+
+
+### new MischiefGeneratedExchange(\[props\])
+
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| \[props\] | `object` | `{}` | <p>Object containing any of the properties of <code>this</code>.</p> |
+
+
+### mischiefGeneratedExchange.connectionId
+
+**Kind**: instance property of [`MischiefGeneratedExchange`]  
+
+### mischiefGeneratedExchange.date
+
+**Kind**: instance property of [`MischiefGeneratedExchange`]  
+
+### mischiefGeneratedExchange.description
+
+**Kind**: instance property of [`MischiefGeneratedExchange`]  
+
+### mischiefGeneratedExchange.id
+
+**Kind**: instance property of [`MischiefGeneratedExchange`]  
+
+### mischiefGeneratedExchange.isEntryPoint
+
+**Kind**: instance property of [`MischiefGeneratedExchange`]  
+
+### mischiefGeneratedExchange.request
+
+**Kind**: instance property of [`MischiefGeneratedExchange`]  
+
+### mischiefGeneratedExchange.response
+
+**Kind**: instance property of [`MischiefGeneratedExchange`]  
+
 ## MischiefHTTPParser
 
 <p>Parser for raw HTTP exchanges</p>
@@ -248,20 +373,135 @@ Should only contain states defined in <code>states</code>.</p>
 | input | `*` | 
 
 
+## *MischiefIntercepter*
+
+<p>Abstract class for intercepter implementations to capture HTTP traffic.</p>
+
+**Kind**: global abstract class  
+
+* *[MischiefIntercepter]*
+    * *[new MischiefIntercepter(capture)]*
+    * *[.byteLength]*
+    * *[.capture]*
+    * *[.checkAndEnforceSizeLimit()]*
+    * *[.checkExchangeForNoArchive(exchange)]*
+    * *[.exchanges]*
+    * *[.recordExchanges]*
+
+
+### *new MischiefIntercepter(capture)*
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| capture | [`Mischief`] | <p>a Mischief capture</p> |
+
+
+### *mischiefIntercepter.byteLength*
+
+<p>Total byte length of all data recorded to exchanges</p>
+
+**Kind**: instance property of [`MischiefIntercepter`]  
+
+### *mischiefIntercepter.capture*
+
+<p>The Mischief capture utilizing this intercepter</p>
+
+**Kind**: instance property of [`MischiefIntercepter`]  
+
+### *mischiefIntercepter.checkAndEnforceSizeLimit()*
+
+<p>Checks whether the total byte length has exceeded
+the capture's limit and, if so, ends the capture</p>
+
+**Kind**: instance method of [`MischiefIntercepter`]  
+
+### *mischiefIntercepter.checkExchangeForNoArchive(exchange)*
+
+<p>Tries to find the &quot;noarchive&quot; directive in a given exchange.
+If found, keeps trace of match in <code>Mischief.provenanceInfo</code>.</p>
+
+**Kind**: instance method of [`MischiefIntercepter`]  
+**Returns**: `boolean` - <ul>
+<li><code>true</code> if request contained &quot;noarchive&quot;</li>
+</ul>  
+
+| Param | Type |
+| --- | --- |
+| exchange | [`MischiefExchange`] | 
+
+
+### *mischiefIntercepter.exchanges*
+
+<p>Data recorded by the intercepter,
+formatted as a series of exchanges</p>
+
+**Kind**: instance property of [`MischiefIntercepter`]  
+
+### *mischiefIntercepter.recordExchanges*
+
+<p>When set to <code>false</code>, the intercepter will cease
+appending data to the exchanges array until
+once again set to <code>true</code></p>
+
+**Kind**: instance property of [`MischiefIntercepter`]  
+
 ## MischiefProxy
 
 <p>A proxy based intercepter that captures raw HTTP exchanges
 without parsing, preserving headers et al as delivered.</p>
 
 **Kind**: global class  
+**Extends**: [`MischiefIntercepter`]  
 
 * [MischiefProxy]
+    * [.byteLength]
+    * [.capture]
+    * [.checkAndEnforceSizeLimit()]
+    * [.checkExchangeForNoArchive(exchange)]
     * [.checkRequestAgainstBlocklist(session)]
     * [.contextOptions]
+    * [.exchanges]
     * [.getOrInitExchange(id, type)]
     * [.intercept(type, data, session)]
+    * [.recordExchanges]
     * [.setup()]
     * [.teardown()]
+
+
+### mischiefProxy.byteLength
+
+<p>Total byte length of all data recorded to exchanges</p>
+
+**Kind**: instance property of [`MischiefProxy`]  
+**Overrides**: `byteLength`  
+
+### mischiefProxy.capture
+
+<p>The Mischief capture utilizing this intercepter</p>
+
+**Kind**: instance property of [`MischiefProxy`]  
+
+### mischiefProxy.checkAndEnforceSizeLimit()
+
+<p>Checks whether the total byte length has exceeded
+the capture's limit and, if so, ends the capture</p>
+
+**Kind**: instance method of [`MischiefProxy`]  
+
+### mischiefProxy.checkExchangeForNoArchive(exchange)
+
+<p>Tries to find the &quot;noarchive&quot; directive in a given exchange.
+If found, keeps trace of match in <code>Mischief.provenanceInfo</code>.</p>
+
+**Kind**: instance method of [`MischiefProxy`]  
+**Returns**: `boolean` - <ul>
+<li><code>true</code> if request contained &quot;noarchive&quot;</li>
+</ul>  
+
+| Param | Type |
+| --- | --- |
+| exchange | [`MischiefExchange`] | 
 
 
 ### mischiefProxy.checkRequestAgainstBlocklist(session)
@@ -294,6 +534,14 @@ Includes a flag to ignore certificate errors introduced by proxying.</p>
 | ignoreHTTPSErrors | `boolean` | `true` |  |
 
 
+### mischiefProxy.exchanges
+
+<p>Data recorded by the intercepter,
+formatted as a series of exchanges</p>
+
+**Kind**: instance property of [`MischiefProxy`]  
+**Overrides**: [`exchanges`]  
+
 ### mischiefProxy.getOrInitExchange(id, type)
 
 <p>Returns an exchange based on the session id and type (&quot;request&quot; or &quot;response&quot;).
@@ -322,6 +570,14 @@ Post-capture checks and capture size enforcement happens here.</p>
 | session | `Session` | 
 
 
+### mischiefProxy.recordExchanges
+
+<p>When set to <code>false</code>, the intercepter will cease
+appending data to the exchanges array until
+once again set to <code>true</code></p>
+
+**Kind**: instance property of [`MischiefProxy`]  
+
 ### mischiefProxy.setup()
 
 <p>Initializes the proxy server</p>
@@ -333,6 +589,87 @@ Post-capture checks and capture size enforcement happens here.</p>
 <p>Closes the proxy server</p>
 
 **Kind**: instance method of [`MischiefProxy`]  
+
+## MischiefProxyExchange
+
+<p>Represents an HTTP exchange captured via MischiefProxy.</p>
+
+**Kind**: global class  
+**Extends**: [`MischiefExchange`]  
+
+* [MischiefProxyExchange]
+    * [new MischiefProxyExchange(\[props\])]
+    * [.connectionId]
+    * [.date]
+    * [.id]
+    * [.isEntryPoint]
+    * [.request]
+    * [.requestRaw]
+    * [.requestRawBody]
+    * [.requestRawHeaders]
+    * [.response]
+    * [.responseRaw]
+    * [.responseRawBody]
+    * [.responseRawHeaders]
+
+
+### new MischiefProxyExchange(\[props\])
+
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| \[props\] | `object` | `{}` | <p>Object containing any of the properties of <code>this</code>.</p> |
+
+
+### mischiefProxyExchange.connectionId
+
+**Kind**: instance property of [`MischiefProxyExchange`]  
+
+### mischiefProxyExchange.date
+
+**Kind**: instance property of [`MischiefProxyExchange`]  
+
+### mischiefProxyExchange.id
+
+**Kind**: instance property of [`MischiefProxyExchange`]  
+
+### mischiefProxyExchange.isEntryPoint
+
+**Kind**: instance property of [`MischiefProxyExchange`]  
+
+### mischiefProxyExchange.request
+
+**Kind**: instance property of [`MischiefProxyExchange`]  
+**Overrides**: `request`  
+
+### mischiefProxyExchange.requestRaw
+
+**Kind**: instance property of [`MischiefProxyExchange`]  
+
+### mischiefProxyExchange.requestRawBody
+
+**Kind**: instance property of [`MischiefProxyExchange`]  
+
+### mischiefProxyExchange.requestRawHeaders
+
+**Kind**: instance property of [`MischiefProxyExchange`]  
+
+### mischiefProxyExchange.response
+
+**Kind**: instance property of [`MischiefProxyExchange`]  
+**Overrides**: `response`  
+
+### mischiefProxyExchange.responseRaw
+
+**Kind**: instance property of [`MischiefProxyExchange`]  
+
+### mischiefProxyExchange.responseRawBody
+
+**Kind**: instance property of [`MischiefProxyExchange`]  
+
+### mischiefProxyExchange.responseRawHeaders
+
+**Kind**: instance property of [`MischiefProxyExchange`]  
 
 ## CONSTANTS
 
@@ -587,7 +924,7 @@ Classes in this module are meant to be used to parse raw network traffic (i.e. H
 [WACZ]:#waczwacz
 [.blocklist]:#mischiefblocklist
 [.captureTmpFolderPath]:#mischiefcapturetmpfolderpath
-[.exchanges]:#mischiefexchanges
+[.exchanges]:#mischiefproxyexchanges
 [.intercepter]:#mischiefintercepter
 [.log]:#mischieflog
 [.options]:#mischiefoptions
@@ -600,10 +937,32 @@ Classes in this module are meant to be used to parse raw network traffic (i.e. H
 [`Mischief`]:#new-mischiefurl-options
 [options.defaultOptions]:options.defaultOptions
 [Page]:https://playwright.dev/docs/api/class-page
+[.connectionId]:#mischiefproxyexchangeconnectionid
+[.date]:#mischiefproxyexchangedate
+[.id]:#mischiefproxyexchangeid
+[.isEntryPoint]:#mischiefproxyexchangeisentrypoint
+[.request]:#mischiefproxyexchangerequest
+[.response]:#mischiefproxyexchangeresponse
+[~RequestOrResponse]:#mischiefexchangerequestorresponse
+[`MischiefExchange`]:#new-mischiefexchangeprops
+[.description]:#mischiefgeneratedexchangedescription
+[`MischiefGeneratedExchange`]:#new-mischiefgeneratedexchangeprops
 [https://github.com/creationix/http-parser-js/blob/master/standalone-example.js]:https://github.com/creationix/http-parser-js/blob/master/standalone-example.js
 [`MischiefHTTPParser`]:#mischiefhttpparser
+[.byteLength]:#mischiefproxybytelength
+[.capture]:#mischiefproxycapture
+[.recordExchanges]:#mischiefproxyrecordexchanges
+[`MischiefIntercepter`]:#new-mischiefinterceptercapture
 [.contextOptions]:#mischiefproxycontextoptions
 [`MischiefProxy`]:#mischiefproxy
+[`exchanges`]:#exchanges
+[.requestRaw]:#mischiefproxyexchangerequestraw
+[.requestRawBody]:#mischiefproxyexchangerequestrawbody
+[.requestRawHeaders]:#mischiefproxyexchangerequestrawheaders
+[.responseRaw]:#mischiefproxyexchangeresponseraw
+[.responseRawBody]:#mischiefproxyexchangeresponserawbody
+[.responseRawHeaders]:#mischiefproxyexchangeresponserawheaders
+[`MischiefProxyExchange`]:#new-mischiefproxyexchangeprops
 [.ASSETS_PATH]:#constantsassets_path
 [.BASE_PATH]:#constantsbase_path
 [.EXECUTABLES_PATH]:#constantsexecutables_path
@@ -628,9 +987,15 @@ Classes in this module are meant to be used to parse raw network traffic (i.e. H
 [.teardown()]:#mischiefproxyteardown
 [.toWacz(\[includeRaw\], signingServer)]:#mischieftowaczincluderaw-signingserver
 [.toWarc()]:#mischieftowarc
+[new MischiefExchange(\[props\])]:#new-mischiefexchangeprops
+[new MischiefGeneratedExchange(\[props\])]:#new-mischiefgeneratedexchangeprops
+[new MischiefIntercepter(capture)]:#new-mischiefinterceptercapture
+[.checkAndEnforceSizeLimit()]:#mischiefproxycheckandenforcesizelimit
+[.checkExchangeForNoArchive(exchange)]:#mischiefproxycheckexchangefornoarchiveexchange
 [.checkRequestAgainstBlocklist(session)]:#mischiefproxycheckrequestagainstblocklistsession
 [.getOrInitExchange(id, type)]:#mischiefproxygetorinitexchangeid-type
 [.intercept(type, data, session)]:#mischiefproxyintercepttype-data-session
+[new MischiefProxyExchange(\[props\])]:#new-mischiefproxyexchangeprops
 [.mischiefToWacz(capture, \[includeRaw\], signingServer)]:#exportersmischieftowaczcapture-includeraw-signingserver
 [.mischiefToWarc(capture)]:#exportersmischieftowarccapture
 [.filterOptions(newOptions)]:#optionsfilteroptionsnewoptions
