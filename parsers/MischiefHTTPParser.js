@@ -1,6 +1,9 @@
 import { HTTPParser } from 'http-parser-js'
 
 /**
+ * @class MischiefHTTPParser
+ *
+ * @classdesc
  * Parser for raw HTTP exchanges
  *
  * @see {@link https://github.com/creationix/http-parser-js/blob/master/standalone-example.js}
