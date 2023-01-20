@@ -42,7 +42,7 @@ import * as CONSTANTS from './constants.js'
  * @property {string[]} blocklist - a list of patterns, to be matched against each request's URL and IP address, and subsequently blocked during capture. Valid entries include url strings, CIDR strings, and regular expressions in string form.
  */
 export const defaultOptions = {
-  logLevel: 'info',
+  logLevel: 'trace',
   headless: true,
   proxyHost: 'localhost',
   proxyPort: 9000,
@@ -58,7 +58,7 @@ export const defaultOptions = {
   pdfSnapshot: true,
   captureVideoAsAttachment: true,
   captureVideoAsAttachmentTimeout: 30 * 1000,
-  ytDlpPath: `${CONSTANTS.EXECUTABLES_PATH}/yt-dlp`,
+  ytDlpPath: `${CONSTANTS.EXECUTABLES_PATH}yt-dlp`,
   captureWindowX: 1600,
   captureWindowY: 900,
   autoScroll: true,

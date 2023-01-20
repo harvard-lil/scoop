@@ -36,26 +36,29 @@ Uses a proxy to allow for comprehensive and raw network interception.</p>
 
 * [Mischief]
     * [new Mischief(url, \[options\])]
-    * [.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description)]
-    * [.blocklist]
-    * [.capture()]
-    * [.captureTmpFolderPath]
-    * [.exchanges]
-    * [.extractGeneratedExchanges()]
-    * [.filterUrl(url)]
-    * [.intercepter]
-    * [.log]
-    * [.options]
-    * [.pageInfo]
-    * [.provenanceInfo]
-    * [.setup()]
-    * [.startedAt]
-    * [.state]
-    * [.states]
-    * [.teardown()]
-    * [.toWacz(\[includeRaw\], signingServer)]
-    * [.toWarc()]
-    * [.url]
+    * _static_
+        * [.fromWacz(zipPath)]
+    * _instance_
+        * [.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description)]
+        * [.blocklist]
+        * [.capture()]
+        * [.captureTmpFolderPath]
+        * [.exchanges]
+        * [.extractGeneratedExchanges()]
+        * [.filterUrl(url)]
+        * [.intercepter]
+        * [.log]
+        * [.options]
+        * [.pageInfo]
+        * [.provenanceInfo]
+        * [.setup()]
+        * [.startedAt]
+        * [.state]
+        * [.states]
+        * [.teardown()]
+        * [.toWacz(\[includeRaw\], signingServer)]
+        * [.toWarc()]
+        * [.url]
 
 
 ### new Mischief(url, \[options\])
@@ -74,6 +77,17 @@ const myCapture = new Mischief("https://example.com");
 await myCapture.capture();
 const myArchive = await myCapture.toWarc();
 ```
+
+### Mischief.fromWacz(zipPath)
+
+<p>(Shortcut) Reconstructs a Mischief capture from a WACZ.</p>
+
+**Kind**: static method of [`Mischief`]  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| zipPath | `string` | <p>Path to .wacz file.</p> |
+
 
 ### mischief.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description)
 
@@ -979,6 +993,7 @@ Classes in this module are meant to be used to parse raw network traffic (i.e. H
 [.defaultOptions]:#optionsdefaultoptions
 [`options`]:#options
 [new Mischief(url, \[options\])]:#new-mischiefurl-options
+[.fromWacz(zipPath)]:#mischieffromwaczzippath
 [.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description)]:#mischiefaddgeneratedexchangeurl-httpheaders-body-isentrypoint-description
 [.capture()]:#mischiefcapture
 [.extractGeneratedExchanges()]:#mischiefextractgeneratedexchanges
