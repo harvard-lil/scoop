@@ -4,15 +4,32 @@ import { MischiefExchange } from './MischiefExchange.js'
 import { MischiefHTTPParser } from '../parsers/index.js'
 
 /**
+ * @class MischiefProxyExchange
+ * @extends MischiefExchange
+ *
+ * @classdesc
  * Represents an HTTP exchange captured via MischiefProxy.
+ *
+ * @param {object} [props={}] - Object containing any of the properties of `this`.
  */
 export class MischiefProxyExchange extends MischiefExchange {
+  constructor (props = {}) {
+    super(props)
+
+    for (const [key, value] of Object.entries(props)) {
+      if (key in this) {
+        this[key] = value
+      }
+    }
+  }
+
   /**
    * @type {?Buffer}
    * @private
    */
   _requestRaw
 
+  /** @type {?Buffer} */
   get requestRaw () {
     return this._requestRaw
   }
@@ -22,10 +39,12 @@ export class MischiefProxyExchange extends MischiefExchange {
     this._requestRaw = val
   }
 
+  /** @type {?Buffer} */
   get requestRawHeaders () {
     return this.requestRaw.subarray(0, bodyStartIndex(this.requestRaw))
   }
 
+  /** @type {?Buffer} */
   get requestRawBody () {
     return this.requestRaw.subarray(bodyStartIndex(this.requestRaw))
   }
@@ -36,6 +55,7 @@ export class MischiefProxyExchange extends MischiefExchange {
    */
   _responseRaw
 
+  /** @type {?Buffer} */
   get responseRaw () {
     return this._responseRaw
   }
@@ -45,14 +65,17 @@ export class MischiefProxyExchange extends MischiefExchange {
     this._responseRaw = val
   }
 
+  /** @type {Buffer} */
   get responseRawHeaders () {
     return this.responseRaw.subarray(0, bodyStartIndex(this.responseRaw))
   }
 
+  /** @type {Buffer} */
   get responseRawBody () {
     return this.responseRaw.subarray(bodyStartIndex(this.responseRaw))
   }
 
+  /** @type {?MischiefExchange~RequestOrResponse} */
   get request () {
     if (!this._request && this.requestRaw) {
       this._request = MischiefHTTPParser.parseRequest(this.requestRaw)
@@ -70,6 +93,7 @@ export class MischiefProxyExchange extends MischiefExchange {
     this._request = val
   }
 
+  /** @type {?MischiefExchange~RequestOrResponse} */
   get response () {
     if (!this._response && this.responseRaw) {
       this._response = MischiefHTTPParser.parseResponse(this.responseRaw)
@@ -81,18 +105,5 @@ export class MischiefProxyExchange extends MischiefExchange {
 
   set response (val) {
     this._response = val
-  }
-
-  /**
-   * @param {object} props - Object containing any of the properties of `this`.
-   */
-  constructor (props = {}) {
-    super(props)
-
-    for (const [key, value] of Object.entries(props)) {
-      if (key in this) {
-        this[key] = value
-      }
-    }
   }
 }

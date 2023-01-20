@@ -1,16 +1,16 @@
 import { MischiefExchange } from './MischiefExchange.js'
 
 /**
+ * @class MischiefGeneratedExchange
+ * @extends MischiefExchange
+ *
+ * @classdesc
  * An exchange constructed ad-hoc (vs intercepted),
  * typically used to inject additional resources into an archive
+ *
+ * @param {object} [props={}] - Object containing any of the properties of `this`.
 */
 export class MischiefGeneratedExchange extends MischiefExchange {
-  /** @type {?string} */
-  description
-
-  /**
-   * @param {object} props - Object containing any of the properties of `this`.
-   */
   constructor (props = {}) {
     super(props)
 
@@ -20,4 +20,7 @@ export class MischiefGeneratedExchange extends MischiefExchange {
       }
     }
   }
+
+  /** @type {?string} */
+  description
 }

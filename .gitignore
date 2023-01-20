@@ -1,13 +1,9 @@
 .DS_Store
-node_modules/
-*.wbn
-*.warc.gz
-*.wacz
 test.js
 tmp.js
-examples/
 __*.js
-*.mp4
+node_modules/
+examples/
 executables/
 tmp/
 docs

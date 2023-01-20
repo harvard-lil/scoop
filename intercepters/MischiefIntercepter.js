@@ -5,9 +5,20 @@ import { Mischief } from '../Mischief.js'
 import { bodyToString } from '../utils/http.js'
 
 /**
+ * @class MischiefIntercepter
+ * @abstract
+ *
+ * @classdesc
  * Abstract class for intercepter implementations to capture HTTP traffic.
+ *
+ * @param {Mischief} capture - a Mischief capture
  */
 export class MischiefIntercepter {
+  constructor (capture) {
+    this.capture = capture
+    return this
+  }
+
   /**
    * The Mischief capture utilizing this intercepter
    *
@@ -38,11 +49,6 @@ export class MischiefIntercepter {
    * @type {MischiefExchange[]}
    */
   exchanges = []
-
-  constructor (capture) {
-    this.capture = capture
-    return this
-  }
 
   // convenience function
   get options () {

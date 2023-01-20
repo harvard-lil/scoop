@@ -953,6 +953,11 @@ export class Mischief {
     return await exporters.mischiefToWacz(this, includeRaw, signingServer)
   }
 
+  /**
+   * (Shortcut) Reconstructs a Mischief capture from a WACZ.
+   * @param {string} zipPath - Path to .wacz file.
+   * @returns {Promise<Mischief>}
+   */
   static async fromWacz (zipPath) {
     return await importers.waczToMischief(zipPath)
   }

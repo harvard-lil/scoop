@@ -2,7 +2,6 @@
  * @module CONSTANTS
  * @description Constants used across the library.
  */
-
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -35,7 +34,7 @@ export const WACZ_VERSION = '1.1.1'
 export const BASE_PATH = dirname(fileURLToPath(import.meta.url))
 
 /**
- * Location of the directory in which assets may be rendered (ex: the provinance summary)
+ * Location of the directory in which assets may be rendered (ex: the provenance summary)
  */
 export const ASSETS_PATH = `${BASE_PATH}/assets/`
 

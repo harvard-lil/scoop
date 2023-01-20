@@ -58,7 +58,7 @@ export const defaultOptions = {
   pdfSnapshot: true,
   captureVideoAsAttachment: true,
   captureVideoAsAttachmentTimeout: 30 * 1000,
-  ytDlpPath: `${CONSTANTS.EXECUTABLES_PATH}/yt-dlp`,
+  ytDlpPath: `${CONSTANTS.EXECUTABLES_PATH}yt-dlp`,
   captureWindowX: 1600,
   captureWindowY: 900,
   autoScroll: true,
