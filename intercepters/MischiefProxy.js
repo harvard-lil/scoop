@@ -4,6 +4,9 @@ import ProxyServer from 'transparent-proxy'
 import { searchBlocklistFor } from '../utils/blocklist.js'
 
 /**
+ * @class MischiefProxy
+ *
+ * @classdesc
  * A proxy based intercepter that captures raw HTTP exchanges
  * without parsing, preserving headers et al as delivered.
  */

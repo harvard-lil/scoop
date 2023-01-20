@@ -4,9 +4,24 @@ import { MischiefExchange } from './MischiefExchange.js'
 import { MischiefHTTPParser } from '../parsers/index.js'
 
 /**
+ * @class MischiefProxyExchange
+ *
+ * @classdesc
  * Represents an HTTP exchange captured via MischiefProxy.
+ *
+ * @param {object} [props={}] - Object containing any of the properties of `this`.
  */
 export class MischiefProxyExchange extends MischiefExchange {
+  constructor (props = {}) {
+    super(props)
+
+    for (const [key, value] of Object.entries(props)) {
+      if (key in this) {
+        this[key] = value
+      }
+    }
+  }
+
   /**
    * @type {?Buffer}
    * @private
@@ -93,18 +108,5 @@ export class MischiefProxyExchange extends MischiefExchange {
   /** @type {?object} */
   set response (val) {
     this._response = val
-  }
-
-  /**
-   * @param {object} [props={}] - Object containing any of the properties of `this`.
-   */
-  constructor (props = {}) {
-    super(props)
-
-    for (const [key, value] of Object.entries(props)) {
-      if (key in this) {
-        this[key] = value
-      }
-    }
   }
 }
