@@ -37,12 +37,11 @@ export class MischiefExchange {
    */
   _request
 
-  /** @type {?object} */
   set request (val) {
     this._request = val
   }
 
-  /** @type {?object} */
+  /** @type {?MischiefExchange~RequestOrResponse} */
   get request () {
     return this._request
   }
@@ -53,13 +52,25 @@ export class MischiefExchange {
    */
   _response
 
-  /** @type {?object} */
   set response (val) {
     this._response = val
   }
 
-  /** @type {?object} */
+  /** @type {?MischiefExchange~RequestOrResponse} */
   get response () {
     return this._response
   }
 }
+
+/**
+ * @typedef MischiefExchange~RequestOrResponse
+ * @property {boolean} shouldKeepAlive
+ * @property {boolean} upgrade
+ * @property {string} method
+ * @property {string} url
+ * @property {number} versionMajor
+ * @property {number} versionMinor
+ * @property {object} headers
+ * @property {Buffer} body
+ * @property {Array} trailers
+ */
