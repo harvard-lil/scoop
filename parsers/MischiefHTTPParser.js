@@ -84,7 +84,7 @@ export class MischiefHTTPParser {
   /**
    *
    * @param {*} input
-   * @returns {MischiefHTTPParserResponse}
+   * @returns {object}
    */
   static parseResponse (input) {
     const parser = new HTTPParser(HTTPParser.RESPONSE)
