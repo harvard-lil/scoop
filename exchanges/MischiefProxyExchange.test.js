@@ -49,6 +49,9 @@ test('MischiefProxyExchange request and response properties populate automatical
       assert(newObj.body instanceof Buffer)
       assert.deepEqual(newObj.body, refObj.body)
 
+      assert(typeof newObj.url === 'string')
+      assert(newObj.url === refObj.url)
+
       if (key === 'response') {
         assert(typeof newObj.statusCode === 'number')
         assert(newObj.statusCode === refObj.statusCode)

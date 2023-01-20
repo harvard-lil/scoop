@@ -73,4 +73,6 @@ export class MischiefExchange {
  * @property {object} headers
  * @property {Buffer} body
  * @property {Array} trailers
+ * @property {?number} statusCode - Response only
+ * @property {?string} statusMessage - Response only
  */
