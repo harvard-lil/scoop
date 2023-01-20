@@ -5,6 +5,7 @@ import { MischiefHTTPParser } from '../parsers/index.js'
 
 /**
  * @class MischiefProxyExchange
+ * @extends MischiefExchange
  *
  * @classdesc
  * Represents an HTTP exchange captured via MischiefProxy.

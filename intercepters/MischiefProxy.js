@@ -5,6 +5,7 @@ import { searchBlocklistFor } from '../utils/blocklist.js'
 
 /**
  * @class MischiefProxy
+ * @extends MischiefIntercepter
  *
  * @classdesc
  * A proxy based intercepter that captures raw HTTP exchanges

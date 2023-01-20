@@ -2,6 +2,7 @@ import { MischiefExchange } from './MischiefExchange.js'
 
 /**
  * @class MischiefGeneratedExchange
+ * @extends MischiefExchange
  *
  * @classdesc
  * An exchange constructed ad-hoc (vs intercepted),
