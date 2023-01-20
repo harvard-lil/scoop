@@ -42,7 +42,7 @@ import * as CONSTANTS from './constants.js'
  * @property {string[]} blocklist - a list of patterns, to be matched against each request's URL and IP address, and subsequently blocked during capture. Valid entries include url strings, CIDR strings, and regular expressions in string form.
  */
 export const defaultOptions = {
-  logLevel: 'trace',
+  logLevel: 'info',
   headless: true,
   proxyHost: 'localhost',
   proxyPort: 9000,
