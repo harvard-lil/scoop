@@ -241,14 +241,15 @@ To be specialized by interception type (i.e: [MischiefProxyExchange].</p>
 
 * *[MischiefExchange]*
     * *[new MischiefExchange(\[props\])]*
-    * *[.connectionId]*
-    * *[.date]*
-    * *[.id]*
-    * *[.isEntryPoint]*
-    * *[.request]*
-    * *[.request]*
-    * *[.response]*
-    * *[.response]*
+    * _instance_
+        * *[.connectionId]*
+        * *[.date]*
+        * *[.id]*
+        * *[.isEntryPoint]*
+        * *[.request]*
+        * *[.response]*
+    * _inner_
+        * *[~RequestOrResponse]*
 
 
 ### *new MischiefExchange(\[props\])*
@@ -279,17 +280,27 @@ To be specialized by interception type (i.e: [MischiefProxyExchange].</p>
 
 **Kind**: instance property of [`MischiefExchange`]  
 
-### *mischiefExchange.request*
-
-**Kind**: instance property of [`MischiefExchange`]  
-
 ### *mischiefExchange.response*
 
 **Kind**: instance property of [`MischiefExchange`]  
 
-### *mischiefExchange.response*
+### *MischiefExchange~RequestOrResponse*
 
-**Kind**: instance property of [`MischiefExchange`]  
+**Kind**: inner typedef of [`MischiefExchange`]  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| shouldKeepAlive | `boolean` | 
+| upgrade | `boolean` | 
+| method | `string` | 
+| url | `string` | 
+| versionMajor | `number` | 
+| versionMinor | `number` | 
+| headers | `object` | 
+| body | `Buffer` | 
+| trailers | `Array` | 
+
 
 ## MischiefGeneratedExchange
 
@@ -341,12 +352,10 @@ typically used to inject additional resources into an archive</p>
 ### mischiefGeneratedExchange.request
 
 **Kind**: instance property of [`MischiefGeneratedExchange`]  
-**Overrides**: `request`  
 
 ### mischiefGeneratedExchange.response
 
 **Kind**: instance property of [`MischiefGeneratedExchange`]  
-**Overrides**: `response`  
 
 ## MischiefHTTPParser
 
@@ -595,14 +604,10 @@ once again set to <code>true</code></p>
     * [.id]
     * [.isEntryPoint]
     * [.request]
-    * [.request]
-    * [.requestRaw]
     * [.requestRaw]
     * [.requestRawBody]
     * [.requestRawHeaders]
     * [.response]
-    * [.response]
-    * [.responseRaw]
     * [.responseRaw]
     * [.responseRawBody]
     * [.responseRawHeaders]
@@ -637,15 +642,6 @@ once again set to <code>true</code></p>
 **Kind**: instance property of [`MischiefProxyExchange`]  
 **Overrides**: `request`  
 
-### mischiefProxyExchange.request
-
-**Kind**: instance property of [`MischiefProxyExchange`]  
-**Overrides**: `request`  
-
-### mischiefProxyExchange.requestRaw
-
-**Kind**: instance property of [`MischiefProxyExchange`]  
-
 ### mischiefProxyExchange.requestRaw
 
 **Kind**: instance property of [`MischiefProxyExchange`]  
@@ -662,15 +658,6 @@ once again set to <code>true</code></p>
 
 **Kind**: instance property of [`MischiefProxyExchange`]  
 **Overrides**: `response`  
-
-### mischiefProxyExchange.response
-
-**Kind**: instance property of [`MischiefProxyExchange`]  
-**Overrides**: `response`  
-
-### mischiefProxyExchange.responseRaw
-
-**Kind**: instance property of [`MischiefProxyExchange`]  
 
 ### mischiefProxyExchange.responseRaw
 
@@ -956,6 +943,7 @@ Classes in this module are meant to be used to parse raw network traffic (i.e. H
 [.isEntryPoint]:#mischiefproxyexchangeisentrypoint
 [.request]:#mischiefproxyexchangerequest
 [.response]:#mischiefproxyexchangeresponse
+[~RequestOrResponse]:#mischiefexchangerequestorresponse
 [`MischiefExchange`]:#new-mischiefexchangeprops
 [.description]:#mischiefgeneratedexchangedescription
 [`MischiefGeneratedExchange`]:#new-mischiefgeneratedexchangeprops
