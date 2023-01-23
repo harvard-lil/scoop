@@ -303,17 +303,19 @@ To be specialized by interception type (i.e: [MischiefProxyExchange].</p>
 **Kind**: inner typedef of [`MischiefExchange`]  
 **Properties**
 
-| Name | Type |
-| --- | --- |
-| shouldKeepAlive | `boolean` | 
-| upgrade | `boolean` | 
-| method | `string` | 
-| url | `string` | 
-| versionMajor | `number` | 
-| versionMinor | `number` | 
-| headers | `object` | 
-| body | `Buffer` | 
-| trailers | `Array` | 
+| Name | Type | Description |
+| --- | --- | --- |
+| shouldKeepAlive | `boolean` |  |
+| upgrade | `boolean` |  |
+| method | `string` |  |
+| url | `string` |  |
+| versionMajor | `number` |  |
+| versionMinor | `number` |  |
+| headers | `object` |  |
+| body | `Buffer` |  |
+| trailers | `Array` |  |
+| statusCode | `number` | <p>Response only</p> |
+| statusMessage | `string` | <p>Response only</p> |
 
 
 ## MischiefGeneratedExchange
@@ -378,13 +380,43 @@ typically used to inject additional resources into an archive</p>
 **Kind**: global class  
 **See**: [https://github.com/creationix/http-parser-js/blob/master/standalone-example.js]  
 
-### MischiefHTTPParser.parseResponse(input)
+* [MischiefHTTPParser]
+    * [.headersArrayToMap(headers)]
+    * [.parseRequest(input)]
+    * [.parseResponse(input)]
+
+
+### MischiefHTTPParser.headersArrayToMap(headers)
+
+<p>Maps HTTP headers into an key / value association.</p>
 
 **Kind**: static method of [`MischiefHTTPParser`]  
 
-| Param | Type |
-| --- | --- |
-| input | `*` | 
+| Param | Type | Description |
+| --- | --- | --- |
+| headers | `Array` | <p>Parsed HTTP headers presented as an array.</p> |
+
+
+### MischiefHTTPParser.parseRequest(input)
+
+<p>Parses raw HTTP request bytes into an object using http-parser-js.</p>
+
+**Kind**: static method of [`MischiefHTTPParser`]  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| input | `Buffer` | <p>Raw HTTP request bytes</p> |
+
+
+### MischiefHTTPParser.parseResponse(input)
+
+<p>Parses raw HTTP response bytes into an object using http-parser-js.</p>
+
+**Kind**: static method of [`MischiefHTTPParser`]  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| input | `Buffer` | <p>Raw HTTP response bytes</p> |
 
 
 ## *MischiefIntercepter*
@@ -1004,6 +1036,9 @@ Classes in this module are meant to be used to parse raw network traffic (i.e. H
 [.toWarc()]:#mischieftowarc
 [new MischiefExchange(\[props\])]:#new-mischiefexchangeprops
 [new MischiefGeneratedExchange(\[props\])]:#new-mischiefgeneratedexchangeprops
+[.headersArrayToMap(headers)]:#mischiefhttpparserheadersarraytomapheaders
+[.parseRequest(input)]:#mischiefhttpparserparserequestinput
+[.parseResponse(input)]:#mischiefhttpparserparseresponseinput
 [new MischiefIntercepter(capture)]:#new-mischiefinterceptercapture
 [.checkAndEnforceSizeLimit()]:#mischiefproxycheckandenforcesizelimit
 [.checkExchangeForNoArchive(exchange)]:#mischiefproxycheckexchangefornoarchiveexchange
