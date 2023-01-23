@@ -9,7 +9,16 @@ import { HTTPParser } from 'http-parser-js'
  * @see {@link https://github.com/creationix/http-parser-js/blob/master/standalone-example.js}
  */
 export class MischiefHTTPParser {
-  static headersToMap (headers) {
+  /**
+   * Maps HTTP headers into an key / value association.
+   * @param {Array} headers - Parsed HTTP headers presented as an array.
+   * @returns {object}
+   */
+  static headersArrayToMap (headers) {
+    if (!headers || headers?.constructor?.name !== 'Array' || headers.length < 2) {
+      return {}
+    }
+
     return Object.fromEntries(
       headers.reduce(
         (result, _value, index, sourceArray) =>
@@ -19,6 +28,21 @@ export class MischiefHTTPParser {
     )
   }
 
+  /**
+   * Parses raw HTTP request bytes into an object using http-parser-js.
+   * @param {Buffer} input - Raw HTTP request bytes
+   * @returns {{
+   *   shouldKeepAlive: boolean,
+   *   upgrade: boolean,
+   *   method: string,
+   *   url: string,
+   *   versionMajor: number,
+   *   versionMinor: number,
+   *   headers: Array,
+   *   body: Buffer,
+   *   trailers: Array
+   * }}
+   */
   static parseRequest (input) {
     const parser = new HTTPParser(HTTPParser.REQUEST)
     let complete = false
@@ -31,6 +55,10 @@ export class MischiefHTTPParser {
     let headers = []
     let trailers = []
     const bodyChunks = []
+
+    if (input instanceof Buffer === false) {
+      throw new Error('input must be a buffer.')
+    }
 
     parser[HTTPParser.kOnHeadersComplete] = function (req) {
       shouldKeepAlive = req.shouldKeepAlive
@@ -63,7 +91,7 @@ export class MischiefHTTPParser {
     parser.finish()
 
     if (!complete) {
-      throw new Error('Could not parse request')
+      throw new Error('Could not parse request.')
     }
 
     const body = Buffer.concat(bodyChunks)
@@ -82,9 +110,19 @@ export class MischiefHTTPParser {
   }
 
   /**
-   *
-   * @param {*} input
-   * @returns {object}
+   * Parses raw HTTP response bytes into an object using http-parser-js.
+   * @param {Buffer} input - Raw HTTP response bytes
+   * @returns {{
+   *   shouldKeepAlive: boolean,
+   *   upgrade: boolean,
+   *   statusCode: number,
+   *   statusMessage: string,
+   *   versionMajor: number,
+   *   versionMinor: number,
+   *   headers: Array,
+   *   body: Buffer,
+   *   trailers: Array
+   * }}
    */
   static parseResponse (input) {
     const parser = new HTTPParser(HTTPParser.RESPONSE)
@@ -98,6 +136,10 @@ export class MischiefHTTPParser {
     let headers = []
     let trailers = []
     const bodyChunks = []
+
+    if (input instanceof Buffer === false) {
+      throw new Error('input must be a buffer.')
+    }
 
     parser[HTTPParser.kOnHeadersComplete] = function (res) {
       shouldKeepAlive = res.shouldKeepAlive
