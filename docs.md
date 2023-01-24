@@ -381,20 +381,8 @@ typically used to inject additional resources into an archive</p>
 **See**: [https://github.com/creationix/http-parser-js/blob/master/standalone-example.js]  
 
 * [MischiefHTTPParser]
-    * [.headersArrayToMap(headers)]
     * [.parseRequest(input)]
     * [.parseResponse(input)]
-
-
-### MischiefHTTPParser.headersArrayToMap(headers)
-
-<p>Maps HTTP headers into an key / value association.</p>
-
-**Kind**: static method of [`MischiefHTTPParser`]  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| headers | `Array` | <p>Parsed HTTP headers presented as an array.</p> |
 
 
 ### MischiefHTTPParser.parseRequest(input)
@@ -1036,7 +1024,6 @@ Classes in this module are meant to be used to parse raw network traffic (i.e. H
 [.toWarc()]:#mischieftowarc
 [new MischiefExchange(\[props\])]:#new-mischiefexchangeprops
 [new MischiefGeneratedExchange(\[props\])]:#new-mischiefgeneratedexchangeprops
-[.headersArrayToMap(headers)]:#mischiefhttpparserheadersarraytomapheaders
 [.parseRequest(input)]:#mischiefhttpparserparserequestinput
 [.parseResponse(input)]:#mischiefhttpparserparseresponseinput
 [new MischiefIntercepter(capture)]:#new-mischiefinterceptercapture
