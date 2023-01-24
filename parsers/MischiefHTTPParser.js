@@ -10,25 +10,6 @@ import { HTTPParser } from 'http-parser-js'
  */
 export class MischiefHTTPParser {
   /**
-   * Maps HTTP headers into an key / value association.
-   * @param {Array} headers - Parsed HTTP headers presented as an array.
-   * @returns {object}
-   */
-  static headersArrayToMap (headers) {
-    if (!headers || headers?.constructor?.name !== 'Array' || headers.length < 2) {
-      return {}
-    }
-
-    return Object.fromEntries(
-      headers.reduce(
-        (result, _value, index, sourceArray) =>
-          index % 2 === 0 ? [...result, sourceArray.slice(index, index + 2)] : result,
-        []
-      )
-    )
-  }
-
-  /**
    * Parses raw HTTP request bytes into an object using http-parser-js.
    * @param {Buffer} input - Raw HTTP request bytes
    * @returns {{

@@ -30,29 +30,6 @@ async function getSampleMischiefProxyExchange () {
 
 let _exchange = null // Caching variable for getSampleMischiefProxyExchange
 
-test('MischiefHTTPParser.headersArrayToMap: should return an empty object if given anything other than an array.', async (_t) => {
-  for (const headers of [null, true, false, 12, 'FOO', {}, () => {}, ['foo']]) {
-    assert.deepEqual(MischiefHTTPParser.headersArrayToMap(headers), {})
-  }
-})
-
-test('MischiefHTTPParser.headersArrayToMap: returns a hashmap for a given linear representation of headers.', async (_t) => {
-  const input = [
-    'age', '76448',
-    'content-encoding', 'gzip',
-    'content-encoding', 'br', // Checking dedupe
-    'content-type', 'text/html; charset=utf-8'
-  ]
-
-  const expectedOutput = {
-    age: '76448',
-    'content-encoding': 'br',
-    'content-type': 'text/html; charset=utf-8'
-  }
-
-  assert.deepEqual(MischiefHTTPParser.headersArrayToMap(input), expectedOutput)
-})
-
 test('MischiefHTTPParser.parseRequest: throws if given anything else than a buffer.', async (_t) => {
   for (const input of [null, true, false, 12, 'FOO', {}, () => {}, ['foo']]) {
     assert.throws(() => MischiefHTTPParser.parseRequest(input))
