@@ -13,7 +13,7 @@ export const defaultTestOptions = {
   headless: true,
   captureVideoAsAttachment: false,
   provenanceSummary: true,
-  proxyPort: 5000 + Math.floor(Math.random() * 5000) // Since each test runs in a different context, they should all get a different port
+  proxyPort: Math.floor(5000 + Math.random() * 5000) // Since each test runs in a different context, they should all get a different port
 }
 
 test('filterOptions: invalid or empty argument should return full defaults.', async (_t) => {
