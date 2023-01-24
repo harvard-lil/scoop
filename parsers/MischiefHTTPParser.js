@@ -57,7 +57,7 @@ export class MischiefHTTPParser {
     const bodyChunks = []
 
     if (input instanceof Buffer === false) {
-      throw new Error('input must be a buffer.')
+      throw new Error('"input" must be of Buffer type.')
     }
 
     parser[HTTPParser.kOnHeadersComplete] = function (req) {
@@ -138,7 +138,7 @@ export class MischiefHTTPParser {
     const bodyChunks = []
 
     if (input instanceof Buffer === false) {
-      throw new Error('input must be a buffer.')
+      throw new Error('"input" must be of Buffer type.')
     }
 
     parser[HTTPParser.kOnHeadersComplete] = function (res) {

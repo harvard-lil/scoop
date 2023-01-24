@@ -135,7 +135,7 @@ export function filterOptions (newOptions = {}) {
 
       default:
         if (options[key].constructor !== constructor) {
-          throw new Error(`${key} must be type ${constructor.name}`)
+          throw new Error(`"${key}" must be type ${constructor.name}`)
         }
     }
   }
