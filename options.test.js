@@ -4,10 +4,16 @@ import assert from 'node:assert/strict'
 import * as CONSTANTS from './constants.js'
 import { defaultOptions, filterOptions } from './options.js'
 
+/**
+ * Basic set of options to be used with Mischief for automated testing purposes.
+ * @ignore
+ */
 export const defaultTestOptions = {
   ...defaultOptions,
   headless: true,
-  captureVideoAsAttachment: false
+  captureVideoAsAttachment: false,
+  provenanceSummary: true,
+  proxyPort: 5000 + Math.floor(Math.random() * 5000) // Since each test runs in a different context, they should all get a different port
 }
 
 test('filterOptions: invalid or empty argument should return full defaults.', async (_t) => {

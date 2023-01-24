@@ -13,6 +13,7 @@ import { defaultTestOptions } from '../options.test.js'
 test('Roundtrip should produce identical Mischief object.', async (_t) => {
   const fpath = `${CONSTANTS.TMP_PATH}${uuidv4()}.wacz`
   const capture = new Mischief('https://example.com', defaultTestOptions)
+
   await capture.capture()
   const wacz = await capture.toWacz()
 

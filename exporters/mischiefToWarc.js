@@ -29,7 +29,11 @@ if (!globalThis.crypto) {
 export async function mischiefToWarc (capture) {
   let serializedInfo = null
   const serializedRecords = []
-  const validStates = [Mischief.states.PARTIAL, Mischief.states.COMPLETE, Mischief.states.RECONSTRUCTED]
+  const validStates = [
+    Mischief.states.PARTIAL,
+    Mischief.states.COMPLETE,
+    Mischief.states.RECONSTRUCTED
+  ]
 
   // Check capture state
   if (!(capture instanceof Mischief) || !validStates.includes(capture.state)) {
