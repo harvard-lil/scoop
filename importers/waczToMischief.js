@@ -28,7 +28,8 @@ export async function waczToMischief (zipPath) {
     id: pageJSON.id,
     startedAt: new Date(pageJSON.ts),
     provenanceInfo: datapackage.extras?.provenanceInfo,
-    exchanges: await getExchanges(zip)
+    exchanges: await getExchanges(zip),
+    state: Mischief.states.RECONSTRUCTED
   })
 
   await zip.close()

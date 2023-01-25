@@ -23,6 +23,7 @@
   "homepage": "https://github.com/matteocargnelutti/mischief#readme",
   "dependencies": {
     "@laverdet/beaugunderson-ip-address": "^8.1.0",
+    "adm-zip": "^0.5.10",
     "archiver": "^5.3.1",
     "browsertrix-behaviors": "^0.3.4",
     "chalk": "^5.2.0",

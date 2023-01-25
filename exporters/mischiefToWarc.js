@@ -5,6 +5,7 @@ import { WARCRecord, WARCSerializer } from 'warcio'
 
 import * as CONSTANTS from '../constants.js'
 import { Mischief } from '../Mischief.js'
+import { MischiefExchange } from '../exchanges/MischiefExchange.js'
 
 // warcio needs the crypto utils suite as a global, but does not import it.
 // Node JS 19+ automatically imports webcrypto as globalThis.crypto.
@@ -28,11 +29,15 @@ if (!globalThis.crypto) {
 export async function mischiefToWarc (capture) {
   let serializedInfo = null
   const serializedRecords = []
-  const validStates = [Mischief.states.PARTIAL, Mischief.states.COMPLETE]
+  const validStates = [
+    Mischief.states.PARTIAL,
+    Mischief.states.COMPLETE,
+    Mischief.states.RECONSTRUCTED
+  ]
 
   // Check capture state
   if (!(capture instanceof Mischief) || !validStates.includes(capture.state)) {
-    throw new Error('`capture` must be a partial or complete Mischief capture object.')
+    throw new Error('"capture" must be a partial or complete Mischief capture object.')
   }
 
   //
@@ -114,7 +119,11 @@ export async function mischiefToWarc (capture) {
  * @returns {string} The HTTP status line as expected by Warcio
  * @private
  */
-function prepareExchangeStatusLine (exchange, type = 'response') {
+export function prepareExchangeStatusLine (exchange, type = 'response') {
+  if (exchange instanceof MischiefExchange === false) {
+    throw new Error('"exchange" should be a valid MischiefExchange')
+  }
+
   let statusLine = ''
   const reqOrResp = exchange[type]
 
