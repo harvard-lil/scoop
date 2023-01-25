@@ -52,7 +52,7 @@ export function versionFromStatusLine (statusLine) {
  *
  * @param {Buffer} body
  * @param {?string} [contentEncoding=null] - Can be "br", "deflate" or "gzip"
- * @returns {string}
+ * @returns {Promise<string>}
  */
 export async function bodyToString (body, contentEncoding = null) {
   switch (contentEncoding) {
@@ -70,4 +70,23 @@ export async function bodyToString (body, contentEncoding = null) {
   }
 
   return body.toString('utf-8')
+}
+
+/**
+ * Maps HTTP headers into an key / value association.
+ * @param {Array} headers - Parsed HTTP headers presented as an array.
+ * @returns {object}
+ */
+export function headersArrayToMap (headers) {
+  if (!headers || headers?.constructor?.name !== 'Array' || headers.length < 2) {
+    return {}
+  }
+
+  return Object.fromEntries(
+    headers.reduce(
+      (result, _value, index, sourceArray) =>
+        index % 2 === 0 ? [...result, sourceArray.slice(index, index + 2)] : result,
+      []
+    )
+  )
 }
