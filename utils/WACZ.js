@@ -12,7 +12,7 @@ import * as zip from '../utils/zip.js'
  */
 export class WACZ {
   validations = [
-    [/^archives\//, [this.assertWarc]],
+    [/^archive\//, [this.assertWarc]],
     [/^indexes\//, [this.assertIndex]],
     [/^pages\//, [this.assertPages]]
   ]
