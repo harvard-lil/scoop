@@ -12,7 +12,7 @@ import * as zip from '../utils/zip.js'
  */
 export class WACZ {
   validations = [
-    [/^archives\//, [this.assertWarc]],
+    [/^archive\//, [this.assertWarc]],
     [/^indexes\//, [this.assertIndex]],
     [/^pages\//, [this.assertPages]]
   ]
@@ -229,6 +229,7 @@ export class WACZ {
     datapackage.software = `${CONSTANTS.SOFTWARE} ${CONSTANTS.VERSION}`
     datapackage.created = this.created
 
+    // TODO: ignore datapackage-digest.json here if present, or throw error when assigned
     datapackage.resources = Object.entries(this.files).map(([fpath, fdata]) => {
       return {
         name: path.basename(fpath),
@@ -239,6 +240,7 @@ export class WACZ {
     })
 
     // Set `mainPageUrl` and `mainPageDate`: pick first entry in `this.pages` that starts with "http"
+    // TODO: set this using the pages/pages.jsonl buffer if present
     const mainPage = this.pages.find(page => page.url.startsWith('http'))
     if (mainPage) {
       datapackage.mainPageUrl = mainPage.url
