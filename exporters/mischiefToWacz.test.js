@@ -5,10 +5,10 @@ import AdmZip from 'adm-zip'
 
 import { Mischief } from '../Mischief.js'
 import { mischiefToWacz } from './mischiefToWacz.js'
-import * as zip from '../utils/zip.js'
+import { WACZ } from '../utils/WACZ.js'
+import { isZip } from '../utils/zip.js'
 
 import { defaultTestOptions } from '../options.test.js'
-import { WARCParser } from 'warcio'
 
 /**
  * Makes a capture of https://example.com and returns the resulting Mischief object.
@@ -33,38 +33,18 @@ test('mischiefToWacz throws if given anything else than a Mischief instance for 
 
 test('mischiefToWacz generates a valid WACZ file.', async (_t) => {
   const capture = await testCapture()
-  const wacz = Buffer.from(await mischiefToWacz(capture, true))
+  const waczBuffer = Buffer.from(await mischiefToWacz(capture, true))
 
-  assert(zip.isZip(wacz)) // Is this a ZIP?
-  const unzipped = new AdmZip(wacz)
+  assert(isZip(waczBuffer)) // Is this a ZIP?
+  const zip = new AdmZip(waczBuffer)
 
-  // Zip contains datapackage.json and datapackage-digest.json, both are valid JSON files
-  assert(unzipped.getEntry('datapackage.json'))
-  assert(unzipped.getEntry('datapackage-digest.json'))
+  const wacz = new WACZ()
+  const entries = zip.getEntries().map(entry => [entry.entryName, zip.readFile(entry)])
 
-  assert.doesNotThrow(() => {
-    const raw = unzipped.getEntry('datapackage.json').getData().toString('utf-8')
-    JSON.parse(raw)
+  assert.doesNotReject(async () => {
+    wacz.files = Object.fromEntries(entries)
+    await wacz.finalize()
   })
-
-  assert.doesNotThrow(() => {
-    const raw = unzipped.getEntry('datapackage-digest.json').getData().toString('utf-8')
-    JSON.parse(raw)
-  })
-
-  // Zip contains a valid WARC file under "archive"
-  assert(unzipped.getEntry('archive/data.warc'))
-
-  assert.doesNotThrow(() => {
-    const raw = unzipped.getEntry('archive/data.warc').getData()
-    new WARCParser(raw) // eslint-disable-line
-  })
-
-  // Zip contains a cdx file under "indexes"
-  assert(unzipped.getEntry('indexes/index.cdx'))
-
-  // Zip contains a pages.jsonl file under "pages"
-  assert(unzipped.getEntry('pages/pages.jsonl'))
 })
 
 test('mischiefToWacz accounts for "includeRaw" option appropriately.', async (_t) => {
@@ -72,11 +52,11 @@ test('mischiefToWacz accounts for "includeRaw" option appropriately.', async (_t
 
   for (const withRaw of [true, false]) {
     const wacz = Buffer.from(await mischiefToWacz(capture, withRaw))
-    const unzipped = new AdmZip(wacz)
+    const zip = new AdmZip(wacz)
 
     // Does this zip contain a "raw" folder?
     let containsRaw = false
-    for (const entry of unzipped.getEntries()) {
+    for (const entry of zip.getEntries()) {
       if (entry.entryName.toString().startsWith('raw/')) {
         containsRaw = true
         break

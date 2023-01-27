@@ -10,6 +10,7 @@ import { defaultOptions, filterOptions } from './options.js'
  */
 export const defaultTestOptions = {
   ...defaultOptions,
+  logLevel: 'silent',
   headless: true,
   captureVideoAsAttachment: false,
   provenanceSummary: true,
