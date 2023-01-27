@@ -38,11 +38,9 @@ test('mischiefToWacz generates a valid WACZ file.', async (_t) => {
   assert(isZip(waczBuffer)) // Is this a ZIP?
   const zip = new AdmZip(waczBuffer)
 
-  const wacz = new WACZ()
   const entries = zip.getEntries().map(entry => [entry.entryName, zip.readFile(entry)])
-
   assert.doesNotReject(async () => {
-    wacz.files = Object.fromEntries(entries)
+    const wacz = new WACZ({ files: Object.fromEntries(entries) })
     await wacz.finalize()
   })
 })
