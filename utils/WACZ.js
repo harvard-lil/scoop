@@ -98,12 +98,11 @@ export class WACZ {
       return
     }
 
-    if (zip.isZip(buf)) {
+    if (zip.isGzip(buf)) {
       if (!/\.warc\.gz$/.test(fpath)) {
         throw new Error(`${fpath}: must use .warc.gz extension when using zip`)
-      } else if (!zip.usesStoreCompression(fdata)) {
-        throw new Error(`${fpath}: must use STORE when compressing the zip`)
-      } else if (zip.readBodyAsString(fdata, 4) === 'WARC') {
+      } else {
+        // TODO: decode first few bytes of file to look for 'WARC' string
         return
       }
     }
@@ -116,6 +115,8 @@ export class WACZ {
    * Checks to see if a buffer contains CDXJ data
    * using simple sniff tests that are imperfect but
    * helpful nonetheless.
+   *
+   * TODO: support zipped files e.g. "All index/*.cdx.gz files should be stored in ZIP with 'STORE' mode."
    *
    * @param {string} fpath
    * @param {Buffer} fdata
