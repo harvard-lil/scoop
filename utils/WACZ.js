@@ -282,7 +282,7 @@ export class WACZ {
    *
    * @param {object} payload - Payload to be passed to the signing server
    * @param {string} payload.hash - sha256 hash of datapackage.json as included in datapackage-digest.json
-   * @param {string} payload.created - ISO 8861 date from datapackage.json, marking when it was created
+   * @param {string} payload.created - ISO 8601 date from datapackage.json, marking when it was created
    * @return {Promise<object>} a promise of https.request
    */
   async requestSignature (payload) {
@@ -399,7 +399,7 @@ export function mischiefExchangeToPageLine (exchange) {
 function assertValidSignatureResponse (resp) {
   const generalProps = {
     hash: assertions.assertSHA256WithPrefix,
-    created: assertions.assertISO861Date,
+    created: assertions.assertISO8601Date,
     software: assertions.assertString,
     // 'version': assertions.assertString, //TODO: verify whether this is required; some implementations append this to the end of `software`
     signature: assertions.assertBase64

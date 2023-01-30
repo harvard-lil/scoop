@@ -32,13 +32,13 @@ export const assertString = makeAssertion(
 
 /**
  * Asserts that the given value is a date string
- * that conforms to ISO 861
+ * that conforms to ISO 8601
  * @function
  * @param {any} val - The value to test
  * @throws Error
  */
-export const assertISO861Date = makeAssertion(
-  'ISO 861 date',
+export const assertISO8601Date = makeAssertion(
+  'ISO 8601 date',
   (val) => val?.match?.(/(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))/))
 
 /**

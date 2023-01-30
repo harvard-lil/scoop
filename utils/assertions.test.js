@@ -8,7 +8,7 @@ import { hash } from './WACZ.js'
 
 import {
   assertString,
-  assertISO861Date,
+  assertISO8601Date,
   assertBase64,
   assertSHA256WithPrefix,
   assertPEMCertificateChain,
@@ -24,9 +24,9 @@ test('assertString throws on non-strings', async (_t) => {
   assert.throws(() => assertString(/test/))
 })
 
-test('assertISO861Date throws on non-ISO861 dates', async (_t) => {
-  assert.doesNotThrow(() => assertISO861Date((new Date()).toISOString()))
-  assert.throws(() => assertISO861Date((new Date()).toUTCString()))
+test('assertISO8601Date throws on non-ISO8601 dates', async (_t) => {
+  assert.doesNotThrow(() => assertISO8601Date((new Date()).toISOString()))
+  assert.throws(() => assertISO8601Date((new Date()).toUTCString()))
 })
 
 test('assertBase64 throws on non-base64 encoded strings', async (_t) => {
