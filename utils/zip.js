@@ -22,6 +22,16 @@ export function isZip (buf) {
 }
 
 /**
+ * Sniffs a buffer to infer whether it's a gzip file.
+ *
+ * @param {Buffer} buf - The buffer to check
+ * @returns {boolean} True if buf appears to be a gzip file.
+ */
+export function isGzip (buf) {
+  return buf[0] === 0x1f && buf[1] === 0x8b
+}
+
+/**
  * Checks the header of a zip buffer
  * to see if STORE compression was used
  *
