@@ -43,42 +43,6 @@ export function usesStoreCompression (buf) {
 }
 
 /**
- * Checks the header of a zip buffer to see
- * how long the file name is in the header.
- * Used to seek past the header to the body.
- *
- * @param {Buffer} buf - A buffer containing zip data
- * @returns {integer}
- */
-export function fileNameLen (buf) {
-  return buf.readUIntLE(26, 2)
-}
-
-/**
- * Checks the header of a zip buffer to see
- * how long the "extra field" is in the header.
- * Used to seek past the header to the body.
- *
- * @param {Buffer} buf - A buffer containing zip data
- * @returns {integer}
- */
-export function extraFieldLen (buf) {
-  return buf.readUIntLE(28, 2)
-}
-
-/**
- * A convenience function to seek past the header
- * of a zip buffer and read N bytes of the body.
- *
- * @param {Buffer} buf - A buffer containing zip data
- * @param {integer} byteLen
- * @returns {string}
- */
-export function readBodyAsString (buf, byteLen) {
-  return buf.toString('utf8', 30 + fileNameLen(buf) + extraFieldLen(buf), byteLen)
-}
-
-/**
  * Creates a zip file, in memory, from a list of files
  *
  * @param {object} files - an object whose keys are the file paths and values are the file data

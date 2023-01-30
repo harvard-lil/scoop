@@ -25,12 +25,8 @@ test('usesStoreCompression should detect when zip data uses store compression', 
   assert(!zip.usesStoreCompression(nonStoreFixture))
 })
 
-test('fileNameLen should return the length of the original file name', async (_t) => {
-  assert.equal(zip.fileNameLen(waczFixture), 17) // our fixture was renamed after compression
-  assert.equal(zip.fileNameLen(nonStoreFixture), 8)
-})
-
-test('extraFieldLen should return the length of the "extra field"', async (_t) => {
-  assert.equal(zip.extraFieldLen(waczFixture), 0)
-  assert.equal(zip.extraFieldLen(nonStoreFixture), 32)
+test('create should create a valid zip file with store compression by default', async (_t) => {
+  const buf = await zip.create({ testPath: Buffer.from([1, 2, 3]) })
+  assert(zip.isZip(buf))
+  assert(zip.usesStoreCompression(buf))
 })
