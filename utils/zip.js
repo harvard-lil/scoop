@@ -75,7 +75,7 @@ export function extraFieldLen (buf) {
  * @returns {string}
  */
 export function readBodyAsString (buf, byteLen) {
-  return buf.toString(30 + fileNameLen(buf) + extraFieldLen(buf), byteLen)
+  return buf.toString('utf8', 30 + fileNameLen(buf) + extraFieldLen(buf), byteLen)
 }
 
 /**
