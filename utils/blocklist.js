@@ -60,6 +60,7 @@ function matchAgainst (matcher) {
       return val === matcher
     }
 
+    // The matcher is a regex. Attempt to run against the value.
     return Boolean(val.match?.(matcher))
   }
 }
