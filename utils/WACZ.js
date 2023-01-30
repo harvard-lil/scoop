@@ -399,7 +399,7 @@ export function mischiefExchangeToPageLine (exchange) {
 function assertValidSignatureResponse (resp) {
   const generalProps = {
     hash: assertions.assertSHA256WithPrefix,
-    created: assertions.assertISO8861Date,
+    created: assertions.assertISO861Date,
     software: assertions.assertString,
     // 'version': assertions.assertString, //TODO: verify whether this is required; some implementations append this to the end of `software`
     signature: assertions.assertBase64
