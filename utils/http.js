@@ -23,10 +23,10 @@ const LFx2 = '\n\n'
  * some poorly configured servers only use LF (\n) so we
  * look for the first pair we can find.
  *
- * Ref: https://stackoverflow.com/a/11254057
+ * @see {@link https://stackoverflow.com/a/11254057}
  *
- * @param {Buffer} buffer -
- * @returns {integer}
+ * @param {Buffer} buffer - The contents of an HTTP response
+ * @returns {integer} The index within the buffer at which the body begins
  */
 export function bodyStartIndex (buffer) {
   return [CRLFx2, LFx2].reduce((prevEnd, delimiter) => {
@@ -39,8 +39,8 @@ export function bodyStartIndex (buffer) {
 /**
  * Extracts the protocol version from an HTTP status line
  *
- * @param {string} statusLine -
- * @returns {array}
+ * @param {string} statusLine - An HTTP status line
+ * @returns {Array<integer>} The HTTP version as an array of integers ex: [MajorVer, MinorVer]
  */
 export function versionFromStatusLine (statusLine) {
   return statusLine.match(/\/([\d.]+)/)[1].split('.').map(n => parseInt(n))
