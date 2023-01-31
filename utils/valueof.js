@@ -10,10 +10,11 @@ import { MischiefGeneratedExchange } from '../exchanges/MischiefGeneratedExchang
  * For example, comparing an original Mischief capture against
  * a rehydrated version populated by a WACZ import. In this case, certain
  * transient internal properties may not match exactly but the substantive
- * properties match.
+ * properties are the same and are pulled out for comparison here.
  *
  * @param {any} source - A value to be converted into a primative version
  * @returns {any} A primative version of the supplied source
+ * @private
  */
 export function valueOf (source) {
   switch (source.constructor) {
