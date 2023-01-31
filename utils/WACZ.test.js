@@ -3,10 +3,10 @@ import assert from 'node:assert/strict'
 
 import AdmZip from 'adm-zip'
 
-import { BASE_PATH } from '../constants.js'
+import { FIXTURES_PATH } from '../constants.js'
 import { WACZ } from './WACZ.js'
 
-const exampleFixtureZip = new AdmZip(`${BASE_PATH}/assets/fixtures/example.com.wacz`)
+const exampleFixtureZip = new AdmZip(`${FIXTURES_PATH}/example.com.wacz`)
 const exampleFixtureEntries = exampleFixtureZip.getEntries().map(entry => [entry.entryName, exampleFixtureZip.readFile(entry)])
 const fixture = Object.freeze(Object.fromEntries(exampleFixtureEntries))
 

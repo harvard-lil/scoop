@@ -3,12 +3,12 @@ import assert from 'node:assert/strict'
 
 import { readFileSync } from 'node:fs'
 
-import { BASE_PATH } from '../constants.js'
+import { FIXTURES_PATH } from '../constants.js'
 import * as zip from './zip.js'
 
-const waczFixture = readFileSync(`${BASE_PATH}/assets/fixtures/example.com.wacz`)
-const warcGzFixture = readFileSync(`${BASE_PATH}/assets/fixtures/example.com.warc.gz`)
-const nonStoreFixture = readFileSync(`${BASE_PATH}/assets/fixtures/test.txt.zip`)
+const waczFixture = readFileSync(`${FIXTURES_PATH}example.com.wacz`)
+const warcGzFixture = readFileSync(`${FIXTURES_PATH}example.com.warc.gz`)
+const nonStoreFixture = readFileSync(`${FIXTURES_PATH}test.txt.zip`)
 
 test('isZip should detect when a buffer contains zip data', async (_t) => {
   assert(zip.isZip(waczFixture))

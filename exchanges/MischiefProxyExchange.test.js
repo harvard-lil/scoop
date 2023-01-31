@@ -4,14 +4,14 @@ import assert from 'node:assert/strict'
 import { MischiefExchange } from './MischiefExchange.js'
 import { MischiefProxyExchange } from './MischiefProxyExchange.js'
 import { Mischief } from '../Mischief.js'
-import * as CONSTANTS from '../constants.js'
+import { FIXTURES_PATH } from '../constants.js'
 
 test('MischiefProxyExchange must inherit from MischiefExchange.', async (_t) => {
   assert(MischiefProxyExchange.prototype instanceof MischiefExchange)
 })
 
 test('MischiefProxyExchange request and response properties populate automatically from requestRaw and responseRaw.', async (_t) => {
-  const capture = await Mischief.fromWacz(`${CONSTANTS.ASSETS_PATH}fixtures/example.com.wacz`)
+  const capture = await Mischief.fromWacz(`${FIXTURES_PATH}example.com.wacz`)
 
   for (const exchange of capture.exchanges) {
     if (exchange instanceof MischiefProxyExchange === false) {

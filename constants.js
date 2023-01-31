@@ -54,6 +54,11 @@ export const EXECUTABLES_PATH = `${BASE_PATH}/executables/`
 export const TMP_PATH = `${BASE_PATH}/tmp/`
 
 /**
+ * Location of the testing fixtures folder.
+ */
+export const FIXTURES_PATH = `${ASSETS_PATH}fixtures/`
+
+/**
  * Colors used by the logging function
  */
 export const LOGGING_COLORS = {
