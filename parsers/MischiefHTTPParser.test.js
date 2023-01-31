@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import * as CONSTANTS from '../constants.js'
+import { FIXTURES_PATH } from '../constants.js'
 import { MischiefHTTPParser } from './MischiefHTTPParser.js'
 import { Mischief } from '../Mischief.js'
 import { MischiefProxyExchange } from '../exchanges/MischiefProxyExchange.js'
@@ -17,7 +17,7 @@ async function getSampleMischiefProxyExchange () {
     return _exchange
   }
 
-  const capture = await Mischief.fromWacz(`${CONSTANTS.ASSETS_PATH}fixtures/example.com.wacz`)
+  const capture = await Mischief.fromWacz(`${FIXTURES_PATH}example.com.wacz`)
 
   for (const exchange of capture.exchanges) {
     if (exchange instanceof MischiefProxyExchange && exchange.requestRaw && exchange.responseRaw) {

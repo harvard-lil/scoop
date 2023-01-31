@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 
 import { readFile } from 'fs/promises'
 
-import { BASE_PATH } from '../constants.js'
+import { FIXTURES_PATH } from '../constants.js'
 import { hash } from './WACZ.js'
 
 import {
@@ -40,7 +40,7 @@ test('assertSHA256WithPrefix throws on non-sha256 strings', async (_t) => {
 })
 
 test('assertPEMCertificateChain throws on non-sha256 strings', async (_t) => {
-  const pem = await readFile(`${BASE_PATH}/assets/fixtures/example.pem`)
+  const pem = await readFile(`${FIXTURES_PATH}example.pem`)
   assert.doesNotThrow(() => assertPEMCertificateChain(pem))
   assert.throws(() => assertPEMCertificateChain('test'))
 })

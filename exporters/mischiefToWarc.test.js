@@ -7,7 +7,7 @@ import { WARCParser } from 'warcio'
 import { mischiefToWarc, prepareExchangeStatusLine } from './mischiefToWarc.js'
 import { MischiefExchange, MischiefGeneratedExchange, MischiefProxyExchange } from '../exchanges/index.js'
 import { Mischief } from '../Mischief.js'
-import * as CONSTANTS from '../constants.js'
+import { FIXTURES_PATH } from '../constants.js'
 
 test('prepareExchangeStatusLine throws if not given a MischiefExchange-like object.', async (_t) => {
   for (const exchange of [{}, true, false, null, () => {}, [], 'FOO']) {
@@ -55,7 +55,7 @@ test('mischiefToWarc throws if given anything else than a Mischief instance.', a
 })
 
 test('mischiefToWarc generates a valid WARC file.', async (_t) => {
-  const capture = await Mischief.fromWacz(`${CONSTANTS.ASSETS_PATH}fixtures/example.com.wacz`)
+  const capture = await Mischief.fromWacz(`${FIXTURES_PATH}example.com.wacz`)
 
   let expectedRequests = 0
   let expectedResponses = 0
