@@ -17,7 +17,7 @@ export const defaultTestOptions = {
   proxyPort: Math.floor(5000 + Math.random() * 5000) // Since each test runs in a different context, they should all get a different port
 }
 
-test('filterOptions: invalid or empty argument should return full defaults.', async (_t) => {
+test('filterOptions invalid or empty argument should return full defaults.', async (_t) => {
   for (const input of [{}, [], null, undefined, true, 'FOO', () => {}]) {
     const options = filterOptions(input)
 
@@ -30,7 +30,7 @@ test('filterOptions: invalid or empty argument should return full defaults.', as
   }
 })
 
-test('filterOptions: entries that are not provided should be filled with defaults.', async (_t) => {
+test('filterOptions entries that are not provided should be filled with defaults.', async (_t) => {
   const newOptions = { logLevel: 'trace', screenshot: false, captureWindowX: 1920, captureWindowY: 1080 }
 
   for (const [key, value] of Object.entries(filterOptions(newOptions))) {
@@ -44,7 +44,7 @@ test('filterOptions: entries that are not provided should be filled with default
   }
 })
 
-test('filterOptions: entries are typecast based on defaults.', async (_t) => {
+test('filterOptions entries are typecast based on defaults.', async (_t) => {
   const newOptions = filterOptions({
     screenshot: 0,
     captureWindowX: '1920',
@@ -57,13 +57,13 @@ test('filterOptions: entries are typecast based on defaults.', async (_t) => {
   }
 })
 
-test('filterOptions: pdfSnapshot cannot be activated in headless mode.', async (_t) => {
+test('filterOptions pdfSnapshot cannot be activated in headless mode.', async (_t) => {
   assert.throws(() => {
     filterOptions({ pdfSnapshot: true, headless: false })
   })
 })
 
-test('filterOptions: ytDlpPath must be a valid path to a file.', async (_t) => {
+test('filterOptions ytDlpPath must be a valid path to a file.', async (_t) => {
   assert.doesNotThrow(() => filterOptions()) // Default should not throw
 
   for (const ytDlpPath of [null, false, true, 12, () => {}, 'FOO', CONSTANTS.TMP_PATH]) {

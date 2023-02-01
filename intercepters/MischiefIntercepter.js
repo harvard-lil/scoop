@@ -14,7 +14,15 @@ import { bodyToString } from '../utils/http.js'
  * @param {Mischief} capture - a Mischief capture
  */
 export class MischiefIntercepter {
+  /**
+   * @param {Mischief} capture
+   * @returns
+   */
   constructor (capture) {
+    if (capture instanceof Mischief === false) {
+      throw new Error('"capture" must be an instance of Mischief.')
+    }
+
     this.capture = capture
     return this
   }
@@ -55,12 +63,19 @@ export class MischiefIntercepter {
     return this.capture.options
   }
 
+  /**
+   * Needs to be implemented by inheriting class.
+   * @param {*} _page
+   */
   setup (_page) {
-    throw new Error('method must be implemented')
+    throw new Error('Method must be implemented.')
   }
 
+  /**
+   * Needs to be implemented by inheriting class.
+   */
   teardown () {
-    throw new Error('method must be implemented')
+    throw new Error('Method must be implemented.')
   }
 
   get contextOptions () {
