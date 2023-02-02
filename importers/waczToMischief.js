@@ -27,10 +27,14 @@ export async function waczToMischief (zipPath) {
   Object.assign(capture, {
     id: pageJSON.id,
     startedAt: new Date(pageJSON.ts),
-    provenanceInfo: datapackage.extras?.provenanceInfo,
     exchanges: await getExchanges(zip),
     state: Mischief.states.RECONSTRUCTED
   })
+
+  // Only set `provenanceInfo` if available.
+  if (datapackage?.extras?.provenanceInfo) {
+    capture.provenanceInfo = datapackage?.extras?.provenanceInfo
+  }
 
   await zip.close()
   return capture

@@ -16,7 +16,6 @@ import { bodyToString } from '../utils/http.js'
 export class MischiefIntercepter {
   /**
    * @param {Mischief} capture
-   * @returns
    */
   constructor (capture) {
     if (capture instanceof Mischief === false) {
@@ -45,7 +44,6 @@ export class MischiefIntercepter {
 
   /**
    * Total byte length of all data recorded to exchanges
-   *
    * @type {integer}
    */
   byteLength = 0
@@ -78,6 +76,10 @@ export class MischiefIntercepter {
     throw new Error('Method must be implemented.')
   }
 
+  /**
+   * Options to be given to Playwright
+   * @type {object}
+   */
   get contextOptions () {
     return {}
   }

@@ -419,8 +419,13 @@ typically used to inject additional resources into an archive</p>
     * *[.capture]*
     * *[.checkAndEnforceSizeLimit()]*
     * *[.checkExchangeForNoArchive(exchange)]*
+    * *[.contextOptions]*
     * *[.exchanges]*
+    * *[.MischiefIntercepter]*
+        * [new exports.MischiefIntercepter(capture)]
     * *[.recordExchanges]*
+    * *[.setup(_page)]*
+    * *[.teardown()]*
 
 
 ### *new MischiefIntercepter(capture)*
@@ -465,12 +470,30 @@ If found, keeps trace of match in <code>Mischief.provenanceInfo</code>.</p>
 | exchange | [`MischiefExchange`] | 
 
 
+### *mischiefIntercepter.contextOptions*
+
+<p>Options to be given to Playwright</p>
+
+**Kind**: instance property of [`MischiefIntercepter`]  
+
 ### *mischiefIntercepter.exchanges*
 
 <p>Data recorded by the intercepter,
 formatted as a series of exchanges</p>
 
 **Kind**: instance property of [`MischiefIntercepter`]  
+
+### *mischiefIntercepter.MischiefIntercepter*
+
+**Kind**: instance class of [`MischiefIntercepter`]  
+
+#### new exports.MischiefIntercepter(capture)
+
+
+| Param | Type |
+| --- | --- |
+| capture | [`Mischief`] | 
+
 
 ### *mischiefIntercepter.recordExchanges*
 
@@ -479,6 +502,23 @@ appending data to the exchanges array until
 once again set to <code>true</code></p>
 
 **Kind**: instance property of [`MischiefIntercepter`]  
+
+### *mischiefIntercepter.setup(_page)*
+
+<p>Needs to be implemented by inheriting class.</p>
+
+**Kind**: instance method of [`MischiefIntercepter`]  
+
+| Param | Type |
+| --- | --- |
+| _page | `*` | 
+
+
+### *mischiefIntercepter.teardown()*
+
+<p>Needs to be implemented by inheriting class.</p>
+
+**Kind**: instance method of [`MischiefIntercepter`]  
 
 ## MischiefProxy
 
@@ -498,6 +538,8 @@ without parsing, preserving headers et al as delivered.</p>
     * [.exchanges]
     * [.getOrInitExchange(id, type)]
     * [.intercept(type, data, session)]
+    * [.MischiefIntercepter]
+        * [new exports.MischiefIntercepter(capture)]
     * [.recordExchanges]
     * [.setup()]
     * [.teardown()]
@@ -559,6 +601,7 @@ Keeps trace of blocked requests in <code>Mischief.provenanceInfo</code>.</p>
 Includes a flag to ignore certificate errors introduced by proxying.</p>
 
 **Kind**: instance property of [`MischiefProxy`]  
+**Overrides**: `contextOptions`  
 **Properties**
 
 | Name | Type | Default | Description |
@@ -604,6 +647,18 @@ Post-capture checks and capture size enforcement happens here.</p>
 | session | `Session` | 
 
 
+### mischiefProxy.MischiefIntercepter
+
+**Kind**: instance class of [`MischiefProxy`]  
+
+#### new exports.MischiefIntercepter(capture)
+
+
+| Param | Type |
+| --- | --- |
+| capture | [`Mischief`] | 
+
+
 ### mischiefProxy.recordExchanges
 
 <p>When set to <code>false</code>, the intercepter will cease
@@ -617,12 +672,14 @@ once again set to <code>true</code></p>
 <p>Initializes the proxy server</p>
 
 **Kind**: instance method of [`MischiefProxy`]  
+**Overrides**: `setup`  
 
 ### mischiefProxy.teardown()
 
 <p>Closes the proxy server</p>
 
 **Kind**: instance method of [`MischiefProxy`]  
+**Overrides**: `teardown`  
 
 ## MischiefProxyExchange
 
@@ -714,6 +771,7 @@ once again set to <code>true</code></p>
     * [.ASSETS_PATH]
     * [.BASE_PATH]
     * [.EXECUTABLES_PATH]
+    * [.FIXTURES_PATH]
     * [.LOGGING_COLORS]
     * [.SOFTWARE]
     * [.TEMPLATES_PATH]
@@ -738,6 +796,12 @@ once again set to <code>true</code></p>
 ### CONSTANTS.EXECUTABLES_PATH
 
 <p>Path to the executables folder.</p>
+
+**Kind**: static constant of [`CONSTANTS`]  
+
+### CONSTANTS.FIXTURES_PATH
+
+<p>Location of the testing fixtures folder.</p>
 
 **Kind**: static constant of [`CONSTANTS`]  
 
@@ -985,9 +1049,10 @@ Classes in this module are meant to be used to parse raw network traffic (i.e. H
 [`MischiefHTTPParser`]:#mischiefhttpparser
 [.byteLength]:#mischiefproxybytelength
 [.capture]:#mischiefproxycapture
+[.contextOptions]:#mischiefproxycontextoptions
+[.MischiefIntercepter]:#mischiefproxymischiefintercepter
 [.recordExchanges]:#mischiefproxyrecordexchanges
 [`MischiefIntercepter`]:#new-mischiefinterceptercapture
-[.contextOptions]:#mischiefproxycontextoptions
 [`MischiefProxy`]:#mischiefproxy
 [`exchanges`]:#exchanges
 [.requestRaw]:#mischiefproxyexchangerequestraw
@@ -1000,6 +1065,7 @@ Classes in this module are meant to be used to parse raw network traffic (i.e. H
 [.ASSETS_PATH]:#constantsassets_path
 [.BASE_PATH]:#constantsbase_path
 [.EXECUTABLES_PATH]:#constantsexecutables_path
+[.FIXTURES_PATH]:#constantsfixtures_path
 [.LOGGING_COLORS]:#constantslogging_colors
 [.SOFTWARE]:#constantssoftware
 [.TEMPLATES_PATH]:#constantstemplates_path
@@ -1029,6 +1095,8 @@ Classes in this module are meant to be used to parse raw network traffic (i.e. H
 [new MischiefIntercepter(capture)]:#new-mischiefinterceptercapture
 [.checkAndEnforceSizeLimit()]:#mischiefproxycheckandenforcesizelimit
 [.checkExchangeForNoArchive(exchange)]:#mischiefproxycheckexchangefornoarchiveexchange
+[new exports.MischiefIntercepter(capture)]:#new-exportsmischiefinterceptercapture
+[.setup(_page)]:#mischiefinterceptersetup_page
 [.checkRequestAgainstBlocklist(session)]:#mischiefproxycheckrequestagainstblocklistsession
 [.getOrInitExchange(id, type)]:#mischiefproxygetorinitexchangeid-type
 [.intercept(type, data, session)]:#mischiefproxyintercepttype-data-session
