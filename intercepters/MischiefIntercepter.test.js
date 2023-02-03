@@ -34,7 +34,7 @@ test('checkExchangeForNoArchive returns true when noarchive directive is present
     noArchiveCount += Number(await intercepter.checkExchangeForNoArchive(exchange))
   }
 
-  assert(noArchiveCount === 1)
+  assert.equal(noArchiveCount, 1)
 })
 
 test('checkExchangeForNoArchive returns false when noarchive directive is not present in exchange.', async (_t) => {
@@ -46,7 +46,7 @@ test('checkExchangeForNoArchive returns false when noarchive directive is not pr
     noArchiveCount += Number(await intercepter.checkExchangeForNoArchive(exchange))
   }
 
-  assert(noArchiveCount === 0)
+  assert.equal(noArchiveCount, 0)
 })
 
 test('checkAndEnforceSizeLimit interrupts capture when size limit is reached.', async (_t) => {
