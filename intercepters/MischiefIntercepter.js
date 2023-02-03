@@ -14,7 +14,14 @@ import { bodyToString } from '../utils/http.js'
  * @param {Mischief} capture - a Mischief capture
  */
 export class MischiefIntercepter {
+  /**
+   * @param {Mischief} capture
+   */
   constructor (capture) {
+    if (capture instanceof Mischief === false) {
+      throw new Error('"capture" must be an instance of Mischief.')
+    }
+
     this.capture = capture
     return this
   }
@@ -37,7 +44,6 @@ export class MischiefIntercepter {
 
   /**
    * Total byte length of all data recorded to exchanges
-   *
    * @type {integer}
    */
   byteLength = 0
@@ -55,14 +61,25 @@ export class MischiefIntercepter {
     return this.capture.options
   }
 
+  /**
+   * Needs to be implemented by inheriting class.
+   * @param {*} _page
+   */
   setup (_page) {
-    throw new Error('method must be implemented')
+    throw new Error('Method must be implemented.')
   }
 
+  /**
+   * Needs to be implemented by inheriting class.
+   */
   teardown () {
-    throw new Error('method must be implemented')
+    throw new Error('Method must be implemented.')
   }
 
+  /**
+   * Options to be given to Playwright
+   * @type {object}
+   */
   get contextOptions () {
     return {}
   }

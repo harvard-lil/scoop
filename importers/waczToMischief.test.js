@@ -10,7 +10,7 @@ import { valueOf } from '../utils/valueof.js'
 
 import { defaultTestOptions } from '../options.test.js'
 
-test('waczToMischief: Roundtrip should produce identical Mischief object.', async (_t) => {
+test('waczToMischief\'s roundtrip should produce identical Mischief object.', async (_t) => {
   const fpath = `${CONSTANTS.TMP_PATH}${uuidv4()}.wacz`
   const capture = new Mischief('https://example.com', defaultTestOptions)
 
