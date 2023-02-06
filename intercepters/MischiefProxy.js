@@ -1,6 +1,7 @@
+import ProxyServer from 'transparent-proxy'
+
 import { MischiefIntercepter } from './MischiefIntercepter.js'
 import { MischiefProxyExchange } from '../exchanges/index.js'
-import ProxyServer from 'transparent-proxy'
 import { searchBlocklistFor } from '../utils/blocklist.js'
 
 /**
@@ -12,8 +13,10 @@ import { searchBlocklistFor } from '../utils/blocklist.js'
  * without parsing, preserving headers et al as delivered.
  */
 export class MischiefProxy extends MischiefIntercepter {
+  /** @type {ProxyServer} */
   #connection
 
+  /** @type {MischiefProxyExchange[]} */
   exchanges = []
 
   /**
@@ -37,6 +40,7 @@ export class MischiefProxy extends MischiefIntercepter {
 
   /**
    * Closes the proxy server
+   * @returns {void}
    */
   teardown () {
     this.#connection.close()
@@ -58,15 +62,22 @@ export class MischiefProxy extends MischiefIntercepter {
   }
 
   /**
-   * Returns an exchange based on the session id and type ("request" or "response").
+   * Returns an exchange based on the exchange connectionId and type.
    * If the type is a request and there's already been a response on that same session,
    * create a new exchange. Otherwise append to continue the exchange.
    *
-   * @param {string} id
-   * @param {string} type
+   * @param {string} connectionId
+   * @param {string} [type='request'] - Can be "request" or "response"
    */
-  getOrInitExchange (connectionId, type) {
-    // TODO: For loop-ify for clarity and maintainability?
+  getOrInitExchange (connectionId, type = 'request') {
+    if (!connectionId) {
+      throw new Error('"connectionId" must be provided.')
+    }
+
+    if (['response', 'request'].includes(type) === false) {
+      throw new Error('"type" must be "request" or "response".')
+    }
+
     return (
       this.exchanges.findLast(ex => ex.connectionId === connectionId && (type === 'response' || !ex.responseRaw)) ||
         this.exchanges[this.exchanges.push(new MischiefProxyExchange({ connectionId })) - 1]
@@ -107,6 +118,11 @@ export class MischiefProxy extends MischiefIntercepter {
     return true
   }
 
+  /**
+   * @param {Buffer} data
+   * @param {Session} session
+   * @returns {Buffer}
+   */
   interceptRequest = (data, session) => {
     this.checkRequestAgainstBlocklist(session) // May interrupt request
 
@@ -115,6 +131,11 @@ export class MischiefProxy extends MischiefIntercepter {
     }
   }
 
+  /**
+   * @param {Buffer} data
+   * @param {Session} session
+   * @returns {Buffer}
+   */
   interceptResponse = (data, session) => {
     return this.intercept('response', data, session)
   }
@@ -126,6 +147,7 @@ export class MischiefProxy extends MischiefIntercepter {
    * @param {string} type
    * @param {Buffer} data
    * @param {Session} session
+   * @returns {Buffer}
    */
   intercept (type, data, session) {
     // Early exit with unmodified data if not recording exchanges

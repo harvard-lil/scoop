@@ -3,6 +3,8 @@ import { mkdir, writeFile } from 'fs/promises'
 import { Mischief } from './Mischief.js'
 
 const toCapture = [
+  { name: 'lil', url: 'https://lil.law.harvard.edu' }
+  /*
   { name: 'chrome-update', url: 'http://update.googleapis.com/service/update2/json?cup2key=12:EhHNMQsbmQEJvI_P7gxZrdMKErBWF-wj-U6U8Mi83co&cup2hreq=1338f1651449d867f560f6fd72886fa074753bf76320d7864159e993fc33527b' },
   { name: 'lil', url: 'https://lil.law.harvard.edu' },
   { name: 'example-http', url: 'http://example.com' },
@@ -23,6 +25,7 @@ const toCapture = [
   { name: 'facebook-post', url: 'https://www.facebook.com/1074538035934151/posts/3646788408709088' },
   { name: 'tiktok', url: 'https://www.tiktok.com/@wbznewsradio/video/7110266333144583466' },
   { name: 'instagram-video', url: 'https://www.instagram.com/reel/CguYHRlAKVX/' }
+  */
 ]
 
 const path = './examples/'
