@@ -93,8 +93,8 @@ export class MischiefIntercepter {
    */
   async checkExchangeForNoArchive (exchange) {
     // Exit early if this isn't an HTML document
-    if (!exchange?.response?.combinedBody ||
-        !exchange?.response?.headers?.get('content-type')?.startsWith('text/html')) {
+    if (!exchange?.response?.bodyCombined ||
+        !exchange?.response?.headers?.get('content-type')?.toLowerCase().startsWith('text/html')) {
       return false
     }
 
