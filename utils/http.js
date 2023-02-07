@@ -101,16 +101,16 @@ export async function bodyToString (body, contentEncoding = null) {
 
 /**
  * Maps HTTP headers into an key / value association.
- * @param {Array} headers - Parsed HTTP headers presented as an array.
- * @returns {object}
+ * @param {Array} headersArray - Parsed HTTP headers presented as a flat array.
+ * @returns {Headers}
  */
-export function headersArrayToMap (headers) {
-  if (!headers || headers?.constructor?.name !== 'Array' || headers.length < 2) {
-    return {}
+export function flatArrayToHeadersObject (headersArray) {
+  if (headersArray?.constructor !== Array || headersArray.length % 2 === 1) {
+    throw new Error('headers must be an array with an even number of items as matched key value pairs')
   }
 
-  return Object.fromEntries(
-    headers.reduce(
+  return new Headers(
+    headersArray.reduce(
       (result, _value, index, sourceArray) =>
         index % 2 === 0 ? [...result, sourceArray.slice(index, index + 2)] : result,
       []

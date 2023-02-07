@@ -252,7 +252,7 @@ export class Mischief {
         name: 'Screenshot',
         main: async (page) => {
           const url = 'file:///screenshot.png'
-          const httpHeaders = { 'content-type': 'image/png' }
+          const httpHeaders = new Headers({ 'content-type': 'image/png' })
           const body = await page.screenshot({ fullPage: true })
           const isEntryPoint = true
           const description = `Capture Time Screenshot of ${this.url}`
@@ -267,10 +267,10 @@ export class Mischief {
         name: 'DOM snapshot',
         main: async (page) => {
           const url = 'file:///dom-snapshot.html'
-          const httpHeaders = {
+          const httpHeaders = new Headers({
             'content-type': 'text/html',
             'content-disposition': 'Attachment'
-          }
+          })
           const body = Buffer.from(await page.content())
           const isEntryPoint = true
           const description = `Capture Time DOM Snapshot of ${this.url}`
@@ -502,7 +502,7 @@ export class Mischief {
         // Add favicon to exchanges as a generated exchange (as it was captured out of band)
         this.addGeneratedExchange(
           this.pageInfo.faviconUrl,
-          Object.fromEntries(response.headers.entries()),
+          response.headers,
           this.pageInfo.favicon,
           false,
           'Favicon (captured out-of-band by Mischief)'
@@ -607,7 +607,7 @@ export class Mischief {
       if (file.startsWith('video-extracted-') && file.endsWith('.mp4')) {
         try {
           const url = `file:///${file}`
-          const httpHeaders = { 'content-type': 'video/mp4' }
+          const httpHeaders = new Headers({ 'content-type': 'video/mp4' })
           const body = await readFile(`${this.captureTmpFolderPath}${file}`)
           const isEntryPoint = false // TODO: Reconsider whether this should be an entry point.
 
@@ -630,7 +630,7 @@ export class Mischief {
       if (file.startsWith('video-extracted-') && file.endsWith('.vtt')) {
         try {
           const url = `file:///${file}`
-          const httpHeaders = { 'content-type': 'text/vtt' }
+          const httpHeaders = new Headers({ 'content-type': 'text/vtt' })
           const body = await readFile(`${this.captureTmpFolderPath}${file}`)
           const isEntryPoint = false
           const locale = file.split('.')[1]
@@ -672,7 +672,7 @@ export class Mischief {
       }
 
       const url = 'file:///video-extracted-metadata.json'
-      const httpHeaders = { 'content-type': 'application/json' }
+      const httpHeaders = new Headers({ 'content-type': 'application/json' })
       const body = Buffer.from(JSON.stringify(metadataParsed, null, 2))
       const isEntryPoint = false
 
@@ -698,7 +698,7 @@ export class Mischief {
       })
 
       const url = 'file:///video-extracted-summary.html'
-      const httpHeaders = { 'content-type': 'text/html' }
+      const httpHeaders = new Headers({ 'content-type': 'text/html' })
       const body = Buffer.from(html)
       const isEntryPoint = true
       const description = `Extracted Video data from: ${this.url}`
@@ -762,7 +762,7 @@ export class Mischief {
     }
 
     const url = 'file:///pdf-snapshot.pdf'
-    const httpHeaders = { 'content-type': 'application/pdf' }
+    const httpHeaders = new Headers({ 'content-type': 'application/pdf' })
     const body = pdf
     const isEntryPoint = true
     const description = `Capture Time PDF Snapshot of ${this.url}`
@@ -832,7 +832,7 @@ export class Mischief {
       })
 
       const url = 'file:///provenance-summary.html'
-      const httpHeaders = { 'content-type': 'text/html' }
+      const httpHeaders = new Headers({ 'content-type': 'text/html' })
       const body = Buffer.from(html)
       const isEntryPoint = true
       const description = 'Provenance Summary'

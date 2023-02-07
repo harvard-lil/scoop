@@ -108,7 +108,7 @@ const getExchanges = async (zip) => {
           description: record.warcHeaders.headers.get('description'),
           response: {
             startLine: record.httpHeaders.statusline,
-            headers: Object.fromEntries(record.getResponseInfo().headers),
+            headers: new Headers(record.getResponseInfo().headers),
             body: await record.readFully(false)
           }
         }))

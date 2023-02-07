@@ -1,7 +1,7 @@
 import {
   getStartLine,
   getBody,
-  headersArrayToMap
+  flatArrayToHeadersObject
 } from '../utils/http.js'
 
 import { MischiefExchange } from './MischiefExchange.js'
@@ -31,10 +31,7 @@ export class MischiefProxyExchange extends MischiefExchange {
     if (!this._url) {
       this._url = this.request.startLine.split(' ')[1]
       if (this._url[0] === '/') {
-        // find the header in a case-insensitive fashion
-        const hostKey = Object.keys(this.request.headers).find(k => k.toLowerCase() === 'host')
-        const host = this.request.headers[hostKey]
-        this._url = `https://${host}${this._url}`
+        this._url = `https://${this.request.headers.get('host')}${this._url}`
       }
     }
 
@@ -85,8 +82,9 @@ export class MischiefProxyExchange extends MischiefExchange {
       const parsed = MischiefHTTPParser.parseRequest(this.requestRaw)
       this._request = {
         startLine: getStartLine(this.requestRaw).toString(),
-        headers: headersArrayToMap(parsed.headers),
-        body: getBody(this.requestRaw)
+        headers: flatArrayToHeadersObject(parsed.headers),
+        body: getBody(this.requestRaw),
+        bodyCombined: parsed.body
       }
     }
     return this._request
@@ -102,8 +100,9 @@ export class MischiefProxyExchange extends MischiefExchange {
       const parsed = MischiefHTTPParser.parseResponse(this.responseRaw)
       this._response = {
         startLine: getStartLine(this.responseRaw).toString(),
-        headers: headersArrayToMap(parsed.headers),
-        body: getBody(this.responseRaw)
+        headers: flatArrayToHeadersObject(parsed.headers),
+        body: getBody(this.responseRaw),
+        bodyCombined: parsed.body
       }
     }
     return this._response

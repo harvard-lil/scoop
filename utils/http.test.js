@@ -13,7 +13,7 @@ import {
   getBody,
   bodyStartIndex,
   bodyToString,
-  headersArrayToMap
+  flatArrayToHeadersObject
 } from './http.js'
 
 const CRLF = '\r\n'
@@ -74,13 +74,13 @@ test('bodyToString should handle brotli encoded bodies.', async (_t) => {
   assert.equal(body, bodyFixture)
 })
 
-test('headersArrayToMap should return an empty object if given anything other than an array.', async (_t) => {
+test('flatArrayToHeadersObject should throw if given anything other than an array with key value pairs.', async (_t) => {
   for (const headers of [null, true, false, 12, 'FOO', {}, () => {}, ['foo']]) {
-    assert.deepEqual(headersArrayToMap(headers), {})
+    assert.throws(flatArrayToHeadersObject(headers))
   }
 })
 
-test('headersArrayToMap should return a hashmap for a given linear representation of headers.', async (_t) => {
+test('flatArrayToHeadersObject should return a Headers object for a given linear representation of headers.', async (_t) => {
   const input = [
     'age', '76448',
     'content-encoding', 'gzip',
@@ -88,11 +88,11 @@ test('headersArrayToMap should return a hashmap for a given linear representatio
     'content-type', 'text/html; charset=utf-8'
   ]
 
-  const expectedOutput = {
+  const expectedOutput = new Headers({
     age: '76448',
     'content-encoding': 'br',
     'content-type': 'text/html; charset=utf-8'
-  }
+  })
 
-  assert.deepEqual(headersArrayToMap(input), expectedOutput)
+  assert.deepEqual(flatArrayToHeadersObject(input), expectedOutput)
 })

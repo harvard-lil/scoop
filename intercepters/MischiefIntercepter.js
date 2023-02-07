@@ -92,30 +92,18 @@ export class MischiefIntercepter {
    * @returns {boolean} - `true` if request contained "noarchive"
    */
   async checkExchangeForNoArchive (exchange) {
-    let responseBody = null
-    let contentType = null
-    let contentEncoding = null
-    const parsedHeaders = new Headers(exchange?.response?.headers) // eslint-disable-line
-
-    // Skip if a content-type was found, and it is not `text/html`
-    contentType = parsedHeaders.get('content-type')
-
-    if (contentType && !contentType.startsWith('text/html')) {
-      return false
-    }
-
-    // Skip if body is empty
-    responseBody = exchange?.response?.body
-
-    if (!responseBody) {
+    // Exit early if this isn't an HTML document
+    if (!exchange?.response?.combinedBody ||
+        !exchange?.response?.headers?.get('content-type')?.startsWith('text/html')) {
       return false
     }
 
     // Handle deflate / gzip / brotly compression
-    contentEncoding = parsedHeaders.get('content-encoding')
+    const contentEncoding = exchange.response.headers.get('content-encoding')
 
+    let responseBody = null
     try {
-      responseBody = await bodyToString(responseBody, contentEncoding)
+      responseBody = await bodyToString(exchange.response.bodyCombined, contentEncoding)
     } catch (err) {
       this.capture.log.info(`Error while decompressing ${contentEncoding} body. Assuming "noarchive" directive is absent.`)
       this.capture.log.trace(err)
@@ -136,8 +124,8 @@ export class MischiefIntercepter {
     }
 
     // If we reached this point: this exchange is "noarchive".
-    this.capture.log.info(`${exchange?.response?.url} was tagged with the "noarchive" directive.`)
-    this.capture.provenanceInfo.noArchiveUrls.push(exchange?.response?.url)
+    this.capture.log.info(`${exchange.url} was tagged with the "noarchive" directive.`)
+    this.capture.provenanceInfo.noArchiveUrls.push(exchange.url)
     return true
   }
 
