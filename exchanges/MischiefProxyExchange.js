@@ -1,4 +1,8 @@
-import { bodyStartIndex, headersArrayToMap } from '../utils/http.js'
+import {
+  getStartLine,
+  getBody,
+  flatArrayToHeadersObject
+} from '../utils/http.js'
 
 import { MischiefExchange } from './MischiefExchange.js'
 import { MischiefHTTPParser } from '../parsers/index.js'
@@ -23,6 +27,23 @@ export class MischiefProxyExchange extends MischiefExchange {
     }
   }
 
+  get url () {
+    if (!this._url) {
+      this._url = this.request.startLine.split(' ')[1]
+      if (this._url[0] === '/') {
+        this._url = `https://${this.request.headers.get('host')}${this._url}`
+      }
+    }
+
+    return this._url
+  }
+
+  set url (val) {
+    // throw on invalid url
+    new URL(val) // eslint-disable-line
+    this._url = val
+  }
+
   /**
    * @type {?Buffer}
    * @private
@@ -37,16 +58,6 @@ export class MischiefProxyExchange extends MischiefExchange {
   set requestRaw (val) {
     this._request = null
     this._requestRaw = val
-  }
-
-  /** @type {?Buffer} */
-  get requestRawHeaders () {
-    return this.requestRaw.subarray(0, bodyStartIndex(this.requestRaw))
-  }
-
-  /** @type {?Buffer} */
-  get requestRawBody () {
-    return this.requestRaw.subarray(bodyStartIndex(this.requestRaw))
   }
 
   /**
@@ -65,26 +76,18 @@ export class MischiefProxyExchange extends MischiefExchange {
     this._responseRaw = val
   }
 
-  /** @type {Buffer} */
-  get responseRawHeaders () {
-    return this.responseRaw.subarray(0, bodyStartIndex(this.responseRaw))
-  }
-
-  /** @type {Buffer} */
-  get responseRawBody () {
-    return this.responseRaw.subarray(bodyStartIndex(this.responseRaw))
-  }
-
-  /** @type {?MischiefExchange~RequestOrResponse} */
+  /** @type {?MischiefExchange~Message} */
   get request () {
     if (!this._request && this.requestRaw) {
-      this._request = MischiefHTTPParser.parseRequest(this.requestRaw)
-
-      if (this._request.url[0] === '/') {
-        this._request.url = `https://${this._request.headers[1]}${this._request.url}`
+      const parsed = MischiefHTTPParser.parseRequest(this.requestRaw)
+      const body = getBody(this.requestRaw)
+      this._request = {
+        startLine: getStartLine(this.requestRaw).toString(),
+        headers: flatArrayToHeadersObject(parsed.headers),
+        body,
+        // use the existing raw buffer if they're identical to perhaps free up memory
+        bodyCombined: Buffer.compare(body, parsed.body) === 0 ? body : parsed.body
       }
-
-      this._request.headers = headersArrayToMap(this._request.headers)
     }
     return this._request
   }
@@ -93,12 +96,18 @@ export class MischiefProxyExchange extends MischiefExchange {
     this._request = val
   }
 
-  /** @type {?MischiefExchange~RequestOrResponse} */
+  /** @type {?MischiefExchange~Message} */
   get response () {
     if (!this._response && this.responseRaw) {
-      this._response = MischiefHTTPParser.parseResponse(this.responseRaw)
-      this._response.headers = headersArrayToMap(this._response.headers)
-      this._response.url = this.request.url
+      const parsed = MischiefHTTPParser.parseResponse(this.responseRaw)
+      const body = getBody(this.responseRaw)
+      this._response = {
+        startLine: getStartLine(this.responseRaw).toString(),
+        headers: flatArrayToHeadersObject(parsed.headers),
+        body,
+        // use the existing raw buffer if they're identical to perhaps free up memory
+        bodyCombined: Buffer.compare(body, parsed.body) === 0 ? body : parsed.body
+      }
     }
     return this._response
   }

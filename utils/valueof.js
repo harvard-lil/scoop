@@ -48,6 +48,9 @@ export function valueOf (source) {
         'response'
       ])
     }
+    case Headers: {
+      return Object.fromEntries(source.entries())
+    }
     default: {
       return source
     }

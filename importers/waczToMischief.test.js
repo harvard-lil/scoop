@@ -5,13 +5,13 @@ import { v4 as uuidv4 } from 'uuid'
 import { writeFile, rm } from 'fs/promises'
 
 import { Mischief } from '../Mischief.js'
-import * as CONSTANTS from '../constants.js'
+import { TMP_PATH } from '../constants.js'
 import { valueOf } from '../utils/valueof.js'
 
-import { defaultTestOptions } from '../options.test.js'
+import { defaultTestOptions } from '../options.js'
 
 test('waczToMischief\'s roundtrip should produce identical Mischief object.', async (_t) => {
-  const fpath = `${CONSTANTS.TMP_PATH}${uuidv4()}.wacz`
+  const fpath = `${TMP_PATH}${uuidv4()}.wacz`
   const capture = new Mischief('https://example.com', defaultTestOptions)
 
   await capture.capture()

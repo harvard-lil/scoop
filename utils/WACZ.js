@@ -383,9 +383,9 @@ export function hash (buffer) {
 export function mischiefExchangeToPageLine (exchange) {
   return {
     id: exchange.id,
-    url: exchange.response.url,
+    url: exchange.url,
     ts: exchange.date.toISOString(),
-    title: exchange?.description || `High-Fidelity Web Capture of ${exchange.response.url}`
+    title: exchange?.description || `High-Fidelity Web Capture of ${exchange.url}`
   }
 }
 

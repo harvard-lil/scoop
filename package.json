@@ -4,6 +4,12 @@
   "description": "",
   "main": "index.js",
   "type": "module",
+  "engines" : { 
+    "node" : ">=18.0.0"
+  },
+  "standard": {
+    "globals": [ "Headers" ]
+  },
   "scripts": {
     "postinstall": "bash postinstall.sh",
     "standard-fix": "standard --fix",

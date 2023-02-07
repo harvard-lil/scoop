@@ -252,7 +252,7 @@ export class Mischief {
         name: 'Screenshot',
         main: async (page) => {
           const url = 'file:///screenshot.png'
-          const httpHeaders = { 'content-type': 'image/png' }
+          const httpHeaders = new Headers({ 'content-type': 'image/png' })
           const body = await page.screenshot({ fullPage: true })
           const isEntryPoint = true
           const description = `Capture Time Screenshot of ${this.url}`
@@ -267,10 +267,10 @@ export class Mischief {
         name: 'DOM snapshot',
         main: async (page) => {
           const url = 'file:///dom-snapshot.html'
-          const httpHeaders = {
+          const httpHeaders = new Headers({
             'content-type': 'text/html',
             'content-disposition': 'Attachment'
-          }
+          })
           const body = Buffer.from(await page.content())
           const isEntryPoint = true
           const description = `Capture Time DOM Snapshot of ${this.url}`
@@ -502,7 +502,7 @@ export class Mischief {
         // Add favicon to exchanges as a generated exchange (as it was captured out of band)
         this.addGeneratedExchange(
           this.pageInfo.faviconUrl,
-          Object.fromEntries(response.headers.entries()),
+          response.headers,
           this.pageInfo.favicon,
           false,
           'Favicon (captured out-of-band by Mischief)'
@@ -514,7 +514,7 @@ export class Mischief {
     // Otherwise: look for it in exchanges
     } else {
       for (const exchange of this.intercepter.exchanges) {
-        if (exchange?.request?.url && exchange.request.url === this.pageInfo.faviconUrl) {
+        if (exchange?.url && exchange.url === this.pageInfo.faviconUrl) {
           this.pageInfo.favicon = exchange.response.body
         }
       }
@@ -607,7 +607,7 @@ export class Mischief {
       if (file.startsWith('video-extracted-') && file.endsWith('.mp4')) {
         try {
           const url = `file:///${file}`
-          const httpHeaders = { 'content-type': 'video/mp4' }
+          const httpHeaders = new Headers({ 'content-type': 'video/mp4' })
           const body = await readFile(`${this.captureTmpFolderPath}${file}`)
           const isEntryPoint = false // TODO: Reconsider whether this should be an entry point.
 
@@ -630,7 +630,7 @@ export class Mischief {
       if (file.startsWith('video-extracted-') && file.endsWith('.vtt')) {
         try {
           const url = `file:///${file}`
-          const httpHeaders = { 'content-type': 'text/vtt' }
+          const httpHeaders = new Headers({ 'content-type': 'text/vtt' })
           const body = await readFile(`${this.captureTmpFolderPath}${file}`)
           const isEntryPoint = false
           const locale = file.split('.')[1]
@@ -672,7 +672,7 @@ export class Mischief {
       }
 
       const url = 'file:///video-extracted-metadata.json'
-      const httpHeaders = { 'content-type': 'application/json' }
+      const httpHeaders = new Headers({ 'content-type': 'application/json' })
       const body = Buffer.from(JSON.stringify(metadataParsed, null, 2))
       const isEntryPoint = false
 
@@ -687,7 +687,7 @@ export class Mischief {
     // Generate summary page
     //
     try {
-      const html = nunjucks.render(`${CONSTANTS.TEMPLATES_DIR}video-extracted-summary.njk`, {
+      const html = nunjucks.render(`${CONSTANTS.TEMPLATES_PATH}video-extracted-summary.njk`, {
         url: this.url,
         now: new Date().toISOString(),
         videoSaved,
@@ -698,7 +698,7 @@ export class Mischief {
       })
 
       const url = 'file:///video-extracted-summary.html'
-      const httpHeaders = { 'content-type': 'text/html' }
+      const httpHeaders = new Headers({ 'content-type': 'text/html' })
       const body = Buffer.from(html)
       const isEntryPoint = true
       const description = `Extracted Video data from: ${this.url}`
@@ -762,7 +762,7 @@ export class Mischief {
     }
 
     const url = 'file:///pdf-snapshot.pdf'
-    const httpHeaders = { 'content-type': 'application/pdf' }
+    const httpHeaders = new Headers({ 'content-type': 'application/pdf' })
     const body = pdf
     const isEntryPoint = true
     const description = `Capture Time PDF Snapshot of ${this.url}`
@@ -832,7 +832,7 @@ export class Mischief {
       })
 
       const url = 'file:///provenance-summary.html'
-      const httpHeaders = { 'content-type': 'text/html' }
+      const httpHeaders = new Headers({ 'content-type': 'text/html' })
       const body = Buffer.from(html)
       const isEntryPoint = true
       const description = 'Provenance Summary'
@@ -847,13 +847,13 @@ export class Mischief {
    * Generates a MischiefGeneratedExchange for generated content and adds it to `exchanges` unless time limit was reached.
    *
    * @param {string} url
-   * @param {object} httpHeaders
+   * @param {object} headers
    * @param {Buffer} body
    * @param {boolean} isEntryPoint
    * @param {string} description
    * @returns {boolean} true if generated exchange is successfully added
    */
-  addGeneratedExchange (url, httpHeaders, body, isEntryPoint = false, description = '') {
+  addGeneratedExchange (url, headers, body, isEntryPoint = false, description = '') {
     const remainingSpace = this.options.maxSize - this.intercepter.byteLength
 
     if (this.state !== Mischief.states.CAPTURE ||
@@ -865,15 +865,12 @@ export class Mischief {
 
     this.exchanges.push(
       new MischiefGeneratedExchange({
+        url,
         description,
         isEntryPoint: Boolean(isEntryPoint),
         response: {
-          url,
-          headers: httpHeaders,
-          versionMajor: 1,
-          versionMinor: 1,
-          statusCode: 200,
-          statusMessage: 'OK',
+          startLine: 'HTTP/1.1 200 OK',
+          headers,
           body
         }
       })
@@ -926,7 +923,7 @@ export class Mischief {
 
     for (const exchange of this.exchanges) {
       if (exchange instanceof MischiefGeneratedExchange) {
-        const key = exchange.response.url.replace('file:///', '')
+        const key = exchange.url.replace('file:///', '')
         generatedExchanges[key] = exchange
       }
     }

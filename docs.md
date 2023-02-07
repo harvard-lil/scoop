@@ -39,7 +39,7 @@ Uses a proxy to allow for comprehensive and raw network interception.</p>
     * _static_
         * [.fromWacz(zipPath)]
     * _instance_
-        * [.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description)]
+        * [.addGeneratedExchange(url, headers, body, isEntryPoint, description)]
         * [.blocklist]
         * [.capture()]
         * [.captureTmpFolderPath]
@@ -89,7 +89,7 @@ const myArchive = await myCapture.toWarc();
 | zipPath | `string` | <p>Path to .wacz file.</p> |
 
 
-### mischief.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description)
+### mischief.addGeneratedExchange(url, headers, body, isEntryPoint, description)
 
 <p>Generates a MischiefGeneratedExchange for generated content and adds it to <code>exchanges</code> unless time limit was reached.</p>
 
@@ -99,7 +99,7 @@ const myArchive = await myCapture.toWarc();
 | Param | Type | Default |
 | --- | --- | --- |
 | url | `string` |  | 
-| httpHeaders | `object` |  | 
+| headers | `object` |  | 
 | body | `Buffer` |  | 
 | isEntryPoint | `boolean` | `false` | 
 | description | `string` |  | 
@@ -262,8 +262,9 @@ To be specialized by interception type (i.e: [MischiefProxyExchange].</p>
         * *[.isEntryPoint]*
         * *[.request]*
         * *[.response]*
+        * *[.url]*
     * _inner_
-        * *[~RequestOrResponse]*
+        * *[~Message]*
 
 
 ### *new MischiefExchange(\[props\])*
@@ -298,24 +299,21 @@ To be specialized by interception type (i.e: [MischiefProxyExchange].</p>
 
 **Kind**: instance property of [`MischiefExchange`]  
 
-### *MischiefExchange~RequestOrResponse*
+### *mischiefExchange.url*
+
+**Kind**: instance property of [`MischiefExchange`]  
+
+### *MischiefExchange~Message*
 
 **Kind**: inner typedef of [`MischiefExchange`]  
 **Properties**
 
 | Name | Type | Description |
 | --- | --- | --- |
-| shouldKeepAlive | `boolean` |  |
-| upgrade | `boolean` |  |
-| method | `string` |  |
-| url | `string` |  |
-| versionMajor | `number` |  |
-| versionMinor | `number` |  |
-| headers | `object` |  |
+| startLine | `String` |  |
+| headers | `Headers` |  |
 | body | `Buffer` |  |
-| trailers | `Array` |  |
-| statusCode | `number` | <p>Response only</p> |
-| statusMessage | `string` | <p>Response only</p> |
+| bodyCombined | `Buffer` | <p>The body with all chunks combined</p> |
 
 
 ## MischiefGeneratedExchange
@@ -335,6 +333,7 @@ typically used to inject additional resources into an archive</p>
     * [.isEntryPoint]
     * [.request]
     * [.response]
+    * [.url]
 
 
 ### new MischiefGeneratedExchange(\[props\])
@@ -370,6 +369,10 @@ typically used to inject additional resources into an archive</p>
 **Kind**: instance property of [`MischiefGeneratedExchange`]  
 
 ### mischiefGeneratedExchange.response
+
+**Kind**: instance property of [`MischiefGeneratedExchange`]  
+
+### mischiefGeneratedExchange.url
 
 **Kind**: instance property of [`MischiefGeneratedExchange`]  
 
@@ -696,12 +699,9 @@ once again set to <code>true</code></p>
     * [.isEntryPoint]
     * [.request]
     * [.requestRaw]
-    * [.requestRawBody]
-    * [.requestRawHeaders]
     * [.response]
     * [.responseRaw]
-    * [.responseRawBody]
-    * [.responseRawHeaders]
+    * [.url]
 
 
 ### new MischiefProxyExchange(\[props\])
@@ -737,14 +737,6 @@ once again set to <code>true</code></p>
 
 **Kind**: instance property of [`MischiefProxyExchange`]  
 
-### mischiefProxyExchange.requestRawBody
-
-**Kind**: instance property of [`MischiefProxyExchange`]  
-
-### mischiefProxyExchange.requestRawHeaders
-
-**Kind**: instance property of [`MischiefProxyExchange`]  
-
 ### mischiefProxyExchange.response
 
 **Kind**: instance property of [`MischiefProxyExchange`]  
@@ -754,13 +746,10 @@ once again set to <code>true</code></p>
 
 **Kind**: instance property of [`MischiefProxyExchange`]  
 
-### mischiefProxyExchange.responseRawBody
+### mischiefProxyExchange.url
 
 **Kind**: instance property of [`MischiefProxyExchange`]  
-
-### mischiefProxyExchange.responseRawHeaders
-
-**Kind**: instance property of [`MischiefProxyExchange`]  
+**Overrides**: `url`  
 
 ## CONSTANTS
 
@@ -1031,7 +1020,7 @@ Classes in this module are meant to be used to parse raw network traffic (i.e. H
 [.startedAt]:#mischiefstartedat
 [.state]:#mischiefstate
 [.states]:#mischiefstates
-[.url]:#mischiefurl
+[.url]:#mischiefproxyexchangeurl
 [`Mischief`]:#new-mischiefurl-options
 [options.defaultOptions]:options.defaultOptions
 [Page]:https://playwright.dev/docs/api/class-page
@@ -1041,7 +1030,7 @@ Classes in this module are meant to be used to parse raw network traffic (i.e. H
 [.isEntryPoint]:#mischiefproxyexchangeisentrypoint
 [.request]:#mischiefproxyexchangerequest
 [.response]:#mischiefproxyexchangeresponse
-[~RequestOrResponse]:#mischiefexchangerequestorresponse
+[~Message]:#mischiefexchangemessage
 [`MischiefExchange`]:#new-mischiefexchangeprops
 [.description]:#mischiefgeneratedexchangedescription
 [`MischiefGeneratedExchange`]:#new-mischiefgeneratedexchangeprops
@@ -1056,11 +1045,7 @@ Classes in this module are meant to be used to parse raw network traffic (i.e. H
 [`MischiefProxy`]:#mischiefproxy
 [`exchanges`]:#exchanges
 [.requestRaw]:#mischiefproxyexchangerequestraw
-[.requestRawBody]:#mischiefproxyexchangerequestrawbody
-[.requestRawHeaders]:#mischiefproxyexchangerequestrawheaders
 [.responseRaw]:#mischiefproxyexchangeresponseraw
-[.responseRawBody]:#mischiefproxyexchangeresponserawbody
-[.responseRawHeaders]:#mischiefproxyexchangeresponserawheaders
 [`MischiefProxyExchange`]:#new-mischiefproxyexchangeprops
 [.ASSETS_PATH]:#constantsassets_path
 [.BASE_PATH]:#constantsbase_path
@@ -1080,7 +1065,7 @@ Classes in this module are meant to be used to parse raw network traffic (i.e. H
 [`options`]:#options
 [new Mischief(url, \[options\])]:#new-mischiefurl-options
 [.fromWacz(zipPath)]:#mischieffromwaczzippath
-[.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description)]:#mischiefaddgeneratedexchangeurl-httpheaders-body-isentrypoint-description
+[.addGeneratedExchange(url, headers, body, isEntryPoint, description)]:#mischiefaddgeneratedexchangeurl-headers-body-isentrypoint-description
 [.capture()]:#mischiefcapture
 [.extractGeneratedExchanges()]:#mischiefextractgeneratedexchanges
 [.filterUrl(url)]:#mischieffilterurlurl

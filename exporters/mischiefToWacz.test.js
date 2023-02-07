@@ -8,7 +8,7 @@ import { mischiefToWacz } from './mischiefToWacz.js'
 import { WACZ } from '../utils/WACZ.js'
 import { isZip } from '../utils/zip.js'
 
-import { defaultTestOptions } from '../options.test.js'
+import { defaultTestOptions } from '../options.js'
 
 /**
  * Makes a capture of https://example.com and returns the resulting Mischief object.
