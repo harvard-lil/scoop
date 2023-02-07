@@ -19,11 +19,25 @@ export class MischiefExchange {
     }
   }
 
-  /** @type {?string} */
+  /** @type {string} */
   id = uuidv4()
 
   /** @type {Date} */
   date = new Date()
+
+  /**
+   * @type {?string}
+   * @private
+   */
+  _url
+
+  get url () {
+    return this._url
+  }
+
+  set url (val) {
+    this._url = val
+  }
 
   /** @type {boolean} */
   isEntryPoint = false
@@ -41,7 +55,7 @@ export class MischiefExchange {
     this._request = val
   }
 
-  /** @type {?MischiefExchange~RequestOrResponse} */
+  /** @type {?MischiefExchange~Message} */
   get request () {
     return this._request
   }
@@ -56,23 +70,15 @@ export class MischiefExchange {
     this._response = val
   }
 
-  /** @type {?MischiefExchange~RequestOrResponse} */
+  /** @type {?MischiefExchange~Message} */
   get response () {
     return this._response
   }
 }
 
 /**
- * @typedef MischiefExchange~RequestOrResponse
- * @property {boolean} shouldKeepAlive
- * @property {boolean} upgrade
- * @property {string} method
- * @property {string} url
- * @property {number} versionMajor
- * @property {number} versionMinor
+ * @typedef MischiefExchange~Message
+ * @property {String} startLine
  * @property {object} headers
  * @property {Buffer} body
- * @property {Array} trailers
- * @property {?number} statusCode - Response only
- * @property {?string} statusMessage - Response only
  */

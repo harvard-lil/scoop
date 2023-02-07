@@ -5,7 +5,6 @@ import { Readable } from 'stream'
 import { Mischief } from '../Mischief.js'
 import { MischiefProxyExchange, MischiefGeneratedExchange } from '../exchanges/index.js'
 import { WARCParser } from 'warcio'
-import { versionFromStatusLine } from '../utils/http.js'
 
 /**
  * @function waczToMischief
@@ -102,20 +101,14 @@ const getExchanges = async (zip) => {
       // get data for rehydrating generated exchanges
       const url = record.warcHeader('WARC-Target-URI')
       if (url && (new URL(url)).protocol === 'file:') {
-        const [versionMajor, versionMinor] = versionFromStatusLine(record.httpHeaders.statusline)
-        const { status, statusText, headers } = record.getResponseInfo()
-
         generatedExchanges.push(new MischiefGeneratedExchange({
+          url,
           id: record.warcHeaders.headers.get('exchange-id'),
           date: new Date(record.warcHeaders.headers.get('WARC-Date')),
           description: record.warcHeaders.headers.get('description'),
           response: {
-            url,
-            versionMajor,
-            versionMinor,
-            headers: Object.fromEntries(headers),
-            statusCode: status,
-            statusMessage: statusText,
+            startLine: record.httpHeaders.statusline,
+            headers: Object.fromEntries(record.getResponseInfo().headers),
             body: await record.readFully(false)
           }
         }))

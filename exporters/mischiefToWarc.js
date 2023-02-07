@@ -59,14 +59,15 @@ export async function mischiefToWarc (capture) {
     }
 
     for (const type of ['request', 'response']) {
+      const msg = exchange[type]
       // Ignore empty records
-      if (!exchange[type]) {
+      if (!msg) {
         continue
       }
 
       try {
         async function * content () {
-          yield (exchange[`${type}RawBody`] || exchange[type].body)
+          yield msg.body
         }
 
         const warcHeaders = {
@@ -79,12 +80,12 @@ export async function mischiefToWarc (capture) {
 
         const record = WARCRecord.create(
           {
-            url: exchange[type].url,
+            url: exchange.url,
             date: exchange.date.toISOString(),
             type,
             warcVersion: `WARC/${CONSTANTS.WARC_VERSION}`,
-            statusline: prepareExchangeStatusLine(exchange, type),
-            httpHeaders: exchange[type].headers,
+            statusline: msg.startLine,
+            httpHeaders: msg.headers,
             keepHeadersCase: false,
             warcHeaders
           },
@@ -93,7 +94,7 @@ export async function mischiefToWarc (capture) {
 
         serializedRecords.push(await WARCSerializer.serialize(record))
       } catch (err) {
-        capture.log.warn(`${exchange[type].url} ${type} could not be added to warc.`)
+        capture.log.warn(`${msg.url} ${type} could not be added to warc.`)
         capture.log.trace(err)
       }
     }
@@ -103,40 +104,4 @@ export async function mischiefToWarc (capture) {
   // Combine output and return as ArrayBuffer
   //
   return new Blob([serializedInfo, ...serializedRecords]).arrayBuffer()
-}
-
-/**
- * Prepares an HTTP status line string for a given MischiefExchange.
- *
- * Warcio expects the method to be prepended to the request statusLine.
- * Reference:
- * - https://github.com/webrecorder/pywb/pull/636#issue-869181282
- * - https://github.com/webrecorder/warcio.js/blob/d5dcaec38ffb0a905fd7151273302c5f478fe5d9/src/statusandheaders.js#L69-L74
- * - https://github.com/webrecorder/warcio.js/blob/fdb68450e2e011df24129bac19691073ab6b2417/test/testSerializer.js#L212
- *
- * @param {MischiefExchange} exchange
- * @param {string} [type="response"]
- * @returns {string} The HTTP status line as expected by Warcio
- * @private
- */
-export function prepareExchangeStatusLine (exchange, type = 'response') {
-  if (exchange instanceof MischiefExchange === false) {
-    throw new Error('"exchange" should be a valid MischiefExchange')
-  }
-
-  let statusLine = ''
-  const reqOrResp = exchange[type]
-
-  switch (type) {
-    case 'request':
-      statusLine = `${reqOrResp.method} ${reqOrResp.url} HTTP/${reqOrResp.versionMajor}.${reqOrResp.versionMinor}`
-      break
-
-    case 'response':
-    default:
-      statusLine = `HTTP/${reqOrResp.versionMajor}.${reqOrResp.versionMinor} ${reqOrResp.statusCode} ${reqOrResp.statusMessage}`
-      break
-  }
-
-  return statusLine
 }

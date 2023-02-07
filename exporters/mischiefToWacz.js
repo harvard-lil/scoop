@@ -1,5 +1,6 @@
 import { Readable } from 'stream'
 
+import { getHead } from '../utils/http.js'
 import { Mischief } from '../Mischief.js'
 import { WACZ, mischiefExchangeToPageLine, hash } from '../utils/WACZ.js'
 import { WARCParser } from 'warcio'
@@ -60,8 +61,8 @@ export async function mischiefToWacz (capture, includeRaw = false, signingServer
           // if the WARC contains identical body data, remove it from this raw exchange
           // to avoid data bloat and add the digest to the end of the file name for later retrieval
           if (warcPayloadDigests.includes(digest)) {
-            // add only the headers along with trailing CRLF
-            wacz.files[`${fpath}_${digest}`] = exchange[`${type}RawHeaders`]
+            // add only the head and trailing CRLF
+            wacz.files[`${fpath}_${digest}`] = getHead(data)
           } else {
             wacz.files[fpath] = data
           }

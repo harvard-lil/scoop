@@ -514,7 +514,7 @@ export class Mischief {
     // Otherwise: look for it in exchanges
     } else {
       for (const exchange of this.intercepter.exchanges) {
-        if (exchange?.request?.url && exchange.request.url === this.pageInfo.faviconUrl) {
+        if (exchange?.url && exchange.url === this.pageInfo.faviconUrl) {
           this.pageInfo.favicon = exchange.response.body
         }
       }
@@ -847,13 +847,13 @@ export class Mischief {
    * Generates a MischiefGeneratedExchange for generated content and adds it to `exchanges` unless time limit was reached.
    *
    * @param {string} url
-   * @param {object} httpHeaders
+   * @param {object} headers
    * @param {Buffer} body
    * @param {boolean} isEntryPoint
    * @param {string} description
    * @returns {boolean} true if generated exchange is successfully added
    */
-  addGeneratedExchange (url, httpHeaders, body, isEntryPoint = false, description = '') {
+  addGeneratedExchange (url, headers, body, isEntryPoint = false, description = '') {
     const remainingSpace = this.options.maxSize - this.intercepter.byteLength
 
     if (this.state !== Mischief.states.CAPTURE ||
@@ -865,15 +865,12 @@ export class Mischief {
 
     this.exchanges.push(
       new MischiefGeneratedExchange({
+        url,
         description,
         isEntryPoint: Boolean(isEntryPoint),
         response: {
-          url,
-          headers: httpHeaders,
-          versionMajor: 1,
-          versionMinor: 1,
-          statusCode: 200,
-          statusMessage: 'OK',
+          startLine: 'HTTP/1.1 200 OK',
+          headers,
           body
         }
       })
@@ -926,7 +923,7 @@ export class Mischief {
 
     for (const exchange of this.exchanges) {
       if (exchange instanceof MischiefGeneratedExchange) {
-        const key = exchange.response.url.replace('file:///', '')
+        const key = exchange.url.replace('file:///', '')
         generatedExchanges[key] = exchange
       }
     }

@@ -23,42 +23,20 @@ test('MischiefProxyExchange request and response properties populate automatical
     newExchange.requestRaw = exchange.requestRaw
     newExchange.responseRaw = exchange.responseRaw
 
-    assert(newExchange.requestRawBody instanceof Buffer)
-    assert(newExchange.requestRawHeaders instanceof Buffer)
-    assert(newExchange.responseRawBody instanceof Buffer)
-    assert(newExchange.requestRawHeaders instanceof Buffer)
+    assert.equal(newExchange.url.constructor, String)
+    assert.equal(newExchange.url, exchange.url)
 
     for (const key of ['request', 'response']) {
       const newObj = newExchange[key]
       const refObj = exchange[key]
 
-      assert(typeof newObj.shouldKeepAlive === 'boolean')
-      assert(newObj.shouldKeepAlive === refObj.shouldKeepAlive)
-
-      assert(typeof newObj.upgrade === 'boolean')
-      assert(newObj.upgrade === refObj.upgrade)
-
-      assert(typeof newObj.versionMajor === 'number')
-      assert(newObj.versionMajor === refObj.versionMajor)
-
-      assert(typeof newObj.versionMinor === 'number')
-      assert(newObj.versionMinor === refObj.versionMinor)
+      assert.equal(newObj.startLine.constructor, String)
+      assert.equal(newObj.startLine, refObj.startLine)
 
       assert.deepEqual(newObj.headers, refObj.headers)
 
-      assert(newObj.body instanceof Buffer)
+      assert.equal(newObj.body.constructor, Buffer)
       assert.deepEqual(newObj.body, refObj.body)
-
-      assert(typeof newObj.url === 'string')
-      assert(newObj.url === refObj.url)
-
-      if (key === 'response') {
-        assert(typeof newObj.statusCode === 'number')
-        assert(newObj.statusCode === refObj.statusCode)
-
-        assert(typeof newObj.statusMessage === 'string')
-        assert(newObj.statusMessage === refObj.statusMessage)
-      }
     }
   }
 })

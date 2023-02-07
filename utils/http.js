@@ -12,8 +12,22 @@ const inflate = promisify(zlib.inflate)
 const gunzip = promisify(zlib.gunzip)
 const brotliDecompress = promisify(zlib.brotliDecompress)
 
-const CRLFx2 = '\r\n\r\n'
-const LFx2 = '\n\n'
+const CRLF = '\r\n'
+const LF = '\n'
+
+/**
+ *
+ * @param {any} searchItems -
+ * @param {any} buffer -
+ * @returns {any} -
+ */
+function firstIndexOf (searchItems, buffer, getIndexAfter = false) {
+  return searchItems.reduce((prevEnd, delimiter) => {
+    const start = buffer.indexOf(delimiter)
+    const end = start + (getIndexAfter ? delimiter.length : 0)
+    return (start !== -1 && (prevEnd === -1 || end < prevEnd)) ? end : prevEnd
+  }, -1)
+}
 
 /**
  * Locates the beginning of an HTTP response body
@@ -29,21 +43,34 @@ const LFx2 = '\n\n'
  * @returns {integer} The index within the buffer at which the body begins
  */
 export function bodyStartIndex (buffer) {
-  return [CRLFx2, LFx2].reduce((prevEnd, delimiter) => {
-    const start = buffer.indexOf(delimiter)
-    const end = start + delimiter.length
-    return (start !== -1 && (prevEnd === -1 || end < prevEnd)) ? end : prevEnd
-  }, -1)
+  return firstIndexOf([CRLF + CRLF, LF + LF], buffer, true)
 }
 
 /**
- * Extracts the protocol version from an HTTP status line
  *
- * @param {string} statusLine - An HTTP status line
- * @returns {Array<integer>} The HTTP version as an array of integers ex: [MajorVer, MinorVer]
+ * @param {any} buffer -
+ * @returns {any} -
  */
-export function versionFromStatusLine (statusLine) {
-  return statusLine.match(/\/([\d.]+)/)[1].split('.').map(n => parseInt(n))
+export function getHead (buffer) {
+  return buffer.subarray(0, bodyStartIndex(buffer))
+}
+
+/**
+ *
+ * @param {any} buffer -
+ * @returns {any} -
+ */
+export function getStartLine (buffer) {
+  return buffer.subarray(0, firstIndexOf([CRLF, LF], buffer))
+}
+
+/**
+ *
+ * @param {any} buffer -
+ * @returns {any} -
+ */
+export function getBody (buffer) {
+  return buffer.subarray(bodyStartIndex(buffer))
 }
 
 /**

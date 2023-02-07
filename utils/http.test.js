@@ -8,31 +8,50 @@ import {
 } from 'node:zlib'
 
 import {
+  getHead,
+  getStartLine,
+  getBody,
   bodyStartIndex,
-  versionFromStatusLine,
   bodyToString,
   headersArrayToMap
 } from './http.js'
 
-const bodyFixture = 'test'
+const CRLF = '\r\n'
+const LF = '\n'
+
+const bodyFixture = 'body'
+const msgParts = [
+  'HTTP/2 200',
+  'header: 123',
+  'other-header: 456',
+  '',
+  bodyFixture
+]
+
+const properlyConfiguredResponse = Buffer.from(msgParts.join(CRLF))
+const misconfiguredResponse = Buffer.from(msgParts.join(LF))
 
 test('bodyStartIndex should return the index within the buffer at which the body begins.', async (_t) => {
-  const bodyParts = [
-    'HTTP/2 200',
-    'header: 123',
-    '',
-    'body'
-  ]
-  assert.equal(bodyStartIndex(bodyParts.join('\r\n')), 27) // property configured server
-  assert.equal(bodyStartIndex(bodyParts.join('\n')), 24) // misconfigured server
+  assert.equal(bodyStartIndex(properlyConfiguredResponse), properlyConfiguredResponse.indexOf(bodyFixture))
+  assert.equal(bodyStartIndex(misconfiguredResponse), misconfiguredResponse.indexOf(bodyFixture))
 })
 
-test('versionFromStatusLine should parse major and minor versions.', async (_t) => {
-  assert.deepEqual(versionFromStatusLine('HTTP/1.1 200 OK'), [1, 1])
+test('getHead returns the start line, headers, and trailing newline as a buffer', async (_t) => {
+  assert.equal(getHead(properlyConfiguredResponse).constructor, Buffer)
+  assert.equal(getHead(properlyConfiguredResponse).toString(), msgParts.slice(0, -1).join(CRLF) + CRLF)
+  assert.equal(getHead(misconfiguredResponse).toString(), msgParts.slice(0, -1).join(LF) + LF)
 })
 
-test('versionFromStatusLine should handle major versions without minor notation.', async (_t) => {
-  assert.deepEqual(versionFromStatusLine('HTTP/2 204 NO CONTENT'), [2])
+test('getStartLine returns the start line as a buffer', async (_t) => {
+  assert.equal(getStartLine(properlyConfiguredResponse).constructor, Buffer)
+  assert.equal(getStartLine(properlyConfiguredResponse).toString(), msgParts[0])
+  assert.equal(getStartLine(misconfiguredResponse).toString(), msgParts[0])
+})
+
+test('getBody returns the body as a buffer', async (_t) => {
+  assert.equal(getBody(properlyConfiguredResponse).constructor, Buffer)
+  assert.equal(getBody(properlyConfiguredResponse).toString(), bodyFixture)
+  assert.equal(getBody(misconfiguredResponse).toString(), bodyFixture)
 })
 
 test('bodyToString should handle uncompressed bodies.', async (_t) => {
@@ -61,7 +80,7 @@ test('headersArrayToMap should return an empty object if given anything other th
   }
 })
 
-test('headersArrayToMap returns a hashmap for a given linear representation of headers.', async (_t) => {
+test('headersArrayToMap should return a hashmap for a given linear representation of headers.', async (_t) => {
   const input = [
     'age', '76448',
     'content-encoding', 'gzip',
