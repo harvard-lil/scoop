@@ -85,7 +85,7 @@ export async function mischiefToWarc (capture) {
             type,
             warcVersion: `WARC/${CONSTANTS.WARC_VERSION}`,
             statusline: msg.startLine,
-            httpHeaders: msg.headers,
+            httpHeaders: Object.fromEntries(msg.headers.entries()),
             warcHeaders
           },
           content()
