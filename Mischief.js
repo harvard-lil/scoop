@@ -23,6 +23,7 @@ import * as importers from './importers/index.js'
 import { filterOptions } from './options.js'
 
 const exec = util.promisify(execCB)
+const Headers = globalThis.Headers // TODO: This is absurd and only here to please standard JS.
 
 /**
  * @class Mischief

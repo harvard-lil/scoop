@@ -5,7 +5,6 @@ import { WARCRecord, WARCSerializer } from 'warcio'
 
 import * as CONSTANTS from '../constants.js'
 import { Mischief } from '../Mischief.js'
-import { MischiefExchange } from '../exchanges/MischiefExchange.js'
 
 // warcio needs the crypto utils suite as a global, but does not import it.
 // Node JS 19+ automatically imports webcrypto as globalThis.crypto.

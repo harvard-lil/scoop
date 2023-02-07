@@ -31,6 +31,7 @@ export class MischiefExchange {
    */
   _url
 
+  /** @type {?string} */
   get url () {
     return this._url
   }
