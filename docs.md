@@ -22,7 +22,7 @@ Name | Description
 [MischiefGeneratedExchange] | <p>An exchange constructed ad-hoc (vs intercepted), typically used to inject additional resources into an archive</p>
 [MischiefHTTPParser] | <p>Parser for raw HTTP exchanges</p>
 *[MischiefIntercepter]* | <p>Abstract class for intercepter implementations to capture HTTP traffic.</p>
-[MischiefProxy] | <p>A proxy based intercepter that captures raw HTTP exchanges without parsing, preserving headers et al as delivered.</p>
+[MischiefProxy] | <p>A proxy-based intercepter that captures raw HTTP exchanges without parsing, preserving headers et al as delivered. Coalesces exchanges as MischiefProxyExchange entries.</p>
 [MischiefProxyExchange] | <p>Represents an HTTP exchange captured via MischiefProxy.</p>
 [WACZ] | <p>WACZ builder</p>
 
@@ -522,8 +522,8 @@ once again set to <code>true</code></p>
 
 ## MischiefProxy
 
-<p>A proxy based intercepter that captures raw HTTP exchanges
-without parsing, preserving headers et al as delivered.</p>
+<p>A proxy-based intercepter that captures raw HTTP exchanges without parsing, preserving headers et al as delivered.
+Coalesces exchanges as MischiefProxyExchange entries.</p>
 
 **Kind**: global class  
 **Extends**: [`MischiefIntercepter`]  
