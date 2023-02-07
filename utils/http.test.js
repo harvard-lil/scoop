@@ -76,7 +76,7 @@ test('bodyToString should handle brotli encoded bodies.', async (_t) => {
 
 test('flatArrayToHeadersObject should throw if given anything other than an array with key value pairs.', async (_t) => {
   for (const headers of [null, true, false, 12, 'FOO', {}, () => {}, ['foo']]) {
-    assert.throws(flatArrayToHeadersObject(headers))
+    assert.throws(() => flatArrayToHeadersObject(headers))
   }
 })
 
@@ -90,7 +90,7 @@ test('flatArrayToHeadersObject should return a Headers object for a given linear
 
   const expectedOutput = new Headers({
     age: '76448',
-    'content-encoding': 'br',
+    'content-encoding': 'gzip, br',
     'content-type': 'text/html; charset=utf-8'
   })
 
