@@ -135,3 +135,32 @@ test('recordExchanges flag actively controls whether records are added to exchan
     assert.equal(intercepter.exchanges.length, expectedExchangesLength)
   }
 })
+
+test('intercept coalesces arbitrary buffers together for a given exchange.', async (_t) => {
+  const capture = new Mischief(NON_BLOCKLISTED_URL, defaultTestOptions)
+  const intercepter = capture.intercepter
+
+  const testString1 = 'LOREMIPSUM'
+  const testString2 = 'FOOBARBAZ'
+  const expectedByteLength = Buffer.from(testString1 + testString2).byteLength
+
+  const scenarios = [
+    { id: 12, type: 'request', data: Buffer.from(testString1) },
+    { id: 12, type: 'response', data: Buffer.from(testString2.substring(0, 3)) },
+    { id: 12, type: 'response', data: Buffer.from(testString2.substring(3, 6)) },
+    { id: 12, type: 'response', data: Buffer.from(testString2.substring(6, 9)) }
+  ]
+
+  for (const scenario of scenarios) {
+    const { id, type, data } = scenario
+    const session = new Session(id)
+    session._dst = { remoteAddress: NON_BLOCKLISTED_IP }
+    session._src = { destroyed: false }
+    session.request.path = NON_BLOCKLISTED_URL
+    intercepter.intercept(type, data, session)
+  }
+
+  assert.equal(intercepter.byteLength, expectedByteLength)
+  assert.equal(intercepter.exchanges[0].requestRaw.toString(), testString1)
+  assert.equal(intercepter.exchanges[0].responseRaw.toString(), testString2)
+})
