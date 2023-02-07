@@ -10,8 +10,13 @@ import { Mischief } from '../Mischief.js'
 import { defaultTestOptions } from '../options.test.js'
 import { MischiefProxyExchange } from '../exchanges/MischiefProxyExchange.js'
 
+const BLOCKLISTED_IP = '127.0.0.1'
+const BLOCKLISTED_URL = 'http://localhost'
+const NON_BLOCKLISTED_IP = '93.184.216.34'
+const NON_BLOCKLISTED_URL = 'https://lil.law.harvard.edu'
+
 test('MischiefProxy starts and stops a proxy on the requested port', async (_t) => {
-  const capture = new Mischief('https://example.com', defaultTestOptions)
+  const capture = new Mischief(NON_BLOCKLISTED_URL, defaultTestOptions)
   const proxyPort = defaultTestOptions.proxyPort
 
   assert.equal(capture.intercepter instanceof MischiefProxy, true)
@@ -30,7 +35,7 @@ test('MischiefProxy starts and stops a proxy on the requested port', async (_t) 
 })
 
 test('contextOptions returns proxy information in a format that can directly consumed by Playwright', async (_t) => {
-  const capture = new Mischief('https://example.com', defaultTestOptions)
+  const capture = new Mischief(NON_BLOCKLISTED_URL, defaultTestOptions)
   const contextOptions = capture.intercepter.contextOptions
 
   assert.equal(contextOptions.ignoreHTTPSErrors, true)
@@ -38,7 +43,7 @@ test('contextOptions returns proxy information in a format that can directly con
 })
 
 test('getOrInitExchange always returns an exchange when provided valid params, and creates new exchanges as needed.', async (_t) => {
-  const capture = new Mischief('https://example.com', defaultTestOptions)
+  const capture = new Mischief(NON_BLOCKLISTED_URL, defaultTestOptions)
 
   const scenarios = [
     { connectionId: 12, type: 'request', shouldBeNew: true },
@@ -64,12 +69,12 @@ test('getOrInitExchange always returns an exchange when provided valid params, a
 })
 
 test('checkRequestAgainstBlocklist should detect and interrupt blocklisted exchanges.', async (_t) => {
-  const capture = new Mischief('https://example.com', defaultTestOptions)
+  const capture = new Mischief(NON_BLOCKLISTED_URL, defaultTestOptions)
   const intercepter = capture.intercepter
 
   const scenarios = [
-    { path: 'http://localhost/', remoteAddress: '127.0.0.1', shouldBeInterrupted: true },
-    { path: 'https://lil.law.harvard.edu/', remoteAddress: '93.184.216.34', shouldBeInterrupted: false }
+    { path: BLOCKLISTED_URL, remoteAddress: BLOCKLISTED_IP, shouldBeInterrupted: true },
+    { path: NON_BLOCKLISTED_URL, remoteAddress: NON_BLOCKLISTED_IP, shouldBeInterrupted: false }
   ]
 
   for (const scenario of scenarios) {
@@ -86,5 +91,47 @@ test('checkRequestAgainstBlocklist should detect and interrupt blocklisted excha
 
     assert.equal(intercepter.checkRequestAgainstBlocklist(session), shouldBeInterrupted)
     assert.equal(session._src.destroyed, shouldBeInterrupted)
+  }
+})
+
+test('interceptRequest returns undefined when trying to intercept a session for a blocklisted exchange.', async (_t) => {
+  const capture = new Mischief(NON_BLOCKLISTED_URL, defaultTestOptions)
+  const intercepter = capture.intercepter
+
+  const session = new Session(12)
+  session._dst = { remoteAddress: BLOCKLISTED_IP }
+  session._src = { destroyed: false }
+  session.request.path = BLOCKLISTED_URL
+
+  session.destroy = () => {
+    session._src.destroyed = true
+  }
+
+  assert.equal(intercepter.interceptRequest(Buffer.from(''), session), undefined)
+})
+
+test('recordExchanges flag actively controls whether records are added to exchanges list.', async (_t) => {
+  const capture = new Mischief(NON_BLOCKLISTED_URL, defaultTestOptions)
+  const intercepter = capture.intercepter
+
+  const scenarios = [
+    { id: 12, recordExchanges: true, expectedExchangesLength: 1 },
+    { id: 13, recordExchanges: false, expectedExchangesLength: 1 },
+    { id: 14, recordExchanges: true, expectedExchangesLength: 2 }
+  ]
+
+  for (const scenario of scenarios) {
+    const { id, recordExchanges, expectedExchangesLength } = scenario
+    const session = new Session(id)
+    session._dst = { remoteAddress: NON_BLOCKLISTED_IP }
+    session._src = { destroyed: false }
+    session.request.path = NON_BLOCKLISTED_URL
+
+    const data = Buffer.from('')
+
+    intercepter.recordExchanges = recordExchanges
+
+    intercepter.intercept('response', data, session)
+    assert.equal(intercepter.exchanges.length, expectedExchangesLength)
   }
 })

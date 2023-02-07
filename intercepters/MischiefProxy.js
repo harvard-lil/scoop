@@ -10,8 +10,8 @@ import { searchBlocklistFor } from '../utils/blocklist.js'
  * @extends MischiefIntercepter
  *
  * @classdesc
- * A proxy based intercepter that captures raw HTTP exchanges
- * without parsing, preserving headers et al as delivered.
+ * A proxy-based intercepter that captures raw HTTP exchanges without parsing, preserving headers et al as delivered.
+ * Coalesces exchanges as MischiefProxyExchange entries.
  */
 export class MischiefProxy extends MischiefIntercepter {
   /** @type {ProxyServer} */
@@ -126,7 +126,7 @@ export class MischiefProxy extends MischiefIntercepter {
   /**
    * @param {Buffer} data
    * @param {Session} session
-   * @returns {Buffer}
+   * @returns {?Buffer}
    */
   interceptRequest = (data, session) => {
     this.checkRequestAgainstBlocklist(session) // May interrupt request
@@ -139,7 +139,7 @@ export class MischiefProxy extends MischiefIntercepter {
   /**
    * @param {Buffer} data
    * @param {Session} session
-   * @returns {Buffer}
+   * @returns {?Buffer}
    */
   interceptResponse = (data, session) => {
     return this.intercept('response', data, session)
