@@ -74,18 +74,17 @@ test('checkRequestAgainstBlocklist should detect and interrupt blocklisted excha
 
   for (const scenario of scenarios) {
     const { path, remoteAddress, shouldBeInterrupted } = scenario
+
     const session = new Session(12)
     session._dst = { remoteAddress }
+    session._src = { destroyed: false }
     session.request.path = path
 
-    // Ensures that `session.destroy()` was called if needed.
-    let sessionWasInterrupted = false
-
     session.destroy = () => {
-      sessionWasInterrupted = true
+      session._src.destroyed = true
     }
 
     assert.equal(intercepter.checkRequestAgainstBlocklist(session), shouldBeInterrupted)
-    assert.equal(sessionWasInterrupted, shouldBeInterrupted)
+    assert.equal(session._src.destroyed, shouldBeInterrupted)
   }
 })
