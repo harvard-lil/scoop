@@ -6,8 +6,6 @@ import { Mischief } from '../Mischief.js'
 import { MischiefProxyExchange, MischiefGeneratedExchange } from '../exchanges/index.js'
 import { WARCParser } from 'warcio'
 
-const Headers = globalThis.Headers // TODO: This is absurd and only here to please standard JS.
-
 /**
  * @function waczToMischief
  * @memberof module:importers

@@ -11,7 +11,6 @@ import { promisify } from 'util'
 const inflate = promisify(zlib.inflate)
 const gunzip = promisify(zlib.gunzip)
 const brotliDecompress = promisify(zlib.brotliDecompress)
-const Headers = globalThis.Headers // TODO: This is absurd and only here to please standard JS.
 
 const CRLF = '\r\n'
 const LF = '\n'
