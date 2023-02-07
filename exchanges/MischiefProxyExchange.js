@@ -80,11 +80,13 @@ export class MischiefProxyExchange extends MischiefExchange {
   get request () {
     if (!this._request && this.requestRaw) {
       const parsed = MischiefHTTPParser.parseRequest(this.requestRaw)
+      const body = getBody(this.requestRaw)
       this._request = {
         startLine: getStartLine(this.requestRaw).toString(),
         headers: flatArrayToHeadersObject(parsed.headers),
-        body: getBody(this.requestRaw),
-        bodyCombined: parsed.body
+        body,
+        // use the existing raw buffer if they're identical to perhaps free up memory
+        bodyCombined: Buffer.compare(body, parsed.body) === 0 ? body : parsed.body
       }
     }
     return this._request
@@ -98,11 +100,13 @@ export class MischiefProxyExchange extends MischiefExchange {
   get response () {
     if (!this._response && this.responseRaw) {
       const parsed = MischiefHTTPParser.parseResponse(this.responseRaw)
+      const body = getBody(this.responseRaw)
       this._response = {
         startLine: getStartLine(this.responseRaw).toString(),
         headers: flatArrayToHeadersObject(parsed.headers),
-        body: getBody(this.responseRaw),
-        bodyCombined: parsed.body
+        body,
+        // use the existing raw buffer if they're identical to perhaps free up memory
+        bodyCombined: Buffer.compare(body, parsed.body) === 0 ? body : parsed.body
       }
     }
     return this._response
