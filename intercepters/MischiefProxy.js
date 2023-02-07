@@ -1,4 +1,5 @@
 import ProxyServer from 'transparent-proxy'
+import Session from 'transparent-proxy/core/Session.js'
 
 import { MischiefIntercepter } from './MischiefIntercepter.js'
 import { MischiefProxyExchange } from '../exchanges/index.js'
@@ -88,10 +89,14 @@ export class MischiefProxy extends MischiefIntercepter {
    * Checks an outgoing request against the blocklist. Interrupts the request it needed.
    * Keeps trace of blocked requests in `Mischief.provenanceInfo`.
    *
-   * @param {object} session - ProxyServer session
+   * @param {object} session - ProxyServer session.
    * @returns {boolean} - `true` if request was interrupted
    */
   checkRequestAgainstBlocklist (session) {
+    if (session instanceof Session === false) {
+      throw new Error('"session" must be a valid "ProxyServer" session.')
+    }
+
     const ip = session._dst.remoteAddress
 
     // https doesn't have the protocol or host in the path so add it here

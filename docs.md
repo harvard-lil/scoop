@@ -594,7 +594,7 @@ Keeps trace of blocked requests in <code>Mischief.provenanceInfo</code>.</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| session | `object` | <p>ProxyServer session</p> |
+| session | `object` | <p>ProxyServer session.</p> |
 
 
 ### mischiefProxy.contextOptions

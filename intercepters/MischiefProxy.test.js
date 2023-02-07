@@ -1,9 +1,9 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
+import Session from 'transparent-proxy/core/Session.js'
 import detectPort from 'detect-port'
 
-// import { FIXTURES_PATH } from '../constants.js'
 import { MischiefProxy } from './index.js'
 import { Mischief } from '../Mischief.js'
 
@@ -43,12 +43,14 @@ test('getOrInitExchange always returns an exchange when provided valid params, a
   const scenarios = [
     { connectionId: 12, type: 'request', shouldBeNew: true },
     { connectionId: 12, type: 'request', shouldBeNew: false },
-    { connectionId: 12, type: 'response', shouldBeNew: false }
+    { connectionId: 12, type: 'response', shouldBeNew: false },
+    { connectionId: 15, type: 'request', shouldBeNew: true },
+    { connectionId: 15, type: 'response', shouldBeNew: false }
   ]
 
   let previousExchange = null
 
-  for (const scenario of Object.values(scenarios)) {
+  for (const scenario of scenarios) {
     const exchange = capture.intercepter.getOrInitExchange(scenario.connectionId, scenario.type)
 
     assert.equal(exchange instanceof MischiefProxyExchange, true)
@@ -58,5 +60,32 @@ test('getOrInitExchange always returns an exchange when provided valid params, a
     }
 
     previousExchange = exchange
+  }
+})
+
+test('checkRequestAgainstBlocklist should detect and interrupt blocklisted exchanges.', async (_t) => {
+  const capture = new Mischief('https://example.com', defaultTestOptions)
+  const intercepter = capture.intercepter
+
+  const scenarios = [
+    { path: 'http://localhost/', remoteAddress: '127.0.0.1', shouldBeInterrupted: true },
+    { path: 'https://lil.law.harvard.edu/', remoteAddress: '93.184.216.34', shouldBeInterrupted: false }
+  ]
+
+  for (const scenario of scenarios) {
+    const { path, remoteAddress, shouldBeInterrupted } = scenario
+    const session = new Session(12)
+    session._dst = { remoteAddress }
+    session.request.path = path
+
+    // Ensures that `session.destroy()` was called if needed.
+    let sessionWasInterrupted = false
+
+    session.destroy = () => {
+      sessionWasInterrupted = true
+    }
+
+    assert.equal(intercepter.checkRequestAgainstBlocklist(session), shouldBeInterrupted)
+    assert.equal(sessionWasInterrupted, shouldBeInterrupted)
   }
 })
