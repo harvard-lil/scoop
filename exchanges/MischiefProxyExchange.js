@@ -42,6 +42,8 @@ export class MischiefProxyExchange extends MischiefExchange {
   }
 
   set url (val) {
+    // throw on invalid url
+    new URL(val) // eslint-disable-line
     this._url = val
   }
 
