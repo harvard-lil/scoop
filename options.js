@@ -103,6 +103,19 @@ export const defaultOptions = {
 }
 
 /**
+ * Basic set of options to be used with Mischief for automated testing purposes.
+ * @ignore
+ */
+export const defaultTestOptions = {
+  ...defaultOptions,
+  logLevel: 'silent',
+  headless: true,
+  captureVideoAsAttachment: false,
+  provenanceSummary: true,
+  proxyPort: Math.floor(5000 + Math.random() * 5000) // Since each test runs in a different context, they should all get a different port
+}
+
+/**
  * Filters a new options object by comparing it with defaults.
  * Will use defaults for missing properties.
  *

@@ -8,7 +8,7 @@ import { Mischief } from '../Mischief.js'
 import * as CONSTANTS from '../constants.js'
 import { valueOf } from '../utils/valueof.js'
 
-import { defaultTestOptions } from '../options.test.js'
+import { defaultTestOptions } from '../options.js'
 
 test('waczToMischief\'s roundtrip should produce identical Mischief object.', async (_t) => {
   const fpath = `${CONSTANTS.TMP_PATH}${uuidv4()}.wacz`

@@ -7,7 +7,7 @@ import detectPort from 'detect-port'
 import { MischiefProxy } from './index.js'
 import { Mischief } from '../Mischief.js'
 
-import { defaultTestOptions } from '../options.test.js'
+import { defaultTestOptions } from '../options.js'
 import { MischiefProxyExchange } from '../exchanges/MischiefProxyExchange.js'
 
 const BLOCKLISTED_IP = '127.0.0.1'
