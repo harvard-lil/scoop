@@ -15,6 +15,27 @@ const BLOCKLISTED_URL = 'http://localhost'
 const NON_BLOCKLISTED_IP = '93.184.216.34'
 const NON_BLOCKLISTED_URL = 'https://lil.law.harvard.edu'
 
+/**
+ * Creates a mock transparent-proxy Session object.
+ * @param {number} id
+ * @param {string} ip
+ * @param {string} url
+ * @returns {Session}
+ * @ignore
+ */
+function mockSession (id, ip, url) {
+  const session = new Session(id)
+  session._dst = { remoteAddress: ip }
+  session._src = { destroyed: false }
+  session.request.path = url
+
+  session.destroy = () => {
+    session._src.destroyed = true
+  }
+
+  return session
+}
+
 test('MischiefProxy starts and stops a proxy on the requested port', async (_t) => {
   const capture = new Mischief(NON_BLOCKLISTED_URL, defaultTestOptions)
   const proxyPort = defaultTestOptions.proxyPort
@@ -79,15 +100,7 @@ test('checkRequestAgainstBlocklist should detect and interrupt blocklisted excha
 
   for (const scenario of scenarios) {
     const { path, remoteAddress, shouldBeInterrupted } = scenario
-
-    const session = new Session(12)
-    session._dst = { remoteAddress }
-    session._src = { destroyed: false }
-    session.request.path = path
-
-    session.destroy = () => {
-      session._src.destroyed = true
-    }
+    const session = mockSession(12, remoteAddress, path)
 
     assert.equal(intercepter.checkRequestAgainstBlocklist(session), shouldBeInterrupted)
     assert.equal(session._src.destroyed, shouldBeInterrupted)
@@ -97,15 +110,7 @@ test('checkRequestAgainstBlocklist should detect and interrupt blocklisted excha
 test('interceptRequest returns undefined when trying to intercept a session for a blocklisted exchange.', async (_t) => {
   const capture = new Mischief(NON_BLOCKLISTED_URL, defaultTestOptions)
   const intercepter = capture.intercepter
-
-  const session = new Session(12)
-  session._dst = { remoteAddress: BLOCKLISTED_IP }
-  session._src = { destroyed: false }
-  session.request.path = BLOCKLISTED_URL
-
-  session.destroy = () => {
-    session._src.destroyed = true
-  }
+  const session = mockSession(12, BLOCKLISTED_IP, BLOCKLISTED_URL)
 
   assert.equal(intercepter.interceptRequest(Buffer.from(''), session), undefined)
 })
@@ -122,10 +127,7 @@ test('recordExchanges flag actively controls whether records are added to exchan
 
   for (const scenario of scenarios) {
     const { id, recordExchanges, expectedExchangesLength } = scenario
-    const session = new Session(id)
-    session._dst = { remoteAddress: NON_BLOCKLISTED_IP }
-    session._src = { destroyed: false }
-    session.request.path = NON_BLOCKLISTED_URL
+    const session = mockSession(id, NON_BLOCKLISTED_IP, NON_BLOCKLISTED_URL)
 
     const data = Buffer.from('')
 
@@ -136,7 +138,7 @@ test('recordExchanges flag actively controls whether records are added to exchan
   }
 })
 
-test('intercept coalesces arbitrary buffers together for a given exchange.', async (_t) => {
+test('intercept coalesces arbitrary buffers together for a given exchange, new request on full exchange creates new exchange.', async (_t) => {
   const capture = new Mischief(NON_BLOCKLISTED_URL, defaultTestOptions)
   const intercepter = capture.intercepter
 
@@ -153,14 +155,17 @@ test('intercept coalesces arbitrary buffers together for a given exchange.', asy
 
   for (const scenario of scenarios) {
     const { id, type, data } = scenario
-    const session = new Session(id)
-    session._dst = { remoteAddress: NON_BLOCKLISTED_IP }
-    session._src = { destroyed: false }
-    session.request.path = NON_BLOCKLISTED_URL
+    const session = mockSession(id, NON_BLOCKLISTED_IP, NON_BLOCKLISTED_URL)
     intercepter.intercept(type, data, session)
   }
 
   assert.equal(intercepter.byteLength, expectedByteLength)
   assert.equal(intercepter.exchanges[0].requestRaw.toString(), testString1)
   assert.equal(intercepter.exchanges[0].responseRaw.toString(), testString2)
+
+  // New request on existing session for which we already have a response should create a new exchange
+  const session = mockSession(scenarios[0].id, NON_BLOCKLISTED_IP, NON_BLOCKLISTED_URL)
+  intercepter.intercept(scenarios[0].type, scenarios[0].data, session)
+
+  assert.equal(intercepter.exchanges[1].requestRaw.toString(), testString1)
 })
