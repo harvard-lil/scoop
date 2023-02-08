@@ -34,7 +34,7 @@ test('MischiefProxy starts and stops a proxy on the requested port', async (_t) 
   assert.equal(await detectPort(proxyPort), proxyPort)
 })
 
-test('contextOptions returns proxy information in a format that can directly consumed by Playwright', async (_t) => {
+test('contextOptions returns proxy information in a format that can be directly consumed by Playwright', async (_t) => {
   const capture = new Mischief(NON_BLOCKLISTED_URL, defaultTestOptions)
   const contextOptions = capture.intercepter.contextOptions
 
