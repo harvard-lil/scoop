@@ -139,7 +139,7 @@ export class MischiefProxy extends MischiefIntercepter {
   /**
    * @param {Buffer} data
    * @param {Session} session
-   * @returns {?Buffer}
+   * @returns {Buffer}
    */
   interceptResponse = (data, session) => {
     return this.intercept('response', data, session)
