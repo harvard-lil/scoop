@@ -48,6 +48,7 @@
   "devDependencies": {
     "@godaddy/dmd": "^1.0.4",
     "@types/node": "^18.11.0",
+    "detect-port": "^1.5.1",
     "docdash": "^2.0.1",
     "eslint": "^8.31.0",
     "eslint-config-standard": "^17.0.0",

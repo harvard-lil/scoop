@@ -22,7 +22,7 @@ Name | Description
 [MischiefGeneratedExchange] | <p>An exchange constructed ad-hoc (vs intercepted), typically used to inject additional resources into an archive</p>
 [MischiefHTTPParser] | <p>Parser for raw HTTP exchanges</p>
 *[MischiefIntercepter]* | <p>Abstract class for intercepter implementations to capture HTTP traffic.</p>
-[MischiefProxy] | <p>A proxy based intercepter that captures raw HTTP exchanges without parsing, preserving headers et al as delivered.</p>
+[MischiefProxy] | <p>A proxy-based intercepter that captures raw HTTP exchanges without parsing, preserving headers et al as delivered. Coalesces exchanges as MischiefProxyExchange entries.</p>
 [MischiefProxyExchange] | <p>Represents an HTTP exchange captured via MischiefProxy.</p>
 [WACZ] | <p>WACZ builder</p>
 
@@ -525,8 +525,8 @@ once again set to <code>true</code></p>
 
 ## MischiefProxy
 
-<p>A proxy based intercepter that captures raw HTTP exchanges
-without parsing, preserving headers et al as delivered.</p>
+<p>A proxy-based intercepter that captures raw HTTP exchanges without parsing, preserving headers et al as delivered.
+Coalesces exchanges as MischiefProxyExchange entries.</p>
 
 **Kind**: global class  
 **Extends**: [`MischiefIntercepter`]  
@@ -539,8 +539,10 @@ without parsing, preserving headers et al as delivered.</p>
     * [.checkRequestAgainstBlocklist(session)]
     * [.contextOptions]
     * [.exchanges]
-    * [.getOrInitExchange(id, type)]
+    * [.getOrInitExchange(connectionId, \[type\])]
     * [.intercept(type, data, session)]
+    * [.interceptRequest]
+    * [.interceptResponse]
     * [.MischiefIntercepter]
         * [new exports.MischiefIntercepter(capture)]
     * [.recordExchanges]
@@ -595,7 +597,7 @@ Keeps trace of blocked requests in <code>Mischief.provenanceInfo</code>.</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| session | `object` | <p>ProxyServer session</p> |
+| session | `object` | <p>ProxyServer session.</p> |
 
 
 ### mischiefProxy.contextOptions
@@ -616,24 +618,21 @@ Includes a flag to ignore certificate errors introduced by proxying.</p>
 
 ### mischiefProxy.exchanges
 
-<p>Data recorded by the intercepter,
-formatted as a series of exchanges</p>
-
 **Kind**: instance property of [`MischiefProxy`]  
 **Overrides**: [`exchanges`]  
 
-### mischiefProxy.getOrInitExchange(id, type)
+### mischiefProxy.getOrInitExchange(connectionId, \[type\])
 
-<p>Returns an exchange based on the session id and type (&quot;request&quot; or &quot;response&quot;).
+<p>Returns an exchange based on the exchange connectionId and type.
 If the type is a request and there's already been a response on that same session,
 create a new exchange. Otherwise append to continue the exchange.</p>
 
 **Kind**: instance method of [`MischiefProxy`]  
 
-| Param | Type |
-| --- | --- |
-| id | `string` | 
-| type | `string` | 
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| connectionId | `string` |  |  |
+| \[type\] | `string` | `'&#x27;request&#x27;'` | <p>Can be &quot;request&quot; or &quot;response&quot;</p> |
 
 
 ### mischiefProxy.intercept(type, data, session)
@@ -646,6 +645,26 @@ Post-capture checks and capture size enforcement happens here.</p>
 | Param | Type |
 | --- | --- |
 | type | `string` | 
+| data | `Buffer` | 
+| session | `Session` | 
+
+
+### mischiefProxy.interceptRequest
+
+**Kind**: instance property of [`MischiefProxy`]  
+
+| Param | Type |
+| --- | --- |
+| data | `Buffer` | 
+| session | `Session` | 
+
+
+### mischiefProxy.interceptResponse
+
+**Kind**: instance property of [`MischiefProxy`]  
+
+| Param | Type |
+| --- | --- |
 | data | `Buffer` | 
 | session | `Session` | 
 
@@ -1042,6 +1061,8 @@ Classes in this module are meant to be used to parse raw network traffic (i.e. H
 [.MischiefIntercepter]:#mischiefproxymischiefintercepter
 [.recordExchanges]:#mischiefproxyrecordexchanges
 [`MischiefIntercepter`]:#new-mischiefinterceptercapture
+[.interceptRequest]:#mischiefproxyinterceptrequest
+[.interceptResponse]:#mischiefproxyinterceptresponse
 [`MischiefProxy`]:#mischiefproxy
 [`exchanges`]:#exchanges
 [.requestRaw]:#mischiefproxyexchangerequestraw
@@ -1083,7 +1104,7 @@ Classes in this module are meant to be used to parse raw network traffic (i.e. H
 [new exports.MischiefIntercepter(capture)]:#new-exportsmischiefinterceptercapture
 [.setup(_page)]:#mischiefinterceptersetup_page
 [.checkRequestAgainstBlocklist(session)]:#mischiefproxycheckrequestagainstblocklistsession
-[.getOrInitExchange(id, type)]:#mischiefproxygetorinitexchangeid-type
+[.getOrInitExchange(connectionId, \[type\])]:#mischiefproxygetorinitexchangeconnectionid-type
 [.intercept(type, data, session)]:#mischiefproxyintercepttype-data-session
 [new MischiefProxyExchange(\[props\])]:#new-mischiefproxyexchangeprops
 [.mischiefToWacz(capture, \[includeRaw\], signingServer)]:#exportersmischieftowaczcapture-includeraw-signingserver
