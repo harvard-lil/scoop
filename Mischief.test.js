@@ -7,7 +7,6 @@ import express from 'express'
 import { FIXTURES_PATH } from './constants.js'
 import { defaultOptions } from './options.js'
 import { Mischief } from './Mischief.js'
-import { MischiefGeneratedExchange } from './exchanges/MischiefGeneratedExchange.js'
 
 const app = express()
 const PORT = 3000
@@ -36,15 +35,21 @@ app.get('/:path', (req, res) => res.sendFile(FIXTURES_PATH + req.params.path))
  * TESTS
  */
 await test('Mischief captures the body of an html document', async (_t) => {
-  const { exchanges: [final] } = await Mischief.capture(`${URL}/test.html`, options)
-  assert.equal(final.response.body.toString(), testHtmlFixture.toString())
+  const { exchanges: [html] } = await Mischief.capture(`${URL}/test.html`, options)
+  assert.equal(html.response.body.toString(), testHtmlFixture.toString())
 })
 
 await test('Mischief follows redirects', async (_t) => {
   const statusCode = 301
-  const { exchanges: [redirect, final] } = await Mischief.capture(`${URL}/redirect?statusCode=${statusCode}&path=test.html`, options)
+  const { exchanges: [redirect, html] } = await Mischief.capture(`${URL}/redirect?statusCode=${statusCode}&path=test.html`, options)
   assert.equal(redirect.response.startLine.split(' ')[1], statusCode.toString())
-  assert.equal(final.response.body.toString(), testHtmlFixture.toString())
+  assert.equal(html.response.body.toString(), testHtmlFixture.toString())
+})
+
+await test('Mischief captures a screenshot', async (_t) => {
+  const testScreenshotFixture = await readFile(`${FIXTURES_PATH}test.png`)
+  const { exchanges: [, screenshot] } = await Mischief.capture(`${URL}/test.html`, { ...options, screenshot: true })
+  assert.notStrictEqual(screenshot.response.body, testScreenshotFixture)
 })
 
 /*
