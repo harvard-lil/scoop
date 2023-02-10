@@ -35,14 +35,12 @@ Uses a proxy to allow for comprehensive and raw network interception.</p>
 **Kind**: global class  
 
 * [Mischief]
-    * [new Mischief(url, \[options\])]
     * _static_
         * [.capture(url, \[options\])]
         * [.fromWacz(zipPath)]
     * _instance_
         * [.addGeneratedExchange(url, headers, body, isEntryPoint, description)]
         * [.blocklist]
-        * [.capture()]
         * [.captureTmpFolderPath]
         * [.exchanges]
         * [.extractGeneratedExchanges()]
@@ -62,33 +60,16 @@ Uses a proxy to allow for comprehensive and raw network interception.</p>
         * [.url]
 
 
-### new Mischief(url, \[options\])
-
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| url | `string` |  | <p>Must be a valid HTTP(S) url.</p> |
-| \[options\] | `object` | `{}` | <p>See :func:<code>MischiefOptions.defaults</code> for details.</p> |
-
-**Example**  
-```js
-import { Mischief } from "mischief";
-
-const myCapture = new Mischief("https://example.com");
-await myCapture.capture();
-const myArchive = await myCapture.toWarc();
-```
-
 ### Mischief.capture(url, \[options\])
 
-<p>(Shortcut) Instantiates a Mischief instance and runs the capture</p>
+<p>Instantiates a Mischief instance and runs the capture</p>
 
 **Kind**: static method of [`Mischief`]  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
 | url | `string` |  | <p>Must be a valid HTTP(S) url.</p> |
-| \[options\] | `object` | `{}` | <p>See :func:<code>MischiefOptions.defaults</code> for details.</p> |
+| \[options\] | `object` | `{}` | <p>See [MischiefOptions#defaults] for details</p> |
 
 
 ### Mischief.fromWacz(zipPath)
@@ -123,12 +104,6 @@ const myArchive = await myCapture.toWarc();
 <p>A mirror of options.blocklist with IPs parsed for matching</p>
 
 **Kind**: instance property of [`Mischief`]  
-
-### mischief.capture()
-
-<p>Main capture process.</p>
-
-**Kind**: instance method of [`Mischief`]  
 
 ### mischief.captureTmpFolderPath
 
@@ -1053,7 +1028,8 @@ Classes in this module are meant to be used to parse raw network traffic (i.e. H
 [.state]:#mischiefstate
 [.states]:#mischiefstates
 [.url]:#mischiefproxyexchangeurl
-[`Mischief`]:#new-mischiefurl-options
+[`Mischief`]:#mischief
+[MischiefOptions#defaults]:MischiefOptions#defaults
 [options.defaultOptions]:options.defaultOptions
 [Page]:https://playwright.dev/docs/api/class-page
 [.connectionId]:#mischiefproxyexchangeconnectionid
@@ -1097,11 +1073,9 @@ Classes in this module are meant to be used to parse raw network traffic (i.e. H
 [`importers`]:#importers
 [.defaultOptions]:#optionsdefaultoptions
 [`options`]:#options
-[new Mischief(url, \[options\])]:#new-mischiefurl-options
 [.capture(url, \[options\])]:#mischiefcaptureurl-options
 [.fromWacz(zipPath)]:#mischieffromwaczzippath
 [.addGeneratedExchange(url, headers, body, isEntryPoint, description)]:#mischiefaddgeneratedexchangeurl-headers-body-isentrypoint-description
-[.capture()]:#mischiefcapture
 [.extractGeneratedExchanges()]:#mischiefextractgeneratedexchanges
 [.filterUrl(url)]:#mischieffilterurlurl
 [.setup()]:#mischiefproxysetup
