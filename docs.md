@@ -37,6 +37,7 @@ Uses a proxy to allow for comprehensive and raw network interception.</p>
 * [Mischief]
     * [new Mischief(url, \[options\])]
     * _static_
+        * [.capture(url, \[options\])]
         * [.fromWacz(zipPath)]
     * _instance_
         * [.addGeneratedExchange(url, headers, body, isEntryPoint, description)]
@@ -77,6 +78,18 @@ const myCapture = new Mischief("https://example.com");
 await myCapture.capture();
 const myArchive = await myCapture.toWarc();
 ```
+
+### Mischief.capture(url, \[options\])
+
+<p>(Shortcut) Instantiates a Mischief instance and runs the capture</p>
+
+**Kind**: static method of [`Mischief`]  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| url | `string` |  | <p>Must be a valid HTTP(S) url.</p> |
+| \[options\] | `object` | `{}` | <p>See :func:<code>MischiefOptions.defaults</code> for details.</p> |
+
 
 ### Mischief.fromWacz(zipPath)
 
@@ -1085,6 +1098,7 @@ Classes in this module are meant to be used to parse raw network traffic (i.e. H
 [.defaultOptions]:#optionsdefaultoptions
 [`options`]:#options
 [new Mischief(url, \[options\])]:#new-mischiefurl-options
+[.capture(url, \[options\])]:#mischiefcaptureurl-options
 [.fromWacz(zipPath)]:#mischieffromwaczzippath
 [.addGeneratedExchange(url, headers, body, isEntryPoint, description)]:#mischiefaddgeneratedexchangeurl-headers-body-isentrypoint-description
 [.capture()]:#mischiefcapture

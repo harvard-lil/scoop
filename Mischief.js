@@ -952,6 +952,19 @@ export class Mischief {
   }
 
   /**
+   * (Shortcut) Instantiates a Mischief instance and runs the capture
+   *
+   * @param {string} url - Must be a valid HTTP(S) url.
+   * @param {object} [options={}] - See :func:`MischiefOptions.defaults` for details.
+   * @returns {Promise<Mischief>}
+   */
+  static async capture (url, options) {
+    const instance = new Mischief(url, options)
+    await instance.capture()
+    return instance
+  }
+
+  /**
    * (Shortcut) Reconstructs a Mischief capture from a WACZ.
    * @param {string} zipPath - Path to .wacz file.
    * @returns {Promise<Mischief>}
