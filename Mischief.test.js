@@ -22,6 +22,7 @@ const options = { logLevel: 'silent', headless: true, blocklist: [] }
 Object.entries(defaultOptions).forEach(([k, v]) => {
   options[k] = options[k] || ((v === true) ? false : v)
 })
+Object.freeze(options)
 
 /*
  * SETUP
