@@ -34,8 +34,7 @@ try {
 for (const entry of toCapture) {
   const { name, url } = entry
 
-  const myCapture = new Mischief(url)
-  await myCapture.capture()
+  const myCapture = await Mischief.capture(url)
 
   for (const format of ['warc', 'wacz']) {
     let data = null

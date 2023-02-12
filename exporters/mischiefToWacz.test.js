@@ -17,8 +17,7 @@ import { defaultTestOptions } from '../options.js'
  * @returns {Mischief}
  */
 async function testCapture () {
-  const capture = new Mischief('https://example.com', defaultTestOptions)
-  await capture.capture()
+  const capture = await Mischief.capture('https://example.com', defaultTestOptions)
   _capture = capture
   return _capture
 }

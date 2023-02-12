@@ -31,17 +31,18 @@ const exec = util.promisify(execCB)
  * Experimental single-page web archiving library using Playwright.
  * Uses a proxy to allow for comprehensive and raw network interception.
  *
- * @param {string} url - Must be a valid HTTP(S) url.
- * @param {object} [options={}] - See :func:`MischiefOptions.defaults` for details.
- *
  * @example
  * import { Mischief } from "mischief";
  *
- * const myCapture = new Mischief("https://example.com");
- * await myCapture.capture();
+ * const myCapture = await Mischief.capture("https://example.com");
  * const myArchive = await myCapture.toWarc();
  */
 export class Mischief {
+  /**
+   * @param {string} url - Must be a valid HTTP(S) url.
+   * @param {object} [options={}] - See {@link MischiefOptions#defaults} for details
+   * @private
+   */
   constructor (url, options = {}) {
     this.options = filterOptions(options)
     this.blocklist = this.options.blocklist.map(castBlocklistMatcher)
@@ -179,6 +180,7 @@ export class Mischief {
    * Main capture process.
    *
    * @returns {Promise}
+   * @private
    */
   async capture () {
     const options = this.options
@@ -949,6 +951,19 @@ export class Mischief {
    */
   async toWacz (includeRaw = true, signingServer) {
     return await exporters.mischiefToWacz(this, includeRaw, signingServer)
+  }
+
+  /**
+   * Instantiates a Mischief instance and runs the capture
+   *
+   * @param {string} url - Must be a valid HTTP(S) url.
+   * @param {object} [options={}] - See {@link MischiefOptions#defaults} for details
+   * @returns {Promise<Mischief>}
+   */
+  static async capture (url, options) {
+    const instance = new Mischief(url, options)
+    await instance.capture()
+    return instance
   }
 
   /**

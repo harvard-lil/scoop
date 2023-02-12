@@ -6,8 +6,7 @@
 ```javascript
 import { Mischief, defaultOptions } from "mischief";
 
-const myCapture = new Mischief("https://example.com", { blocklist: [/unsafedomain.com/, ...defaultOptions.blocklist] });
-await myCapture.capture();
+const myCapture = await Mischief.capture("https://example.com", { blocklist: [/unsafedomain.com/, ...defaultOptions.blocklist] });
 const myArchive = await myCapture.toWarc();
 ```
 
