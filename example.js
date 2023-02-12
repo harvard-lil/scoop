@@ -43,16 +43,27 @@ for (const entry of toCapture) {
 
     switch (format) {
       case 'wacz':
-        data = await myCapture.toWacz(true, { url: 'https://authsign.lil.tools/sign' })
+        try {
+          data = await myCapture.toWacz(true, { url: 'https://authsign.lil.tools/sign' })
+        } catch (err) {
+          console.trace(err)
+        }
         break
 
       case 'warc':
       default:
-        data = await myCapture.toWarc()
+        try {
+          data = await myCapture.toWarc()
+        } catch (err) {
+          console.trace(err)
+        }
         break
     }
 
-    await writeFile(filename, Buffer.from(data))
+    if (data) {
+      await writeFile(filename, Buffer.from(data))
+    }
+
     console.log(`💾 Saved ${url} as ${filename}`)
   }
 }
