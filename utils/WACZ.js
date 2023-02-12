@@ -291,14 +291,33 @@ export class WACZ {
     const body = stringify(payload)
     const headers = { 'Content-Type': 'application/json' }
 
+    /** @type {?Response} */
+    let response = null
+
+    /** @type {object} */
+    let json = null
+
     if (this.signingServer.token) {
       headers.Authorization = this.signingServer.token
     }
 
-    const resp = await fetch(url, { method: 'POST', headers, body })
-    const json = await resp.json()
-    assertValidSignatureResponse(json)
-    return json
+    try {
+      response = await fetch(url, { method: 'POST', headers, body })
+
+      if (response?.status !== 200) {
+        throw new Error(`Server responded with HTTP ${response.status}.`)
+      }
+    } catch (err) {
+      throw new Error(`WACZ Signature request failed.\n${err}`)
+    }
+
+    try {
+      json = await response.json()
+      assertValidSignatureResponse(json)
+      return json
+    } catch (err) {
+      throw new Error(`Server returned an invalid WACZ signature.\n${err}`)
+    }
   }
 
   /**
