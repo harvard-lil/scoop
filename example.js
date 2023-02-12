@@ -60,10 +60,11 @@ for (const entry of toCapture) {
         break
     }
 
-    if (data) {
+    if (!data) {
+      console.warn(`⛔ No data to be saved for ${filename} (${url})`)
+    } else {
       await writeFile(filename, Buffer.from(data))
+      console.log(`💾 Saved ${url} as ${filename}`)
     }
-
-    console.log(`💾 Saved ${url} as ${filename}`)
   }
 }
