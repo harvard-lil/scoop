@@ -6,6 +6,7 @@ import express from 'express'
 
 import { FIXTURES_PATH } from './constants.js'
 import { isPNG, getDimensions } from './utils/png.js'
+import { isPDF, getPageCount } from './utils/pdf.js'
 import { defaultOptions } from './options.js'
 import { Mischief } from './Mischief.js'
 
@@ -48,10 +49,16 @@ test('Mischief', async (t) => {
     assert.equal(html.response.body.toString(), testHtmlFixture.toString())
   })
 
-  await t.test('Mischief captures a screenshot', async (_t) => {
-    const { exchanges: [, screenshot] } = await Mischief.capture(`${URL}/test.html`, { ...options, screenshot: true })
-    assert(isPNG(screenshot.response.body))
-    assert.deepEqual(getDimensions(screenshot.response.body), [options.captureWindowX, options.captureWindowY])
+  await t.test('Mischief captures a png screenshot', async (_t) => {
+    const { exchanges: [, snapshot] } = await Mischief.capture(`${URL}/test.html`, { ...options, screenshot: true })
+    assert(isPNG(snapshot.response.body))
+    assert.deepEqual(getDimensions(snapshot.response.body), [options.captureWindowX, options.captureWindowY])
+  })
+
+  await t.test('Mischief captures a pdf snapshot', async (_t) => {
+    const { exchanges: [, snapshot] } = await Mischief.capture(`${URL}/test.html`, { ...options, pdfSnapshot: true })
+    assert(isPDF(snapshot.response.body))
+    assert.equal(getPageCount(snapshot.response.body), 1)
   })
 
   /*

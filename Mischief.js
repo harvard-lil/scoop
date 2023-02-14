@@ -1,6 +1,6 @@
 import os from 'os'
 import util from 'util'
-import { readFile, writeFile, rm, readdir, mkdir, mkdtemp, access } from 'fs/promises'
+import { readFile, rm, readdir, mkdir, mkdtemp, access } from 'fs/promises'
 import { constants as fsConstants } from 'node:fs'
 
 import { exec as execCB } from 'child_process'
@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { chromium } from 'playwright'
 import { getOSInfo } from 'get-os-info'
 
+import { gsCompress } from './utils/pdf.js'
 import { MischiefGeneratedExchange } from './exchanges/index.js'
 import { castBlocklistMatcher, searchBlocklistFor } from './utils/blocklist.js'
 
@@ -723,8 +724,6 @@ export class Mischief {
   async #takePdfSnapshot (page) {
     let pdf = null
     let dimensions = null
-    const tmpFilenameIn = `${this.captureTmpFolderPath}${this.id}-raw.pdf`
-    const tmpFilenameOut = `${this.captureTmpFolderPath}${this.id}-compressed.pdf`
 
     await page.emulateMedia({ media: 'screen' })
 
@@ -744,20 +743,7 @@ export class Mischief {
 
     // Try to apply compression if Ghostscript is available
     try {
-      await writeFile(tmpFilenameIn, pdf)
-
-      await exec([
-        'gs',
-        '-sDEVICE=pdfwrite',
-        '-dNOPAUSE',
-        '-dBATCH',
-        '-dJPEGQ=90',
-        '-r150',
-        `-sOutputFile=${tmpFilenameOut}`,
-        `${tmpFilenameIn}`
-      ].join(' '))
-
-      pdf = await readFile(tmpFilenameOut)
+      pdf = await gsCompress(pdf)
     } catch (err) {
       this.log.warn('gs command (Ghostscript) is not available or failed. The PDF Snapshot will be stored uncompressed.')
       this.log.trace(err)
