@@ -54,21 +54,6 @@ export function isPDF (buffer) {
 }
 
 /**
- * Finds FlateDecode streams in a PDF and decodes them
- *
- * @param {Buffer} buffer - a buffer containing PDF data
- * @throws {Error} -
- * @returns {Promise<Array<string>>} -
- */
-export async function getStreams (buffer) {
-  if (!isPDF(buffer)) throw new Error('buffer must contain PDF data')
-
-  const matches = Array.from(buffer.toString().matchAll(/.*?FlateDecode.*?stream\n(.*?)endstream/sg))
-    .map(([, match]) => match.replace(/\r\n/g, ''))
-  return Promise.all(matches.map(async (match) => { await inflate(match) }))
-}
-
-/**
  * Very loosely extracts the number of pages in a PDF buffer
  * NOTE: VERY LOOSELY; use only for testing on known PDF output
  *
