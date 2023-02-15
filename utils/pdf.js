@@ -5,9 +5,7 @@
  * @private
  */
 
-import { promisify } from 'util'
-import { execFile as execFileCB } from 'child_process'
-const execFile = promisify(execFileCB)
+import { exec } from './exec.js'
 
 const magicByte = '%PDF'
 
@@ -18,7 +16,7 @@ const magicByte = '%PDF'
  * @returns {Promise<Buffer>} - A buffer containing compressed PDF data
  */
 export async function gsCompress (buffer) {
-  const promise = execFile('gs', [
+  return exec('gs', [
     '-sDEVICE=pdfwrite',
     '-dNOPAUSE',
     '-dBATCH',
@@ -27,15 +25,7 @@ export async function gsCompress (buffer) {
     '-q',
     '-sOutputFile=-',
     '-'
-  ])
-
-  promise.child.stdin.write(buffer)
-  promise.child.stdin.end()
-
-  return promise.then(({ stdout, stderr }) => {
-    if (stderr) throw new Error(stderr)
-    return Buffer.from(stdout)
-  })
+  ], { input: buffer }).then(Buffer.from)
 }
 
 /**

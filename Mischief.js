@@ -1,9 +1,6 @@
 import os from 'os'
-import util from 'util'
 import { readFile, rm, readdir, mkdir, mkdtemp, access } from 'fs/promises'
 import { constants as fsConstants } from 'node:fs'
-
-import { exec as execCB } from 'child_process'
 
 import log from 'loglevel'
 import logPrefix from 'loglevel-plugin-prefix'
@@ -13,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { chromium } from 'playwright'
 import { getOSInfo } from 'get-os-info'
 
+import { exec } from './utils/exec.js'
 import { gsCompress } from './utils/pdf.js'
 import { MischiefGeneratedExchange } from './exchanges/index.js'
 import { castBlocklistMatcher, searchBlocklistFor } from './utils/blocklist.js'
@@ -23,7 +21,6 @@ import * as exporters from './exporters/index.js'
 import * as importers from './importers/index.js'
 import { filterOptions } from './options.js'
 
-const exec = util.promisify(execCB)
 
 /**
  * @class Mischief
@@ -558,8 +555,7 @@ export class Mischief {
     // yt-dlp health check
     //
     try {
-      const result = await exec(`${ytDlpPath} --version`)
-      const version = result.stdout.trim()
+      const version = await exec(ytDlpPath, ['--version']).then((v) => v.trim())
 
       if (!version.match(/^[0-9]{4}\.[0-9]{2}\.[0-9]{2}$/)) {
         throw new Error(`Unknown version: ${version}`)
@@ -593,8 +589,7 @@ export class Mischief {
         timeout: this.options.captureVideoAsAttachmentTimeout
       }
 
-      const result = await exec(`${ytDlpPath} ${dlpOptions.join(' ')}`, spawnOptions)
-      metadataRaw = result.stdout
+      metadataRaw = await exec(ytDlpPath, dlpOptions, spawnOptions)
     } catch (err) {
       this.log.trace(err)
       throw new Error(`No video found in ${this.url}.`)
