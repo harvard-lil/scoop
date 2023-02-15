@@ -50,15 +50,28 @@ test('Mischief', async (t) => {
   })
 
   await t.test('Mischief captures a png screenshot', async (_t) => {
-    const { exchanges: [, snapshot] } = await Mischief.capture(`${URL}/test.html`, { ...options, screenshot: true })
-    assert(isPNG(snapshot.response.body))
-    assert.deepEqual(getDimensions(snapshot.response.body), [options.captureWindowX, options.captureWindowY])
+    const { exchanges } = await Mischief.capture(`${URL}/test.html`, { ...options, screenshot: true })
+    const attachment = exchanges[exchanges.length - 1]
+    assert(isPNG(attachment.response.body))
+    assert.deepEqual(getDimensions(attachment.response.body), [options.captureWindowX, options.captureWindowY])
   })
 
   await t.test('Mischief captures a pdf snapshot', async (_t) => {
-    const { exchanges: [, snapshot] } = await Mischief.capture(`${URL}/test.html`, { ...options, pdfSnapshot: true })
-    assert(isPDF(snapshot.response.body))
-    assert.equal(getPageCount(snapshot.response.body), 1)
+    const { exchanges } = await Mischief.capture(`${URL}/test.html`, { ...options, pdfSnapshot: true })
+    const attachment = exchanges[exchanges.length - 1]
+    assert(isPDF(attachment.response.body))
+    assert.equal(getPageCount(attachment.response.body), 1)
+  })
+
+  await t.test('Mischief captures video as an attachment', async (_t) => {
+    const { exchanges } = await Mischief.capture(`${URL}/test.html`, { ...options, captureVideoAsAttachment: true })
+    const urls = exchanges.map(ex => ex.url)
+    const expected = [
+      'file:///video-extracted-1.mp4',
+      'file:///video-extracted-metadata.json',
+      'file:///video-extracted-summary.html'
+    ]
+    assert.deepEqual(expected.filter(url => urls.includes(url)), expected)
   })
 
   /*
