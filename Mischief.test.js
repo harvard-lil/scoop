@@ -74,6 +74,20 @@ test('Mischief', async (t) => {
     assert.deepEqual(expected.filter(url => urls.includes(url)), expected)
   })
 
+  await t.test('Mischief can be configured for different window dimensions', async (_t) => {
+    const xy = 600
+    const { exchanges } = await Mischief.capture(`${URL}/test.html`, { ...options, screenshot: true, captureWindowX: xy, captureWindowY: xy })
+    const attachment = exchanges[exchanges.length - 1]
+    assert.deepEqual(getDimensions(attachment.response.body), [xy, xy])
+  })
+
+  await t.test('Mischief adds a provenance summary html page', async (_t) => {
+    const { exchanges } = await Mischief.capture(`${URL}/test.html`, { ...options, provenanceSummary: true })
+    const attachment = exchanges[exchanges.length - 1]
+    assert.equal(attachment.url, 'file:///provenance-summary.html')
+    assert(attachment.response.body.includes('<!DOCTYPE html>'))
+  })
+
   /*
    * TEARDOWN
    */
