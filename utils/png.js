@@ -34,7 +34,7 @@ export function hasIHDR (buffer) {
  * Extracts the width and height from a buffer containing PNG data
  *
  * @param {Buffer} buffer - The png data
- * @returns {[width: integer, height: integer]} True if buffer contains the IHDR data field
+ * @returns {integer[]} A tuple containing the width and height
  */
 export function getDimensions (buffer) {
   if (!isPNG(buffer) || !hasIHDR(buffer)) {

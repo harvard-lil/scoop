@@ -948,7 +948,7 @@ Unless specified otherwise at constructor level, Mischief will run with these se
 
 | Name | Type | Default | Description |
 | --- | --- | --- | --- |
-| logLevel | `boolean` | `&quot;info&quot;` | <p>Determines the logging level of this instance. Can be &quot;silent&quot;, &quot;trace&quot;, &quot;debug&quot;, &quot;info&quot;, &quot;warn&quot; or &quot;error&quot;. See https://github.com/pimterry/loglevel for more information.</p> |
+| logLevel | `"silent"` \| `"trace"` \| `"debug"` \| `"info"` \| `"warn"` \| `"error"` | `&quot;info&quot;` | <p>Determines the logging level of this instance. See [https://github.com/pimterry/loglevel] for more information.</p> |
 | headless | `boolean` | `false` | <p>Should Playwright run in headless mode?</p> |
 | proxyHost | `string` | `'&quot;localhost&quot;'` | <p>What host should Playwright proxy through for capture?</p> |
 | proxyPort | `number` | `9000` | <p>What port should Playwright proxy through for capture?</p> |
@@ -1073,6 +1073,7 @@ Classes in this module are meant to be used to parse raw network traffic (i.e. H
 [`importers`]:#importers
 [.defaultOptions]:#optionsdefaultoptions
 [`options`]:#options
+[https://github.com/pimterry/loglevel]:https://github.com/pimterry/loglevel
 [.capture(url, \[options\])]:#mischiefcaptureurl-options
 [.fromWacz(zipPath)]:#mischieffromwaczzippath
 [.addGeneratedExchange(url, headers, body, isEntryPoint, description)]:#mischiefaddgeneratedexchangeurl-headers-body-isentrypoint-description

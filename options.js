@@ -12,7 +12,7 @@ import * as CONSTANTS from './constants.js'
  * Available options and defaults for Mischief.
  * Unless specified otherwise at constructor level, Mischief will run with these settings.
  *
- * @property {boolean} logLevel="info" - Determines the logging level of this instance. Can be "silent", "trace", "debug", "info", "warn" or "error". See https://github.com/pimterry/loglevel for more information.
+ * @property {("silent" | "trace" | "debug" | "info" | "warn" | "error")} logLevel="info" - Determines the logging level of this instance. See {@link https://github.com/pimterry/loglevel} for more information.
  * @property {boolean} headless=false - Should Playwright run in headless mode?
  * @property {string} proxyHost="localhost" - What host should Playwright proxy through for capture?
  * @property {number} proxyPort=9000 - What port should Playwright proxy through for capture?
