@@ -7,10 +7,7 @@
 
 import { promisify } from 'util'
 import { execFile as execFileCB } from 'child_process'
-import { inflate as inflateCB } from 'node:zlib'
-
 const execFile = promisify(execFileCB)
-const inflate = promisify(inflateCB)
 
 const magicByte = '%PDF'
 
