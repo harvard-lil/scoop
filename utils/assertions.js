@@ -1,12 +1,11 @@
-/**
- * Scoop
- * @module utils.assertions
- * @description Assertion helpers
- * @private
- */
-
 import { X509Certificate } from 'crypto'
 
+/**
+ * Assertion builder utility.
+ * @param {string} description - Message to be shown.
+ * @param {function} matcher - Function to be run to check that value matches assertion.
+ * @returns {function} - Assertion function ready to be consumed.
+ */
 const makeAssertion = (description, matcher) => {
   return (val, customMsg) => {
     if (!matcher(val)) {

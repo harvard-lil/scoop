@@ -17,6 +17,10 @@ import { ScoopGeneratedExchange } from '../exchanges/ScoopGeneratedExchange.js'
  * @private
  */
 export function valueOf (source) {
+  function filterProps (obj, keep) {
+    return Object.fromEntries(keep.map(k => [k, valueOf(obj[k])]))
+  }
+
   switch (source.constructor) {
     case Array: {
       return source.map(valueOf)
@@ -55,8 +59,4 @@ export function valueOf (source) {
       return source
     }
   }
-}
-
-function filterProps (obj, keep) {
-  return Object.fromEntries(keep.map(k => [k, valueOf(obj[k])]))
 }

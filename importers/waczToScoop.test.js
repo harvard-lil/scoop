@@ -6,7 +6,7 @@ import { writeFile, rm } from 'fs/promises'
 
 import { Scoop } from '../Scoop.js'
 import { TMP_PATH } from '../constants.js'
-import { valueOf } from '../utils/valueof.js'
+import { valueOf } from '../utils/valueOf.js'
 
 import { defaultTestOptions } from '../options.js'
 

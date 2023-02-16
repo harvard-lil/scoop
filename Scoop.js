@@ -35,30 +35,7 @@ import { filterOptions } from './options.js'
  * const myArchive = await myCapture.toWarc();
  */
 export class Scoop {
-  /**
-   * @param {string} url - Must be a valid HTTP(S) url.
-   * @param {object} [options={}] - See {@link ScoopOptions#defaults} for details
-   * @private
-   */
-  constructor (url, options = {}) {
-    this.options = filterOptions(options)
-    this.blocklist = this.options.blocklist.map(castBlocklistMatcher)
-    this.url = this.filterUrl(url)
-
-    // Logging setup (level, output formatting)
-    logPrefix.reg(this.log)
-    logPrefix.apply(log, {
-      format (level, _name, timestamp) {
-        const timestampColor = CONSTANTS.LOGGING_COLORS.DEFAULT
-        const msgColor = CONSTANTS.LOGGING_COLORS[level.toUpperCase()]
-        return `${timestampColor(`[${timestamp}]`)} ${msgColor(level)}`
-      }
-    })
-    this.log.setLevel(this.options.logLevel)
-
-    this.intercepter = new intercepters[this.options.intercepter](this)
-  }
-
+  /** @type {string} */
   id = uuidv4()
 
   /**
@@ -172,6 +149,29 @@ export class Scoop {
    * }}
    */
   pageInfo = {}
+
+  /**
+   * @param {string} url - Must be a valid HTTP(S) url.
+   * @param {object} [options={}] - See {@link ScoopOptions#defaults} for details
+   */
+  constructor (url, options = {}) {
+    this.options = filterOptions(options)
+    this.blocklist = this.options.blocklist.map(castBlocklistMatcher)
+    this.url = this.filterUrl(url)
+
+    // Logging setup (level, output formatting)
+    logPrefix.reg(this.log)
+    logPrefix.apply(log, {
+      format (level, _name, timestamp) {
+        const timestampColor = CONSTANTS.LOGGING_COLORS.DEFAULT
+        const msgColor = CONSTANTS.LOGGING_COLORS[level.toUpperCase()]
+        return `${timestampColor(`[${timestamp}]`)} ${msgColor(level)}`
+      }
+    })
+    this.log.setLevel(this.options.logLevel)
+
+    this.intercepter = new intercepters[this.options.intercepter](this)
+  }
 
   /**
    * Main capture process.

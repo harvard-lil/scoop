@@ -1,7 +1,3 @@
-/**
- * @module CONSTANTS
- * @description Constants used across the library.
- */
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 

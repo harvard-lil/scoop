@@ -1,10 +1,3 @@
-/**
- * Scoop
- * @module utils.pdf
- * @description Helper functions for working with buffers containing pdf data.
- * @private
- */
-
 import { exec } from './exec.js'
 
 const magicByte = '%PDF'

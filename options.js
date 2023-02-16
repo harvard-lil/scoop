@@ -1,11 +1,4 @@
-/**
- * @module options
- */
-
-import { statSync } from 'fs'
-// Note: used `statSync` instead of `stat` from `fs/promises` here for convenience.
-// We're using `filter()` in `Scoop()`, which cannot be async.
-
+import { statSync } from 'fs' // Cannot be promisified at this stage (used in constructor)
 import * as CONSTANTS from './constants.js'
 
 /**
