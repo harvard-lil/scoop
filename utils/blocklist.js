@@ -1,5 +1,5 @@
 /**
- * Mischief
+ * Scoop
  * @module utils.blocklist
  * @description Helper functions for matching items in a blocklist.
  * @private

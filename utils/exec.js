@@ -1,5 +1,5 @@
 /**
- * Mischief
+ * Scoop
  * @module utils.exec
  * @description Helper functions for working with command line scripts
  * @private

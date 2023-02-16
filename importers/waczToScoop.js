@@ -2,32 +2,32 @@ import path from 'path'
 import { URL } from 'url'
 import StreamZip from 'node-stream-zip'
 import { Readable } from 'stream'
-import { Mischief } from '../Mischief.js'
-import { MischiefProxyExchange, MischiefGeneratedExchange } from '../exchanges/index.js'
+import { Scoop } from '../Scoop.js'
+import { ScoopProxyExchange, ScoopGeneratedExchange } from '../exchanges/index.js'
 import { WARCParser } from 'warcio'
 
 /**
- * @function waczToMischief
+ * @function waczToScoop
  * @memberof module:importers
  *
  * @description
- * Reconstructs a Mischief capture from a WACZ
+ * Reconstructs a Scoop capture from a WACZ
  * containing raw http traffic data.
  *
  * @param {string} zipPath - path to the zipped WACZ
- * @returns {Promise<Mischief>} a reconstructed Mischief capture object
+ * @returns {Promise<Scoop>} a reconstructed Scoop capture object
  */
-export async function waczToMischief (zipPath) {
+export async function waczToScoop (zipPath) {
   const zip = new StreamZip.async({ file: zipPath }) // eslint-disable-line
   const pageJSON = await getPagesJSON(zip)
   const datapackage = await getDataPackage(zip)
 
-  const capture = new Mischief(pageJSON.url, datapackage.extras?.provenanceInfo?.options)
+  const capture = new Scoop(pageJSON.url, datapackage.extras?.provenanceInfo?.options)
   Object.assign(capture, {
     id: pageJSON.id,
     startedAt: new Date(pageJSON.ts),
     exchanges: await getExchanges(zip),
-    state: Mischief.states.RECONSTRUCTED
+    state: Scoop.states.RECONSTRUCTED
   })
 
   // Only set `provenanceInfo` if available.
@@ -64,10 +64,10 @@ const getDataPackage = async (zip) => {
 
 /**
  * Retrieves the raw requests and responses and initializes
- * them into MischiefProxyExchanges
+ * them into ScoopProxyExchanges
  *
  * @param {StreamZipAsync} zip
- * @returns {MischiefProxyExchange[]} an array of reconstructed MischiefProxyExchanges
+ * @returns {ScoopProxyExchange[]} an array of reconstructed ScoopProxyExchanges
  * @private
  */
 const getExchanges = async (zip) => {
@@ -101,7 +101,7 @@ const getExchanges = async (zip) => {
       // get data for rehydrating generated exchanges
       const url = record.warcHeader('WARC-Target-URI')
       if (url && (new URL(url)).protocol === 'file:') {
-        generatedExchanges.push(new MischiefGeneratedExchange({
+        generatedExchanges.push(new ScoopGeneratedExchange({
           url,
           id: record.warcHeaders.headers.get('exchange-id'),
           date: new Date(record.warcHeaders.headers.get('WARC-Date')),
@@ -144,7 +144,7 @@ const getExchanges = async (zip) => {
     if (prev && prev.id === props.id) {
       Object.assign(prev, props)
     } else {
-      exchanges.push(new MischiefProxyExchange(props))
+      exchanges.push(new ScoopProxyExchange(props))
     }
   }
 

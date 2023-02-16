@@ -1,25 +1,25 @@
 import { strict as assert } from 'node:assert'
 import { parse as parseHTML } from 'node-html-parser'
 
-import { Mischief } from '../Mischief.js'
+import { Scoop } from '../Scoop.js'
 import { bodyToString } from '../utils/http.js'
 
 /**
- * @class MischiefIntercepter
+ * @class ScoopIntercepter
  * @abstract
  *
  * @classdesc
  * Abstract class for intercepter implementations to capture HTTP traffic.
  *
- * @param {Mischief} capture - a Mischief capture
+ * @param {Scoop} capture - a Scoop capture
  */
-export class MischiefIntercepter {
+export class ScoopIntercepter {
   /**
-   * @param {Mischief} capture
+   * @param {Scoop} capture
    */
   constructor (capture) {
-    if (capture instanceof Mischief === false) {
-      throw new Error('"capture" must be an instance of Mischief.')
+    if (capture instanceof Scoop === false) {
+      throw new Error('"capture" must be an instance of Scoop.')
     }
 
     this.capture = capture
@@ -27,9 +27,9 @@ export class MischiefIntercepter {
   }
 
   /**
-   * The Mischief capture utilizing this intercepter
+   * The Scoop capture utilizing this intercepter
    *
-   * @type {Mischief}
+   * @type {Scoop}
    */
   capture
 
@@ -52,7 +52,7 @@ export class MischiefIntercepter {
    * Data recorded by the intercepter,
    * formatted as a series of exchanges
    *
-   * @type {MischiefExchange[]}
+   * @type {ScoopExchange[]}
    */
   exchanges = []
 
@@ -86,9 +86,9 @@ export class MischiefIntercepter {
 
   /**
    * Tries to find the "noarchive" directive in a given exchange.
-   * If found, keeps trace of match in `Mischief.provenanceInfo`.
+   * If found, keeps trace of match in `Scoop.provenanceInfo`.
    *
-   * @param {MischiefExchange} exchange
+   * @param {ScoopExchange} exchange
    * @returns {boolean} - `true` if request contained "noarchive"
    */
   async checkExchangeForNoArchive (exchange) {
@@ -134,9 +134,9 @@ export class MischiefIntercepter {
    * the capture's limit and, if so, ends the capture
    */
   checkAndEnforceSizeLimit () {
-    if (this.byteLength >= this.options.maxSize && this.capture.state === Mischief.states.CAPTURE) {
+    if (this.byteLength >= this.options.maxSize && this.capture.state === Scoop.states.CAPTURE) {
       this.capture.log.warn(`Max size ${this.options.maxSize} reached. Ending interception.`)
-      this.capture.state = Mischief.states.PARTIAL
+      this.capture.state = Scoop.states.PARTIAL
       this.capture.teardown()
     }
   }

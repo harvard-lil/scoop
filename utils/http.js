@@ -1,5 +1,5 @@
 /**
- * Mischief
+ * Scoop
  * @module utils.http
  * @description Helper functions for working with raw HTTP exchanges.
  * @private

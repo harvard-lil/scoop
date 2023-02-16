@@ -1,5 +1,5 @@
 /**
- * Mischief
+ * Scoop
  * @module utils.png
  * @description Helper functions for working with buffers containing png data.
  * @private

@@ -4,4 +4,4 @@
  * @description
  * Entry point for the importers module.
  */
-export * from './waczToMischief.js'
+export * from './waczToScoop.js'

@@ -6,6 +6,6 @@
  * Classes in this module are meant to be used to parse raw network traffic (i.e. HTTP).
  *
  * Classes:
- * * {@link MischiefHTTPParser}
+ * * {@link ScoopHTTPParser}
  */
-export * from './MischiefHTTPParser.js'
+export * from './ScoopHTTPParser.js'

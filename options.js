@@ -4,38 +4,38 @@
 
 import { statSync } from 'fs'
 // Note: used `statSync` instead of `stat` from `fs/promises` here for convenience.
-// We're using `filter()` in `Mischief()`, which cannot be async.
+// We're using `filter()` in `Scoop()`, which cannot be async.
 
 import * as CONSTANTS from './constants.js'
 
 /**
- * Available options and defaults for Mischief.
- * Unless specified otherwise at constructor level, Mischief will run with these settings.
+ * Available options and defaults for Scoop.
+ * Unless specified otherwise at constructor level, Scoop will run with these settings.
  *
  * @property {("silent" | "trace" | "debug" | "info" | "warn" | "error")} logLevel="info" - Determines the logging level of this instance. See {@link https://github.com/pimterry/loglevel} for more information.
  * @property {boolean} headless=false - Should Playwright run in headless mode?
  * @property {string} proxyHost="localhost" - What host should Playwright proxy through for capture?
  * @property {number} proxyPort=9000 - What port should Playwright proxy through for capture?
  * @property {boolean} proxyVerbose=false - Should log entries from the proxy be printed?
- * @property {number} totalTimeout=300000 - How long should Mischief wait for all steps in the capture to complete, in ms?
- * @property {number} loadTimeout=30000 - How long should Mischief wait for the page to load, in ms?
- * @property {number} networkIdleTimeout=30000 - How long should Mischief wait for network events to complete, in ms.
- * @property {number} behaviorsTimeout=60000 - How long should Mischief wait for media to play, secondary resources, and site specific behaviors (in total), in ms?
- * @property {boolean} keepPartialResponses=true - Should Mischief keep partially downloaded resources?
+ * @property {number} totalTimeout=300000 - How long should Scoop wait for all steps in the capture to complete, in ms?
+ * @property {number} loadTimeout=30000 - How long should Scoop wait for the page to load, in ms?
+ * @property {number} networkIdleTimeout=30000 - How long should Scoop wait for network events to complete, in ms.
+ * @property {number} behaviorsTimeout=60000 - How long should Scoop wait for media to play, secondary resources, and site specific behaviors (in total), in ms?
+ * @property {boolean} keepPartialResponses=true - Should Scoop keep partially downloaded resources?
  * @property {number} maxSize=209715200 - Maximum size, in bytes, for the exchanges list.
- * @property {boolean} screenshot=true - Should Mischief try to make a screenshot? Screenshot will be added as `file:///screenshot.png` in the exchanges list.
- * @property {boolean} domSnapshot=true - Should Mischief save a snapshot of the rendered DOM? Added as `file:///dom-snapshot.html` in the exchanges list.
- * @property {boolean} pdfSnapshot=false - Should Mischief save a PDF of the rendered page? Only available in headless mode. Added as `file:///pdf-snapshot.pedf` in the exchanges list.
+ * @property {boolean} screenshot=true - Should Scoop try to make a screenshot? Screenshot will be added as `file:///screenshot.png` in the exchanges list.
+ * @property {boolean} domSnapshot=true - Should Scoop save a snapshot of the rendered DOM? Added as `file:///dom-snapshot.html` in the exchanges list.
+ * @property {boolean} pdfSnapshot=false - Should Scoop save a PDF of the rendered page? Only available in headless mode. Added as `file:///pdf-snapshot.pedf` in the exchanges list.
  * @property {boolean} captureVideoAsAttachment=true - If `true`, will try to capture the main video that may be present in this page as `file:///video-extracted.mp4`. Will also save associated meta data as `file:///video-extracted-metadata.json`. This capture happens out of the browser.
- * @property {number} captureVideoAsAttachmentTimeout=30000 - How long should Mischief wait for `captureVideoAsAttachment` to finish.
+ * @property {number} captureVideoAsAttachmentTimeout=30000 - How long should Scoop wait for `captureVideoAsAttachment` to finish.
  * @property {string} ytDlpPath="./executables/yt-dlp" - Path to the yt-dlp executable to be used.
  * @property {number} captureWindowX=1600 - Browser window resolution in pixels: X axis.
  * @property {number} captureWindowY=900 - Browser window resolution in pixels: Y axis.
- * @property {boolean} autoScroll=true - Should Mischief try to scroll through the page?
- * @property {boolean} autoPlayMedia=true - Should Mischief try to autoplay `<audio>` and `<video>` tags?
- * @property {boolean} grabSecondaryResources=true - Should Mischief try to download img srcsets and secondary stylesheets?
- * @property {boolean} runSiteSpecificBehaviors=true - Should Mischief run behaviors tailored to specific sites (ex: Twitter) in an attempt to better grab the page?
- * @property {string} intercepter="MischiefProxy" - Network interception method to be used. Available at the moment: "MischiefProxy".
+ * @property {boolean} autoScroll=true - Should Scoop try to scroll through the page?
+ * @property {boolean} autoPlayMedia=true - Should Scoop try to autoplay `<audio>` and `<video>` tags?
+ * @property {boolean} grabSecondaryResources=true - Should Scoop try to download img srcsets and secondary stylesheets?
+ * @property {boolean} runSiteSpecificBehaviors=true - Should Scoop run behaviors tailored to specific sites (ex: Twitter) in an attempt to better grab the page?
+ * @property {string} intercepter="ScoopProxy" - Network interception method to be used. Available at the moment: "ScoopProxy".
  * @property {string} userAgentSuffix="" - String to append to the user agent.
  * @property {boolean} provenanceSummary=true - If `true`, information about the capture process (public IP address, User Agent, software version ...) will be gathered and summarized under `file:///provenance-summary.html`. WACZ exports will also hold that information at `datapackage.json` level, under `extras`.
  * @property {string} publicIpResolverEndpoint="https://myip.lil.tools" - URL to be used to retrieve the client's public IP address for `provenanceSummary`. Endpoint requirements: must simply return a IPv4 or IPv6 address as text.
@@ -65,7 +65,7 @@ export const defaultOptions = {
   autoPlayMedia: true,
   grabSecondaryResources: true,
   runSiteSpecificBehaviors: true,
-  intercepter: 'MischiefProxy',
+  intercepter: 'ScoopProxy',
   userAgentSuffix: '',
   provenanceSummary: true,
   publicIpResolverEndpoint: 'https://myip.lil.tools',
@@ -103,7 +103,7 @@ export const defaultOptions = {
 }
 
 /**
- * Basic set of options to be used with Mischief for automated testing purposes.
+ * Basic set of options to be used with Scoop for automated testing purposes.
  * @ignore
  */
 export const defaultTestOptions = {

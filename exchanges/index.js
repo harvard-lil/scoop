@@ -6,11 +6,11 @@
  * An exchange encapsulates a request and associated response.
  *
  * Classes:
- * * {@link MischiefExchange}
- * * {@link MischiefProxyExchange}
- * * {@link MischiefGeneratedExchange}
+ * * {@link ScoopExchange}
+ * * {@link ScoopProxyExchange}
+ * * {@link ScoopGeneratedExchange}
  */
 
-export * from './MischiefExchange.js'
-export * from './MischiefProxyExchange.js'
-export * from './MischiefGeneratedExchange.js'
+export * from './ScoopExchange.js'
+export * from './ScoopProxyExchange.js'
+export * from './ScoopGeneratedExchange.js'

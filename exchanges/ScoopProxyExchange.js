@@ -4,19 +4,19 @@ import {
   flatArrayToHeadersObject
 } from '../utils/http.js'
 
-import { MischiefExchange } from './MischiefExchange.js'
-import { MischiefHTTPParser } from '../parsers/index.js'
+import { ScoopExchange } from './ScoopExchange.js'
+import { ScoopHTTPParser } from '../parsers/index.js'
 
 /**
- * @class MischiefProxyExchange
- * @extends MischiefExchange
+ * @class ScoopProxyExchange
+ * @extends ScoopExchange
  *
  * @classdesc
- * Represents an HTTP exchange captured via MischiefProxy.
+ * Represents an HTTP exchange captured via ScoopProxy.
  *
  * @param {object} [props={}] - Object containing any of the properties of `this`.
  */
-export class MischiefProxyExchange extends MischiefExchange {
+export class ScoopProxyExchange extends ScoopExchange {
   constructor (props = {}) {
     super(props)
 
@@ -76,10 +76,10 @@ export class MischiefProxyExchange extends MischiefExchange {
     this._responseRaw = val
   }
 
-  /** @type {?MischiefExchange~Message} */
+  /** @type {?ScoopExchange~Message} */
   get request () {
     if (!this._request && this.requestRaw) {
-      const parsed = MischiefHTTPParser.parseRequest(this.requestRaw)
+      const parsed = ScoopHTTPParser.parseRequest(this.requestRaw)
       const body = getBody(this.requestRaw)
       this._request = {
         startLine: getStartLine(this.requestRaw).toString(),
@@ -96,10 +96,10 @@ export class MischiefProxyExchange extends MischiefExchange {
     this._request = val
   }
 
-  /** @type {?MischiefExchange~Message} */
+  /** @type {?ScoopExchange~Message} */
   get response () {
     if (!this._response && this.responseRaw) {
-      const parsed = MischiefHTTPParser.parseResponse(this.responseRaw)
+      const parsed = ScoopHTTPParser.parseResponse(this.responseRaw)
       const body = getBody(this.responseRaw)
       this._response = {
         startLine: getStartLine(this.responseRaw).toString(),

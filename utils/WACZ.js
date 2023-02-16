@@ -392,14 +392,14 @@ export function hash (buffer) {
 }
 
 /**
- * Format a MischiefExchange as needed for
+ * Format a ScoopExchange as needed for
  * the pages JSON-Lines
  *
- * @param {MischiefExchange} exchange
+ * @param {ScoopExchange} exchange
  * @returns {object}
  * @private
  */
-export function mischiefExchangeToPageLine (exchange) {
+export function scoopExchangeToPageLine (exchange) {
   return {
     id: exchange.id,
     url: exchange.url,

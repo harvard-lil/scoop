@@ -1,5 +1,5 @@
 /**
- * Mischief
+ * Scoop
  * @module utils.assertions
  * @description Assertion helpers
  * @private

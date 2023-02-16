@@ -2,32 +2,32 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 
 import { FIXTURES_PATH } from '../constants.js'
-import { MischiefIntercepter } from './index.js'
-import { Mischief } from '../Mischief.js'
-import { MischiefProxyExchange } from '../exchanges/MischiefProxyExchange.js'
+import { ScoopIntercepter } from './index.js'
+import { Scoop } from '../Scoop.js'
+import { ScoopProxyExchange } from '../exchanges/ScoopProxyExchange.js'
 
-test('MischiefIntercepter constructor "capture" argument must be a Mischief instance.', async (_t) => {
+test('ScoopIntercepter constructor "capture" argument must be a Scoop instance.', async (_t) => {
   for (const capture of [{}, [], true, 12, 'FOO', ['FOO'], () => {}]) {
-    assert.throws(() => new MischiefIntercepter(capture))
+    assert.throws(() => new ScoopIntercepter(capture))
   }
 })
 
-test('MischiefIntercepter setup and teardown methods throw as not implemented.', async (_t) => {
-  const capture = new Mischief('https://example.com')
-  const intercepter = new MischiefIntercepter(capture)
+test('ScoopIntercepter setup and teardown methods throw as not implemented.', async (_t) => {
+  const capture = new Scoop('https://example.com')
+  const intercepter = new ScoopIntercepter(capture)
   assert.throws(() => intercepter.setup())
   assert.throws(() => intercepter.teardown())
 })
 
 test('checkExchangeForNoArchive returns true when noarchive directive is present in exchange.', async (_t) => {
-  const capture = await Mischief.fromWacz(`${FIXTURES_PATH}/noarchive.netlify.app.wacz`)
-  const intercepter = new MischiefIntercepter(capture)
+  const capture = await Scoop.fromWacz(`${FIXTURES_PATH}/noarchive.netlify.app.wacz`)
+  const intercepter = new ScoopIntercepter(capture)
 
-  // Exactly 1 MischiefProxyExchange in that capture bears the "noarchive" directive.
+  // Exactly 1 ScoopProxyExchange in that capture bears the "noarchive" directive.
   let noArchiveCount = 0
 
   for (const exchange of capture.exchanges) {
-    if (exchange instanceof MischiefProxyExchange === false) {
+    if (exchange instanceof ScoopProxyExchange === false) {
       continue
     }
 
@@ -38,8 +38,8 @@ test('checkExchangeForNoArchive returns true when noarchive directive is present
 })
 
 test('checkExchangeForNoArchive returns false when noarchive directive is not present in exchange.', async (_t) => {
-  const capture = await Mischief.fromWacz(`${FIXTURES_PATH}/example.com.wacz`)
-  const intercepter = new MischiefIntercepter(capture)
+  const capture = await Scoop.fromWacz(`${FIXTURES_PATH}/example.com.wacz`)
+  const intercepter = new ScoopIntercepter(capture)
 
   let noArchiveCount = 0
   for (const exchange of capture.exchanges) {
@@ -50,13 +50,13 @@ test('checkExchangeForNoArchive returns false when noarchive directive is not pr
 })
 
 test('checkAndEnforceSizeLimit interrupts capture when size limit is reached.', async (_t) => {
-  const capture = new Mischief('https://example.com')
-  const intercepter = new MischiefIntercepter(capture)
+  const capture = new Scoop('https://example.com')
+  const intercepter = new ScoopIntercepter(capture)
 
   capture.options.maxSize = 100
-  capture.state = Mischief.states.CAPTURE
+  capture.state = Scoop.states.CAPTURE
 
-  // We mock Mischief.teardown to get a clear indication that it was called.
+  // We mock Scoop.teardown to get a clear indication that it was called.
   // The original method is async but not awaited by checkAndEnforceSizeLimit().
   capture.teardown = () => {
     throw new Error('TEARDOWN')
@@ -64,10 +64,10 @@ test('checkAndEnforceSizeLimit interrupts capture when size limit is reached.', 
 
   // Size limit not reached
   assert.doesNotThrow(() => intercepter.checkAndEnforceSizeLimit(), null, 'TEARDOWN')
-  assert(capture.state === Mischief.states.CAPTURE)
+  assert(capture.state === Scoop.states.CAPTURE)
 
   // Size limit reached
   intercepter.byteLength = 1000
   assert.throws(() => intercepter.checkAndEnforceSizeLimit(), null, 'TEARDOWN')
-  assert(capture.state === Mischief.states.PARTIAL)
+  assert(capture.state === Scoop.states.PARTIAL)
 })

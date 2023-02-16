@@ -11,10 +11,10 @@ import chalk from 'chalk'
  * Description of this software.
  * Used in provenance data to indicate which softare made the capture.
  */
-export const SOFTWARE = 'Mischief @ Harvard Library Innovation Lab'
+export const SOFTWARE = 'Scoop @ Harvard Library Innovation Lab'
 
 /**
- * The current version of Mischief. Also used in provenance data.
+ * The current version of Scoop. Also used in provenance data.
  */
 export const VERSION = 'v0.0.1 DEV'
 
@@ -29,7 +29,7 @@ export const WARC_VERSION = '1.1'
 export const WACZ_VERSION = '1.1.1'
 
 /**
- * Path to the Mischief library.
+ * Path to the Scoop library.
  */
 export const BASE_PATH = dirname(fileURLToPath(import.meta.url))
 

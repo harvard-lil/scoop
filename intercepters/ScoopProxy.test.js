@@ -4,11 +4,11 @@ import assert from 'node:assert/strict'
 import Session from 'transparent-proxy/core/Session.js'
 import detectPort from 'detect-port'
 
-import { MischiefProxy } from './index.js'
-import { Mischief } from '../Mischief.js'
+import { ScoopProxy } from './index.js'
+import { Scoop } from '../Scoop.js'
 
 import { defaultTestOptions } from '../options.js'
-import { MischiefProxyExchange } from '../exchanges/MischiefProxyExchange.js'
+import { ScoopProxyExchange } from '../exchanges/ScoopProxyExchange.js'
 
 const BLOCKLISTED_IP = '127.0.0.1'
 const BLOCKLISTED_URL = 'http://localhost'
@@ -36,11 +36,11 @@ function mockSession (id, ip, url) {
   return session
 }
 
-test('MischiefProxy starts and stops a proxy on the requested port', async (_t) => {
-  const capture = new Mischief(NON_BLOCKLISTED_URL, defaultTestOptions)
+test('ScoopProxy starts and stops a proxy on the requested port', async (_t) => {
+  const capture = new Scoop(NON_BLOCKLISTED_URL, defaultTestOptions)
   const proxyPort = defaultTestOptions.proxyPort
 
-  assert.equal(capture.intercepter instanceof MischiefProxy, true)
+  assert.equal(capture.intercepter instanceof ScoopProxy, true)
 
   // Check that requested port is free before starting the proxy
   assert.equal(await detectPort(proxyPort), proxyPort)
@@ -56,7 +56,7 @@ test('MischiefProxy starts and stops a proxy on the requested port', async (_t) 
 })
 
 test('contextOptions returns proxy information in a format that can be directly consumed by Playwright', async (_t) => {
-  const capture = new Mischief(NON_BLOCKLISTED_URL, defaultTestOptions)
+  const capture = new Scoop(NON_BLOCKLISTED_URL, defaultTestOptions)
   const contextOptions = capture.intercepter.contextOptions
 
   assert.equal(contextOptions.ignoreHTTPSErrors, true)
@@ -64,7 +64,7 @@ test('contextOptions returns proxy information in a format that can be directly 
 })
 
 test('getOrInitExchange always returns an exchange when provided valid params, and creates new exchanges as needed.', async (_t) => {
-  const capture = new Mischief(NON_BLOCKLISTED_URL, defaultTestOptions)
+  const capture = new Scoop(NON_BLOCKLISTED_URL, defaultTestOptions)
 
   const scenarios = [
     { connectionId: 12, type: 'request', shouldBeNew: true },
@@ -79,7 +79,7 @@ test('getOrInitExchange always returns an exchange when provided valid params, a
   for (const scenario of scenarios) {
     const exchange = capture.intercepter.getOrInitExchange(scenario.connectionId, scenario.type)
 
-    assert.equal(exchange instanceof MischiefProxyExchange, true)
+    assert.equal(exchange instanceof ScoopProxyExchange, true)
 
     if (scenarios.shouldBeNew === false) {
       assert.strictEqual(exchange, previousExchange)
@@ -90,7 +90,7 @@ test('getOrInitExchange always returns an exchange when provided valid params, a
 })
 
 test('checkRequestAgainstBlocklist should detect and interrupt blocklisted exchanges.', async (_t) => {
-  const capture = new Mischief(NON_BLOCKLISTED_URL, defaultTestOptions)
+  const capture = new Scoop(NON_BLOCKLISTED_URL, defaultTestOptions)
   const intercepter = capture.intercepter
 
   const scenarios = [
@@ -108,7 +108,7 @@ test('checkRequestAgainstBlocklist should detect and interrupt blocklisted excha
 })
 
 test('interceptRequest returns undefined when trying to intercept a session for a blocklisted exchange.', async (_t) => {
-  const capture = new Mischief(NON_BLOCKLISTED_URL, defaultTestOptions)
+  const capture = new Scoop(NON_BLOCKLISTED_URL, defaultTestOptions)
   const intercepter = capture.intercepter
   const session = mockSession(12, BLOCKLISTED_IP, BLOCKLISTED_URL)
 
@@ -116,7 +116,7 @@ test('interceptRequest returns undefined when trying to intercept a session for 
 })
 
 test('recordExchanges flag actively controls whether records are added to exchanges list.', async (_t) => {
-  const capture = new Mischief(NON_BLOCKLISTED_URL, defaultTestOptions)
+  const capture = new Scoop(NON_BLOCKLISTED_URL, defaultTestOptions)
   const intercepter = capture.intercepter
 
   const scenarios = [
@@ -139,7 +139,7 @@ test('recordExchanges flag actively controls whether records are added to exchan
 })
 
 test('intercept coalesces arbitrary buffers together for a given exchange, new request on full exchange creates new exchange.', async (_t) => {
-  const capture = new Mischief(NON_BLOCKLISTED_URL, defaultTestOptions)
+  const capture = new Scoop(NON_BLOCKLISTED_URL, defaultTestOptions)
   const intercepter = capture.intercepter
 
   const testString1 = 'LOREMIPSUM'

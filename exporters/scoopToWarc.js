@@ -4,7 +4,7 @@ import { Blob } from 'buffer'
 import { WARCRecord, WARCSerializer } from 'warcio'
 
 import * as CONSTANTS from '../constants.js'
-import { Mischief } from '../Mischief.js'
+import { Scoop } from '../Scoop.js'
 
 // warcio needs the crypto utils suite as a global, but does not import it.
 // Node JS 19+ automatically imports webcrypto as globalThis.crypto.
@@ -13,30 +13,30 @@ if (!globalThis.crypto) {
 }
 
 /**
- * @function mischiefToWarc
+ * @function scoopToWarc
  * @memberof module:exporters
  *
  * @description
- * Mischief capture to WARC converter.
+ * Scoop capture to WARC converter.
  *
  * Note:
- * - Logs are added to capture object via `Mischief.log`.
+ * - Logs are added to capture object via `Scoop.log`.
  *
- * @param {Mischief} capture
+ * @param {Scoop} capture
  * @returns {Promise<ArrayBuffer>}
  */
-export async function mischiefToWarc (capture) {
+export async function scoopToWarc (capture) {
   let serializedInfo = null
   const serializedRecords = []
   const validStates = [
-    Mischief.states.PARTIAL,
-    Mischief.states.COMPLETE,
-    Mischief.states.RECONSTRUCTED
+    Scoop.states.PARTIAL,
+    Scoop.states.COMPLETE,
+    Scoop.states.RECONSTRUCTED
   ]
 
   // Check capture state
-  if (!(capture instanceof Mischief) || !validStates.includes(capture.state)) {
-    throw new Error('"capture" must be a partial or complete Mischief capture object.')
+  if (!(capture instanceof Scoop) || !validStates.includes(capture.state)) {
+    throw new Error('"capture" must be a partial or complete Scoop capture object.')
   }
 
   //
