@@ -4,18 +4,18 @@
   "description": "",
   "main": "index.js",
   "type": "module",
-  "engines" : { 
-    "node" : ">=18.0.0"
+  "engines": {
+    "node": ">=18.0.0"
   },
   "standard": {
-    "globals": [ "Headers" ]
+    "globals": [
+      "Headers"
+    ]
   },
   "scripts": {
     "postinstall": "bash postinstall.sh",
     "standard-fix": "standard --fix",
-    "test": "standard && node --test",
-    "docs:html": "jsdoc -c jsdoc/config.json -r .",
-    "docs:md": "node jsdoc/jsdoc2md.js | (cat jsdoc/README.md && cat) > docs.md"
+    "test": "standard && node --test"
   },
   "repository": {
     "type": "git",
@@ -56,8 +56,6 @@
     "eslint-plugin-n": "^15.6.0",
     "eslint-plugin-promise": "^6.1.1",
     "express": "^4.18.2",
-    "jsdoc": "^4.0.0",
-    "jsdoc-to-markdown": "^8.0.0",
     "standard": "*"
   }
 }
