@@ -6,10 +6,6 @@ import { WACZ, scoopExchangeToPageLine, hash } from '../utils/WACZ.js'
 import { WARCParser } from 'warcio'
 
 /**
- * @function scoopToWacz
- * @memberof module:exporters
- *
- * @description
  * Scoop capture to WACZ converter.
  *
  * Note:

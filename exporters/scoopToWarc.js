@@ -5,6 +5,7 @@ import { WARCRecord, WARCSerializer } from 'warcio'
 
 import * as CONSTANTS from '../constants.js'
 import { Scoop } from '../Scoop.js'
+import { ScoopGeneratedExchange } from '../exchanges/index.js'
 
 // warcio needs the crypto utils suite as a global, but does not import it.
 // Node JS 19+ automatically imports webcrypto as globalThis.crypto.
@@ -13,10 +14,6 @@ if (!globalThis.crypto) {
 }
 
 /**
- * @function scoopToWarc
- * @memberof module:exporters
- *
- * @description
  * Scoop capture to WARC converter.
  *
  * Note:
@@ -69,12 +66,18 @@ export async function scoopToWarc (capture) {
           yield msg.body
         }
 
-        const warcHeaders = {
-          'exchange-id': exchange.id
+        const warcHeaders = {}
+
+        // Pairs request / responses together so they can be reconstructed later.
+        warcHeaders[CONSTANTS.EXCHANGE_ID_HEADER_LABEL] = exchange.id
+
+        // Add `WARC-Refers-To-Target-URI` to associate generated exchanges with their origin.
+        if (exchange instanceof ScoopGeneratedExchange) {
+          warcHeaders['WARC-Refers-To-Target-URI'] = capture.url
         }
 
         if (exchange.description) {
-          warcHeaders.description = exchange.description
+          warcHeaders[CONSTANTS.EXCHANGE_DESCRIPTION_HEADER_LABEL] = exchange.description
         }
 
         const record = WARCRecord.create(

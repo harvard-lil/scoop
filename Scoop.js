@@ -830,8 +830,7 @@ export class Scoop {
   addGeneratedExchange (url, headers, body, isEntryPoint = false, description = '') {
     const remainingSpace = this.options.maxSize - this.intercepter.byteLength
 
-    if (this.state !== Scoop.states.CAPTURE ||
-        body.byteLength >= remainingSpace) {
+    if (this.state !== Scoop.states.CAPTURE || body.byteLength >= remainingSpace) {
       this.state = Scoop.states.PARTIAL
       this.warn(`Generated exchange ${url} could not be saved (size limit reached).`)
       return false

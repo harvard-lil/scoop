@@ -1,16 +1,15 @@
 import path from 'path'
 import { URL } from 'url'
-import StreamZip from 'node-stream-zip'
 import { Readable } from 'stream'
+
+import { WARCParser } from 'warcio'
+import StreamZip from 'node-stream-zip'
+
 import { Scoop } from '../Scoop.js'
 import { ScoopProxyExchange, ScoopGeneratedExchange } from '../exchanges/index.js'
-import { WARCParser } from 'warcio'
+import { EXCHANGE_ID_HEADER_LABEL, EXCHANGE_DESCRIPTION_HEADER_LABEL } from '../constants.js'
 
 /**
- * @function waczToScoop
- * @memberof module:importers
- *
- * @description
  * Reconstructs a Scoop capture from a WACZ
  * containing raw http traffic data.
  *
@@ -103,9 +102,9 @@ const getExchanges = async (zip) => {
       if (url && (new URL(url)).protocol === 'file:') {
         generatedExchanges.push(new ScoopGeneratedExchange({
           url,
-          id: record.warcHeaders.headers.get('exchange-id'),
+          id: record.warcHeaders.headers.get(EXCHANGE_ID_HEADER_LABEL),
           date: new Date(record.warcHeaders.headers.get('WARC-Date')),
-          description: record.warcHeaders.headers.get('description'),
+          description: record.warcHeaders.headers.get(EXCHANGE_DESCRIPTION_HEADER_LABEL),
           response: {
             startLine: record.httpHeaders.statusline,
             headers: new Headers(record.getResponseInfo().headers),

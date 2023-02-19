@@ -25,6 +25,16 @@ export const WARC_VERSION = '1.1'
 export const WACZ_VERSION = '1.1.1'
 
 /**
+ * Label to be used in WARC to keep trace of ScoopExchange.id.
+ */
+export const EXCHANGE_ID_HEADER_LABEL = 'Scoop-Exchange-ID'
+
+/**
+ * Label to be used in WARC to keep trace of ScoopGeneratedExchange.description.
+ */
+export const EXCHANGE_DESCRIPTION_HEADER_LABEL = 'Scoop-Exchange-Description'
+
+/**
  * Path to the Scoop library.
  */
 export const BASE_PATH = dirname(fileURLToPath(import.meta.url))
