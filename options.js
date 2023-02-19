@@ -2,8 +2,8 @@ import { statSync } from 'fs' // Cannot be promisified at this stage (used in co
 import * as CONSTANTS from './constants.js'
 
 /**
- * @typedef ScoopOptions
- * @description Available options and defaults for Scoop.
+ * Default options for Scoop.
+ * Unless specified otherwise at constructor level, Scoop will run with these settings.
  * @property {("silent" | "trace" | "debug" | "info" | "warn" | "error")} logLevel="info" - Determines the logging level of this instance. See {@link https://github.com/pimterry/loglevel} for more information.
  * @property {boolean} headless=false - Should Playwright run in headless mode?
  * @property {string} proxyHost="localhost" - What host should Playwright proxy through for capture?
@@ -33,13 +33,7 @@ import * as CONSTANTS from './constants.js'
  * @property {string} publicIpResolverEndpoint="https://myip.lil.tools" - URL to be used to retrieve the client's public IP address for `provenanceSummary`. Endpoint requirements: must simply return a IPv4 or IPv6 address as text.
  * @property {string[]} blocklist - a list of patterns, to be matched against each request's URL and IP address, and subsequently blocked during capture. Valid entries include url strings, CIDR strings, and regular expressions in string form.
  */
-
-/**
- * Default options for Scoop.
- * Unless specified otherwise at constructor level, Scoop will run with these settings.
- * @type {ScoopOptions}
- */
-export const defaultOptions = {
+export const defaults = {
   logLevel: 'info',
   headless: true,
   proxyHost: 'localhost',
@@ -102,11 +96,11 @@ export const defaultOptions = {
 
 /**
  * Basic set of options to be used with Scoop for automated testing purposes.
- * @type {ScoopOptions}
+ * @type {object}
  * @ignore
  */
-export const defaultTestOptions = {
-  ...defaultOptions,
+export const testDefaults = {
+  ...defaults,
   logLevel: 'silent',
   headless: true,
   captureVideoAsAttachment: false,
@@ -119,24 +113,24 @@ export const defaultTestOptions = {
  * Will use defaults for missing properties.
  *
  * @param {object} newOptions
- * @returns {ScoopOptions}
+ * @returns {object}
  */
 export function filterOptions (newOptions = {}) {
   const options = {}
 
-  // Create new option object from `newOptions` and `defaultOptions`:
-  // - Only pull entries from `newOptions` that are defined in `defaultOptions`
+  // Create new option object from `newOptions` and `defaults`:
+  // - Only pull entries from `newOptions` that are defined in `defaults`
   // - Apply basic type casting based on type of defaults
-  for (const key of Object.keys(defaultOptions)) {
-    // options[key] = key in newOptions ? newOptions[key] : defaultOptions[key]
+  for (const key of Object.keys(defaults)) {
+    // options[key] = key in newOptions ? newOptions[key] : defaults[key]
 
     try {
-      options[key] = key in newOptions ? newOptions[key] : defaultOptions[key]
+      options[key] = key in newOptions ? newOptions[key] : defaults[key]
     } catch (_err) { // `key in newOptions` may throw if `newOptions` is not object-like
-      options[key] = defaultOptions[key]
+      options[key] = defaults[key]
     }
 
-    const constructor = defaultOptions[key].constructor
+    const constructor = defaults[key].constructor
 
     switch (constructor) {
       case Boolean:

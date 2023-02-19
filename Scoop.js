@@ -18,7 +18,9 @@ import * as CONSTANTS from './constants.js'
 import * as intercepters from './intercepters/index.js'
 import * as exporters from './exporters/index.js'
 import * as importers from './importers/index.js'
-import { filterOptions } from './options.js'
+import { filterOptions, defaults } from './options.js'
+
+export { defaults }
 
 /**
  * @class Scoop
@@ -67,7 +69,7 @@ export class Scoop {
 
   /**
    * Current settings.
-   * Should only contain keys defined in {@link options.defaultOptions}.
+   * Should only contain keys defined in {@link options.defaults}.
    * @type {object}
    */
   options = {}
@@ -151,7 +153,7 @@ export class Scoop {
 
   /**
    * @param {string} url - Must be a valid HTTP(S) url.
-   * @param {import('./options.js').ScoopOptions} [options={}]
+   * @param {object} [options={}] - See `defaults`.
    */
   constructor (url, options = {}) {
     this.options = filterOptions(options)
@@ -928,7 +930,7 @@ export class Scoop {
    * Instantiates a Scoop instance and runs the capture
    *
    * @param {string} url - Must be a valid HTTP(S) url.
-   * @param {import('./options.js').ScoopOptions} [options={}]
+   * @param {object} [options={}] - See `defaults`.
    * @returns {Promise<Scoop>}
    */
   static async capture (url, options) {

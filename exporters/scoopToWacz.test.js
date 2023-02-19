@@ -8,7 +8,7 @@ import { scoopToWacz } from './scoopToWacz.js'
 import { WACZ } from '../utils/WACZ.js'
 import { isZip } from '../utils/zip.js'
 
-import { defaultTestOptions } from '../options.js'
+import { testDefaults } from '../options.js'
 
 /**
  * Makes a capture of https://example.com and returns the resulting Scoop object.
@@ -17,7 +17,7 @@ import { defaultTestOptions } from '../options.js'
  * @returns {Scoop}
  */
 async function testCapture () {
-  const capture = await Scoop.capture('https://example.com', defaultTestOptions)
+  const capture = await Scoop.capture('https://example.com', testDefaults)
   _capture = capture
   return _capture
 }

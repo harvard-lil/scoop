@@ -7,7 +7,7 @@ import express from 'express'
 import { FIXTURES_PATH } from './constants.js'
 import { isPNG, getDimensions } from './utils/png.js'
 import { isPDF, getPageCount } from './utils/pdf.js'
-import { defaultOptions } from './options.js'
+import { defaults } from './options.js'
 import { Scoop } from './Scoop.js'
 
 test('Scoop', async (t) => {
@@ -18,11 +18,11 @@ test('Scoop', async (t) => {
   const testHtmlFixture = await readFile(`${FIXTURES_PATH}test.html`)
 
   /*
-   * Copy everything from defaultOptions over but set all booleans to false
+   * Copy everything from defaults over but set all booleans to false
    * so that we can selectively test each flag
    */
   const options = { logLevel: 'silent', headless: true, blocklist: [] }
-  Object.entries(defaultOptions).forEach(([k, v]) => {
+  Object.entries(defaults).forEach(([k, v]) => {
     options[k] = options[k] || ((v === true) ? false : v)
   })
   Object.freeze(options)
