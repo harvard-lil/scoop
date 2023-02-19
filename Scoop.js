@@ -11,7 +11,6 @@ import { chromium } from 'playwright'
 import { getOSInfo } from 'get-os-info'
 
 import { exec } from './utils/exec.js'
-import { gsCompress } from './utils/pdf.js'
 import { ScoopGeneratedExchange } from './exchanges/index.js'
 import { castBlocklistMatcher, searchBlocklistFor } from './utils/blocklist.js'
 
@@ -152,7 +151,7 @@ export class Scoop {
 
   /**
    * @param {string} url - Must be a valid HTTP(S) url.
-   * @param {object} [options={}] - See {@link ScoopOptions#defaults} for details
+   * @param {import('./options.js').ScoopOptions} [options={}]
    */
   constructor (url, options = {}) {
     this.options = filterOptions(options)
@@ -585,7 +584,8 @@ export class Scoop {
       ]
 
       const spawnOptions = {
-        timeout: this.options.captureVideoAsAttachmentTimeout
+        timeout: this.options.captureVideoAsAttachmentTimeout,
+        maxBuffer: 1024 * 1024 * 128
       }
 
       metadataRaw = await exec(ytDlpPath, dlpOptions, spawnOptions)
@@ -734,14 +734,6 @@ export class Scoop {
       width: dimensions.width,
       height: dimensions.height
     })
-
-    // Try to apply compression if Ghostscript is available
-    try {
-      pdf = await gsCompress(pdf)
-    } catch (err) {
-      this.log.warn('gs command (Ghostscript) is not available or failed. The PDF Snapshot will be stored uncompressed.')
-      this.log.trace(err)
-    }
 
     const url = 'file:///pdf-snapshot.pdf'
     const httpHeaders = new Headers({ 'content-type': 'application/pdf' })
@@ -937,7 +929,7 @@ export class Scoop {
    * Instantiates a Scoop instance and runs the capture
    *
    * @param {string} url - Must be a valid HTTP(S) url.
-   * @param {object} [options={}] - See {@link ScoopOptions#defaults} for details
+   * @param {import('./options.js').ScoopOptions} [options={}]
    * @returns {Promise<Scoop>}
    */
   static async capture (url, options) {

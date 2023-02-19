@@ -77,5 +77,5 @@ export async function scoopToWacz (capture, includeRaw = false, signingServer) {
     .filter((ex) => ex === firstExchange || ex.isEntryPoint)
     .map(scoopExchangeToPageLine)
 
-  return await wacz.finalize()
+  return (await wacz.finalize()).buffer
 }

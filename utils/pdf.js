@@ -1,25 +1,4 @@
-import { exec } from './exec.js'
-
 const magicByte = '%PDF'
-
-/**
- * Compresses a PDF using ghostscript (if available)
- *
- * @param {Buffer} buffer - A buffer containing PDF data
- * @returns {Promise<Buffer>} - A buffer containing compressed PDF data
- */
-export async function gsCompress (buffer) {
-  return exec('gs', [
-    '-sDEVICE=pdfwrite',
-    '-dNOPAUSE',
-    '-dBATCH',
-    '-dJPEGQ=90',
-    '-r150',
-    '-q',
-    '-sOutputFile=-',
-    '-'
-  ], { input: buffer }).then(Buffer.from)
-}
 
 /**
  * Sniffs a buffer to loosely infer whether it's a PDF file.

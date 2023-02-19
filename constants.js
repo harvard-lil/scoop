@@ -12,7 +12,7 @@ export const SOFTWARE = 'Scoop @ Harvard Library Innovation Lab'
 /**
  * The current version of Scoop. Also used in provenance data.
  */
-export const VERSION = 'v0.0.1 DEV'
+export const VERSION = 'v0.0.1'
 
 /**
  * The version of WARC this library exports

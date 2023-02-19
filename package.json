@@ -40,7 +40,7 @@
     "node-html-parser": "^6.1.4",
     "node-stream-zip": "^1.15.0",
     "nunjucks": "^3.2.3",
-    "playwright": "^1.27.1",
+    "playwright": "^1.30.0",
     "transparent-proxy": "^1.9.1",
     "uuid": "^9.0.0",
     "warcio": "^2.0.1"

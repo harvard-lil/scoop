@@ -2,9 +2,8 @@ import { statSync } from 'fs' // Cannot be promisified at this stage (used in co
 import * as CONSTANTS from './constants.js'
 
 /**
- * Available options and defaults for Scoop.
- * Unless specified otherwise at constructor level, Scoop will run with these settings.
- *
+ * @typedef ScoopOptions
+ * @description Available options and defaults for Scoop.
  * @property {("silent" | "trace" | "debug" | "info" | "warn" | "error")} logLevel="info" - Determines the logging level of this instance. See {@link https://github.com/pimterry/loglevel} for more information.
  * @property {boolean} headless=false - Should Playwright run in headless mode?
  * @property {string} proxyHost="localhost" - What host should Playwright proxy through for capture?
@@ -34,20 +33,26 @@ import * as CONSTANTS from './constants.js'
  * @property {string} publicIpResolverEndpoint="https://myip.lil.tools" - URL to be used to retrieve the client's public IP address for `provenanceSummary`. Endpoint requirements: must simply return a IPv4 or IPv6 address as text.
  * @property {string[]} blocklist - a list of patterns, to be matched against each request's URL and IP address, and subsequently blocked during capture. Valid entries include url strings, CIDR strings, and regular expressions in string form.
  */
+
+/**
+ * Default options for Scoop.
+ * Unless specified otherwise at constructor level, Scoop will run with these settings.
+ * @type {ScoopOptions}
+ */
 export const defaultOptions = {
   logLevel: 'info',
   headless: true,
   proxyHost: 'localhost',
   proxyPort: 9000,
   proxyVerbose: false,
-  totalTimeout: 2 * 60 * 1000,
+  totalTimeout: 1 * 60 * 1000,
   loadTimeout: 30 * 1000,
   networkIdleTimeout: 30 * 1000,
   behaviorsTimeout: 60 * 1000,
   keepPartialResponses: true,
   maxSize: 200 * 1024 * 1024,
   screenshot: true,
-  domSnapshot: true,
+  domSnapshot: false,
   pdfSnapshot: true,
   captureVideoAsAttachment: true,
   captureVideoAsAttachmentTimeout: 30 * 1000,
@@ -97,6 +102,7 @@ export const defaultOptions = {
 
 /**
  * Basic set of options to be used with Scoop for automated testing purposes.
+ * @type {ScoopOptions}
  * @ignore
  */
 export const defaultTestOptions = {
@@ -113,7 +119,7 @@ export const defaultTestOptions = {
  * Will use defaults for missing properties.
  *
  * @param {object} newOptions
- * @returns {object}
+ * @returns {ScoopOptions}
  */
 export function filterOptions (newOptions = {}) {
   const options = {}
