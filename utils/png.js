@@ -1,11 +1,15 @@
-/**
- * Mischief
- * @module utils.png
- * @description Helper functions for working with buffers containing png data.
- * @private
- */
 
+/**
+ * PDF magic number.
+ * @type {Buffer}
+ * @constant
+ */
 const magicNumber = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+
+/**
+ * @type {Buffer}
+ * @constant
+ */
 const IHDR = Buffer.from('IHDR')
 
 /**

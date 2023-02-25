@@ -4,18 +4,18 @@ import { Readable } from 'node:stream'
 
 import { WARCParser } from 'warcio'
 
-import { mischiefToWarc } from './mischiefToWarc.js'
-import { Mischief } from '../Mischief.js'
+import { scoopToWarc } from './scoopToWarc.js'
+import { Scoop } from '../Scoop.js'
 import { FIXTURES_PATH } from '../constants.js'
 
-test('mischiefToWarc throws if given anything else than a Mischief instance.', async (_t) => {
+test('scoopToWarc throws if given anything else than a Scoop instance.', async (_t) => {
   for (const capture of [{}, true, false, null, () => {}, [], 'FOO']) {
-    assert.rejects(mischiefToWarc(capture))
+    assert.rejects(scoopToWarc(capture))
   }
 })
 
-test('mischiefToWarc generates a valid WARC file.', async (_t) => {
-  const capture = await Mischief.fromWacz(`${FIXTURES_PATH}example.com.wacz`)
+test('scoopToWarc generates a valid WARC file.', async (_t) => {
+  const capture = await Scoop.fromWacz(`${FIXTURES_PATH}example.com.wacz`)
 
   let expectedRequests = 0
   let expectedResponses = 0
@@ -23,7 +23,7 @@ test('mischiefToWarc generates a valid WARC file.', async (_t) => {
   let actualResponses = 0
   let actualWarcInfo = 0
 
-  // Count exchanges in Mischief capture
+  // Count exchanges in Scoop capture
   for (const exchange of capture.exchanges) {
     if (exchange.request) {
       expectedRequests += 1
@@ -35,7 +35,7 @@ test('mischiefToWarc generates a valid WARC file.', async (_t) => {
   }
 
   // Count exchanges in resulting WARC
-  const raw = Buffer.from(await mischiefToWarc(capture))
+  const raw = Buffer.from(await scoopToWarc(capture))
   const rawStream = Readable.from(raw)
 
   for await (const record of WARCParser.iterRecords(rawStream)) {

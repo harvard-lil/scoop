@@ -1,36 +1,55 @@
-# mischief
-🥸 Experimental single-page web archiving library using Playwright. 
+> 🚧 🚧 🚧
 
-![](mischief.png)
+# Scoop 🍨
+
+High-fidelity, browser-based, single-page web archiving library. 
 
 ```javascript
-import { Mischief, defaultOptions } from "mischief";
+import { Scoop } from "scoop"
 
-const myCapture = await Mischief.capture("https://example.com", { blocklist: [/unsafedomain.com/, ...defaultOptions.blocklist] });
-const myArchive = await myCapture.toWarc();
+const capture = await Scoop.capture("https://lil.law.harvard.edu")
+const wacz = await capture.toWacz()
 ```
 
-> 🚧 Work in progress.
+[![npm version](https://badge.fury.io/js/@harvard-lil%2Fscoop.svg)](https://badge.fury.io/js/@harvard-lil%2Fscoop) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
 ---
 
-## Local setup
-- Requires [Node 18.9.0+](https://nodejs.org/en/) and [Python 3](https://www.python.org/). 
-- At the moment `Mischief` can only operate in Unix-like environment _(Linux, Mac OS, Windows' WSL ...)_
-- Install dependencies: `npm install`
-- Get started by having a look and running `example.js`
+## Summary
+- [Goals and Features](#goals-and-features)
+- [Getting Started](#getting-started)
+- [Options and Advanced Features](#options-and-advanced-features)
+- [Integrations and Tooling](#integrations-and-tooling)
+- [Contributing](#contributing)
 
-## Optional dependencies
-- [Ghostscript](https://www.ghostscript.com/) for PDF compression.
+---
 
-## Testing
-``` sh
-node --test
-```
+## Goals and Features
 
-## Documentation
+[👆 Back to the summary](#summary)
 
-``` sh
-npm run docs:html
-npm run docs:md
-```
+---
+
+## Getting Started
+
+[👆 Back to the summary](#summary)
+
+---
+
+## Options and Advanced Features
+
+[👆 Back to the summary](#summary)
+
+---
+
+## Integrations and Tooling
+
+[👆 Back to the summary](#summary)
+
+---
+
+## Contributing
+
+[👆 Back to the summary](#summary)
+
+---

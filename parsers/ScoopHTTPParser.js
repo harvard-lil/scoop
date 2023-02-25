@@ -1,14 +1,14 @@
 import { HTTPParser } from 'http-parser-js'
 
 /**
- * @class MischiefHTTPParser
+ * @class ScoopHTTPParser
  *
  * @classdesc
  * Parser for raw HTTP exchanges
  *
  * @see {@link https://github.com/creationix/http-parser-js/blob/master/standalone-example.js}
  */
-export class MischiefHTTPParser {
+export class ScoopHTTPParser {
   /**
    * Parses raw HTTP request bytes into an object using http-parser-js.
    * @param {Buffer} input - Raw HTTP request bytes

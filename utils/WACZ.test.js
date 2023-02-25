@@ -71,12 +71,16 @@ test('WACZ should generate a valid datapackage file.', async (_t) => {
 
   const datapackage = JSON.parse(wacz.generateDatapackage())
 
+  // Patch "software" to match fixture so we don't have to make a new fixture with each release.
+  datapackage.software = fixtureDatapackage.software
+
   assert.deepEqual(datapackage, fixtureDatapackage)
 })
 
 test('WACZ should generate a valid datapackage-digest file.', async (_t) => {
   const wacz = new WACZ({ files: fixture })
-  const digest = await wacz.generateDatapackageDigest()
+  const digest = JSON.parse(await wacz.generateDatapackageDigest())
   const { signedData: _, ...fixtureDigest } = JSON.parse(fixture['datapackage-digest.json'])
-  assert.deepEqual(JSON.parse(digest), fixtureDigest)
+
+  assert.deepEqual(digest, fixtureDigest)
 })

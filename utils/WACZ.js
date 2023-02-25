@@ -8,7 +8,12 @@ import * as CONSTANTS from '../constants.js'
 import * as zip from '../utils/zip.js'
 
 /**
- * WACZ builder
+ * WACZ builder.
+ *
+ * @example
+ * const wacz = new WACZ()
+ * wacz.files['archive/data.warc'] = warc
+ * const archive = await wacz.finalize()
  */
 export class WACZ {
   validations = [
@@ -20,10 +25,13 @@ export class WACZ {
   /** @type {?{url: string, token: ?string}}  */
   signingServer
 
+  /** @type {string} */
   created = (new Date()).toISOString()
 
+  /** @type {{id: ?string, url: ?string, ts: ?string, title: ?string}[]} */
   pages = []
 
+  /** @type {object} */
   datapackage = {}
 
   /**
@@ -33,8 +41,10 @@ export class WACZ {
    */
   datapackageExtras = null
 
+  /** @type {?Proxy} */
   _filesProxy
 
+  /** @type {?Proxy} */
   get files () {
     if (!this._filesProxy) {
       // initialize the proxy on first access
@@ -46,7 +56,6 @@ export class WACZ {
 
   /**
    * Use a Proxy to validate any entries added to the `files` property
-   *
    * @param {any} obj - an object whose keys are the file paths and values are the file data
    */
   set files (obj) {
@@ -182,6 +191,7 @@ export class WACZ {
   async generateIndexCDX (files = this.files) {
     const buffers = []
     const converter = new Writable()
+
     converter._write = (chunk, _encoding, cb) => {
       buffers.push(chunk)
       process.nextTick(cb)
@@ -258,7 +268,6 @@ export class WACZ {
 
   /**
    * Generates a datapackage-digest based on the datapackage JSON
-   *
    * @returns {string} - a string with the contents of the datapackage-digest
    */
   async generateDatapackageDigest () {
@@ -392,14 +401,14 @@ export function hash (buffer) {
 }
 
 /**
- * Format a MischiefExchange as needed for
+ * Format a ScoopExchange as needed for
  * the pages JSON-Lines
  *
- * @param {MischiefExchange} exchange
+ * @param {ScoopExchange} exchange
  * @returns {object}
  * @private
  */
-export function mischiefExchangeToPageLine (exchange) {
+export function scoopExchangeToPageLine (exchange) {
   return {
     id: exchange.id,
     url: exchange.url,

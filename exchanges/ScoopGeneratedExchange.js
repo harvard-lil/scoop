@@ -1,8 +1,8 @@
-import { MischiefExchange } from './MischiefExchange.js'
+import { ScoopExchange } from './ScoopExchange.js'
 
 /**
- * @class MischiefGeneratedExchange
- * @extends MischiefExchange
+ * @class ScoopGeneratedExchange
+ * @extends ScoopExchange
  *
  * @classdesc
  * An exchange constructed ad-hoc (vs intercepted),
@@ -10,7 +10,7 @@ import { MischiefExchange } from './MischiefExchange.js'
  *
  * @param {object} [props={}] - Object containing any of the properties of `this`.
 */
-export class MischiefGeneratedExchange extends MischiefExchange {
+export class ScoopGeneratedExchange extends ScoopExchange {
   constructor (props = {}) {
     super(props)
 

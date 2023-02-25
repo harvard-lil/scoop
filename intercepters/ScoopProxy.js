@@ -1,23 +1,23 @@
 import ProxyServer from 'transparent-proxy'
 import Session from 'transparent-proxy/core/Session.js'
 
-import { MischiefIntercepter } from './MischiefIntercepter.js'
-import { MischiefProxyExchange } from '../exchanges/index.js'
+import { ScoopIntercepter } from './ScoopIntercepter.js'
+import { ScoopProxyExchange } from '../exchanges/index.js'
 import { searchBlocklistFor } from '../utils/blocklist.js'
 
 /**
- * @class MischiefProxy
- * @extends MischiefIntercepter
+ * @class ScoopProxy
+ * @extends ScoopIntercepter
  *
  * @classdesc
  * A proxy-based intercepter that captures raw HTTP exchanges without parsing, preserving headers et al as delivered.
- * Coalesces exchanges as MischiefProxyExchange entries.
+ * Coalesces exchanges as ScoopProxyExchange entries.
  */
-export class MischiefProxy extends MischiefIntercepter {
+export class ScoopProxy extends ScoopIntercepter {
   /** @type {ProxyServer} */
   #connection
 
-  /** @type {MischiefProxyExchange[]} */
+  /** @type {ScoopProxyExchange[]} */
   exchanges = []
 
   /**
@@ -81,13 +81,13 @@ export class MischiefProxy extends MischiefIntercepter {
 
     return (
       this.exchanges.findLast(ex => ex.connectionId === connectionId && (type === 'response' || !ex.responseRaw)) ||
-        this.exchanges[this.exchanges.push(new MischiefProxyExchange({ connectionId })) - 1]
+        this.exchanges[this.exchanges.push(new ScoopProxyExchange({ connectionId })) - 1]
     )
   }
 
   /**
    * Checks an outgoing request against the blocklist. Interrupts the request it needed.
-   * Keeps trace of blocked requests in `Mischief.provenanceInfo`.
+   * Keeps trace of blocked requests in `Scoop.provenanceInfo`.
    *
    * @param {object} session - ProxyServer session.
    * @returns {boolean} - `true` if request was interrupted

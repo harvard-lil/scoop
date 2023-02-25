@@ -1,16 +1,16 @@
 import { v4 as uuidv4 } from 'uuid'
 
 /**
- * @class MischiefExchange
+ * @class ScoopExchange
  * @abstract
  *
  * @classdesc
- * Represents an HTTP exchange captured by Mischief, irrespective of how it was captured.
- * To be specialized by interception type (i.e: {@link MischiefProxyExchange}).
+ * Represents an HTTP exchange captured by Scoop, irrespective of how it was captured.
+ * To be specialized by interception type (i.e: {@link ScoopProxyExchange}).
  *
  * @param {object} [props={}] - Object containing any of the properties of `this`.
  */
-export class MischiefExchange {
+export class ScoopExchange {
   constructor (props = {}) {
     for (const [key, value] of Object.entries(props)) {
       if (key in this) {
@@ -58,7 +58,7 @@ export class MischiefExchange {
     this._request = val
   }
 
-  /** @type {?MischiefExchange~Message} */
+  /** @type {?ScoopExchange~Message} */
   get request () {
     return this._request
   }
@@ -73,14 +73,14 @@ export class MischiefExchange {
     this._response = val
   }
 
-  /** @type {?MischiefExchange~Message} */
+  /** @type {?ScoopExchange~Message} */
   get response () {
     return this._response
   }
 }
 
 /**
- * @typedef MischiefExchange~Message
+ * @typedef ScoopExchange~Message
  * @property {String} startLine
  * @property {Headers} headers
  * @property {Buffer} body

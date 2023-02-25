@@ -4,7 +4,8 @@ import { Blob } from 'buffer'
 import { WARCRecord, WARCSerializer } from 'warcio'
 
 import * as CONSTANTS from '../constants.js'
-import { Mischief } from '../Mischief.js'
+import { Scoop } from '../Scoop.js'
+import { ScoopGeneratedExchange } from '../exchanges/index.js'
 
 // warcio needs the crypto utils suite as a global, but does not import it.
 // Node JS 19+ automatically imports webcrypto as globalThis.crypto.
@@ -13,30 +14,26 @@ if (!globalThis.crypto) {
 }
 
 /**
- * @function mischiefToWarc
- * @memberof module:exporters
- *
- * @description
- * Mischief capture to WARC converter.
+ * Scoop capture to WARC converter.
  *
  * Note:
- * - Logs are added to capture object via `Mischief.log`.
+ * - Logs are added to capture object via `Scoop.log`.
  *
- * @param {Mischief} capture
+ * @param {Scoop} capture
  * @returns {Promise<ArrayBuffer>}
  */
-export async function mischiefToWarc (capture) {
+export async function scoopToWarc (capture) {
   let serializedInfo = null
   const serializedRecords = []
   const validStates = [
-    Mischief.states.PARTIAL,
-    Mischief.states.COMPLETE,
-    Mischief.states.RECONSTRUCTED
+    Scoop.states.PARTIAL,
+    Scoop.states.COMPLETE,
+    Scoop.states.RECONSTRUCTED
   ]
 
   // Check capture state
-  if (!(capture instanceof Mischief) || !validStates.includes(capture.state)) {
-    throw new Error('"capture" must be a partial or complete Mischief capture object.')
+  if (!(capture instanceof Scoop) || !validStates.includes(capture.state)) {
+    throw new Error('"capture" must be a partial or complete Scoop capture object.')
   }
 
   //
@@ -69,12 +66,18 @@ export async function mischiefToWarc (capture) {
           yield msg.body
         }
 
-        const warcHeaders = {
-          'exchange-id': exchange.id
+        const warcHeaders = {}
+
+        // Pairs request / responses together so they can be reconstructed later.
+        warcHeaders[CONSTANTS.EXCHANGE_ID_HEADER_LABEL] = exchange.id
+
+        // Add `WARC-Refers-To-Target-URI` to associate generated exchanges with their origin.
+        if (exchange instanceof ScoopGeneratedExchange) {
+          warcHeaders['WARC-Refers-To-Target-URI'] = capture.url
         }
 
         if (exchange.description) {
-          warcHeaders.description = exchange.description
+          warcHeaders[CONSTANTS.EXCHANGE_DESCRIPTION_HEADER_LABEL] = exchange.description
         }
 
         const record = WARCRecord.create(

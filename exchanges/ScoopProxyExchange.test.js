@@ -1,25 +1,25 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { MischiefExchange } from './MischiefExchange.js'
-import { MischiefProxyExchange } from './MischiefProxyExchange.js'
-import { Mischief } from '../Mischief.js'
+import { ScoopExchange } from './ScoopExchange.js'
+import { ScoopProxyExchange } from './ScoopProxyExchange.js'
+import { Scoop } from '../Scoop.js'
 import { FIXTURES_PATH } from '../constants.js'
 
-test('MischiefProxyExchange must inherit from MischiefExchange.', async (_t) => {
-  assert(MischiefProxyExchange.prototype instanceof MischiefExchange)
+test('ScoopProxyExchange must inherit from ScoopExchange.', async (_t) => {
+  assert(ScoopProxyExchange.prototype instanceof ScoopExchange)
 })
 
-test('MischiefProxyExchange request and response properties populate automatically from requestRaw and responseRaw.', async (_t) => {
-  const capture = await Mischief.fromWacz(`${FIXTURES_PATH}example.com.wacz`)
+test('ScoopProxyExchange request and response properties populate automatically from requestRaw and responseRaw.', async (_t) => {
+  const capture = await Scoop.fromWacz(`${FIXTURES_PATH}example.com.wacz`)
 
   for (const exchange of capture.exchanges) {
-    if (exchange instanceof MischiefProxyExchange === false) {
+    if (exchange instanceof ScoopProxyExchange === false) {
       continue
     }
 
-    // Re-create a MischiefProxyExchange from requestRaw / responseRaw
-    const newExchange = new MischiefProxyExchange()
+    // Re-create a ScoopProxyExchange from requestRaw / responseRaw
+    const newExchange = new ScoopProxyExchange()
     newExchange.requestRaw = exchange.requestRaw
     newExchange.responseRaw = exchange.responseRaw
 

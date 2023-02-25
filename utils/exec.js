@@ -1,10 +1,3 @@
-/**
- * Mischief
- * @module utils.exec
- * @description Helper functions for working with command line scripts
- * @private
- */
-
 import { promisify } from 'util'
 import { exec as execCB } from 'child_process'
 const execPromisified = promisify(execCB)

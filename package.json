@@ -1,6 +1,6 @@
 {
-  "name": "mischief",
-  "version": "1.0.0",
+  "name": "scoop",
+  "version": "0.0.1",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -19,14 +19,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/matteocargnelutti/mischief.git"
+    "url": "git+https://github.com/harvard-lil/scoop.git"
   },
   "author": "Harvard Library Innovation Lab",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/matteocargnelutti/mischief/issues"
+    "url": "https://github.com/harvard-lil/scoop/issues"
   },
-  "homepage": "https://github.com/matteocargnelutti/mischief#readme",
+  "homepage": "https://github.com/harvard-lil/scoop#readme",
   "dependencies": {
     "@laverdet/beaugunderson-ip-address": "^8.1.0",
     "adm-zip": "^0.5.10",
@@ -40,7 +40,7 @@
     "node-html-parser": "^6.1.4",
     "node-stream-zip": "^1.15.0",
     "nunjucks": "^3.2.3",
-    "playwright": "^1.27.1",
+    "playwright": "^1.30.0",
     "transparent-proxy": "^1.9.1",
     "uuid": "^9.0.0",
     "warcio": "^2.0.1"

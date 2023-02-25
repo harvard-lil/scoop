@@ -1,32 +1,28 @@
 import { Readable } from 'stream'
 
 import { getHead } from '../utils/http.js'
-import { Mischief } from '../Mischief.js'
-import { WACZ, mischiefExchangeToPageLine, hash } from '../utils/WACZ.js'
+import { Scoop } from '../Scoop.js'
+import { WACZ, scoopExchangeToPageLine, hash } from '../utils/WACZ.js'
 import { WARCParser } from 'warcio'
 
 /**
- * @function mischiefToWacz
- * @memberof module:exporters
- *
- * @description
- * Mischief capture to WACZ converter.
+ * Scoop capture to WACZ converter.
  *
  * Note:
- * - Logs are added to capture object via `Mischief.log`.
+ * - Logs are added to capture object via `Scoop.log`.
  *
- * @param {Mischief} capture
+ * @param {Scoop} capture
  * @param {boolean} [includeRaw=false] - If `true`, includes the raw http exchanges in the WACZ.
  * @param {object} signingServer - Optional server information for signing the WACZ
  * @param {string} signingServer.url - url of the signing server
  * @param {string} signingServer.token - Optional token to be passed to the signing server via the Authorization header
  * @returns {Promise<ArrayBuffer>}
  */
-export async function mischiefToWacz (capture, includeRaw = false, signingServer) {
-  const validStates = [Mischief.states.PARTIAL, Mischief.states.COMPLETE]
+export async function scoopToWacz (capture, includeRaw = false, signingServer) {
+  const validStates = [Scoop.states.PARTIAL, Scoop.states.COMPLETE]
 
-  if (!(capture instanceof Mischief) || !validStates.includes(capture.state)) {
-    throw new Error('`capture` must be a partial or complete Mischief object.')
+  if (!(capture instanceof Scoop) || !validStates.includes(capture.state)) {
+    throw new Error('`capture` must be a partial or complete Scoop object.')
   }
 
   const wacz = new WACZ({ signingServer })
@@ -75,7 +71,7 @@ export async function mischiefToWacz (capture, includeRaw = false, signingServer
   const firstExchange = capture.exchanges[0]
   wacz.pages = capture.exchanges
     .filter((ex) => ex === firstExchange || ex.isEntryPoint)
-    .map(mischiefExchangeToPageLine)
+    .map(scoopExchangeToPageLine)
 
-  return await wacz.finalize()
+  return (await wacz.finalize()).buffer
 }

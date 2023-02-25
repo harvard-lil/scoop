@@ -2,17 +2,17 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 
 import * as CONSTANTS from './constants.js'
-import { defaultOptions, filterOptions } from './options.js'
+import { defaults, filterOptions } from './options.js'
 
 test('filterOptions invalid or empty argument should return full defaults.', async (_t) => {
   for (const input of [{}, [], null, undefined, true, 'FOO', () => {}]) {
     const options = filterOptions(input)
 
-    assert(options !== defaultOptions)
-    assert(Object.keys(options).length === Object.keys(defaultOptions).length)
+    assert(options !== defaults)
+    assert(Object.keys(options).length === Object.keys(defaults).length)
 
     for (const key of Object.keys(options)) {
-      assert(options[key] === defaultOptions[key])
+      assert(options[key] === defaults[key])
     }
   }
 })
@@ -26,7 +26,7 @@ test('filterOptions entries that are not provided should be filled with defaults
       assert(value === newOptions[key])
     // Default
     } else {
-      assert(value === defaultOptions[key])
+      assert(value === defaults[key])
     }
   }
 })
@@ -40,7 +40,7 @@ test('filterOptions entries are typecast based on defaults.', async (_t) => {
   })
 
   for (const key of Object.keys(newOptions)) {
-    assert(newOptions[key].constructor === defaultOptions[key].constructor)
+    assert(newOptions[key].constructor === defaults[key].constructor)
   }
 })
 

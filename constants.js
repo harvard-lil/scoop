@@ -1,7 +1,3 @@
-/**
- * @module CONSTANTS
- * @description Constants used across the library.
- */
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -11,12 +7,12 @@ import chalk from 'chalk'
  * Description of this software.
  * Used in provenance data to indicate which softare made the capture.
  */
-export const SOFTWARE = 'Mischief @ Harvard Library Innovation Lab'
+export const SOFTWARE = 'Scoop @ Harvard Library Innovation Lab'
 
 /**
- * The current version of Mischief. Also used in provenance data.
+ * The current version of Scoop. Also used in provenance data.
  */
-export const VERSION = 'v0.0.1 DEV'
+export const VERSION = 'v0.0.1'
 
 /**
  * The version of WARC this library exports
@@ -29,7 +25,17 @@ export const WARC_VERSION = '1.1'
 export const WACZ_VERSION = '1.1.1'
 
 /**
- * Path to the Mischief library.
+ * Label to be used in WARC to keep trace of ScoopExchange.id.
+ */
+export const EXCHANGE_ID_HEADER_LABEL = 'Scoop-Exchange-ID'
+
+/**
+ * Label to be used in WARC to keep trace of ScoopGeneratedExchange.description.
+ */
+export const EXCHANGE_DESCRIPTION_HEADER_LABEL = 'Scoop-Exchange-Description'
+
+/**
+ * Path to the Scoop library.
  */
 export const BASE_PATH = dirname(fileURLToPath(import.meta.url))
 

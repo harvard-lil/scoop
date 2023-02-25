@@ -1,10 +1,3 @@
-/**
- * Mischief
- * @module utils.zip
- * @description Helper functions for working with buffers containing zip data.
- * @private
- */
-
 import { Writable } from 'stream'
 import Archiver from 'archiver'
 

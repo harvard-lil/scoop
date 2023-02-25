@@ -1,13 +1,13 @@
-import { Mischief } from '../Mischief.js'
-import { MischiefProxyExchange } from '../exchanges/MischiefProxyExchange.js'
-import { MischiefGeneratedExchange } from '../exchanges/MischiefGeneratedExchange.js'
+import { Scoop } from '../Scoop.js'
+import { ScoopProxyExchange } from '../exchanges/ScoopProxyExchange.js'
+import { ScoopGeneratedExchange } from '../exchanges/ScoopGeneratedExchange.js'
 
 /**
  * A utility function for testing purposes that converts
  * a value into a primative version for easier comparison
  * against similar values.
  *
- * For example, comparing an original Mischief capture against
+ * For example, comparing an original Scoop capture against
  * a rehydrated version populated by a WACZ import. In this case, certain
  * transient internal properties may not match exactly but the substantive
  * properties are the same and are pulled out for comparison here.
@@ -17,6 +17,10 @@ import { MischiefGeneratedExchange } from '../exchanges/MischiefGeneratedExchang
  * @private
  */
 export function valueOf (source) {
+  function filterProps (obj, keep) {
+    return Object.fromEntries(keep.map(k => [k, valueOf(obj[k])]))
+  }
+
   switch (source.constructor) {
     case Array: {
       return source.map(valueOf)
@@ -24,7 +28,7 @@ export function valueOf (source) {
     case Object: {
       return Object.fromEntries(Object.entries(source).map(([k, v]) => [k, valueOf(v)]))
     }
-    case Mischief: {
+    case Scoop: {
       return filterProps(source, [
         'url',
         'options',
@@ -32,7 +36,7 @@ export function valueOf (source) {
         'exchanges'
       ])
     }
-    case MischiefProxyExchange: {
+    case ScoopProxyExchange: {
       return filterProps(source, [
         'id',
         'date',
@@ -40,7 +44,7 @@ export function valueOf (source) {
         'responseRaw'
       ])
     }
-    case MischiefGeneratedExchange: {
+    case ScoopGeneratedExchange: {
       return filterProps(source, [
         'id',
         'date',
@@ -55,8 +59,4 @@ export function valueOf (source) {
       return source
     }
   }
-}
-
-function filterProps (obj, keep) {
-  return Object.fromEntries(keep.map(k => [k, valueOf(obj[k])]))
 }

@@ -11,55 +11,33 @@ import { chromium } from 'playwright'
 import { getOSInfo } from 'get-os-info'
 
 import { exec } from './utils/exec.js'
-import { gsCompress } from './utils/pdf.js'
-import { MischiefGeneratedExchange } from './exchanges/index.js'
+import { ScoopGeneratedExchange } from './exchanges/index.js'
 import { castBlocklistMatcher, searchBlocklistFor } from './utils/blocklist.js'
 
 import * as CONSTANTS from './constants.js'
 import * as intercepters from './intercepters/index.js'
 import * as exporters from './exporters/index.js'
 import * as importers from './importers/index.js'
-import { filterOptions } from './options.js'
 
+import { filterOptions, defaults } from './options.js'
+
+export { defaults }
 
 /**
- * @class Mischief
+ * @class Scoop
  *
  * @classdesc
  * Experimental single-page web archiving library using Playwright.
  * Uses a proxy to allow for comprehensive and raw network interception.
  *
  * @example
- * import { Mischief } from "mischief";
+ * import { Scoop } from "scoop";
  *
- * const myCapture = await Mischief.capture("https://example.com");
+ * const myCapture = await Scoop.capture("https://example.com");
  * const myArchive = await myCapture.toWarc();
  */
-export class Mischief {
-  /**
-   * @param {string} url - Must be a valid HTTP(S) url.
-   * @param {object} [options={}] - See {@link MischiefOptions#defaults} for details
-   * @private
-   */
-  constructor (url, options = {}) {
-    this.options = filterOptions(options)
-    this.blocklist = this.options.blocklist.map(castBlocklistMatcher)
-    this.url = this.filterUrl(url)
-
-    // Logging setup (level, output formatting)
-    logPrefix.reg(this.log)
-    logPrefix.apply(log, {
-      format (level, _name, timestamp) {
-        const timestampColor = CONSTANTS.LOGGING_COLORS.DEFAULT
-        const msgColor = CONSTANTS.LOGGING_COLORS[level.toUpperCase()]
-        return `${timestampColor(`[${timestamp}]`)} ${msgColor(level)}`
-      }
-    })
-    this.log.setLevel(this.options.logLevel)
-
-    this.intercepter = new intercepters[this.options.intercepter](this)
-  }
-
+export class Scoop {
+  /** @type {string} */
   id = uuidv4()
 
   /**
@@ -82,7 +60,7 @@ export class Mischief {
    * Should only contain states defined in `states`.
    * @type {number}
    */
-  state = Mischief.states.INIT
+  state = Scoop.states.INIT
 
   /**
    * URL to capture.
@@ -92,7 +70,7 @@ export class Mischief {
 
   /**
    * Current settings.
-   * Should only contain keys defined in {@link options.defaultOptions}.
+   * Should only contain keys defined in {@link options.defaults}.
    * @type {object}
    */
   options = {}
@@ -100,7 +78,7 @@ export class Mischief {
   /**
    * Array of HTTP exchanges that constitute the capture.
    * Only contains generated exchanged until `teardown()`.
-   * @type {MischiefExchange[]}
+   * @type {ScoopExchange[]}
    */
   exchanges = []
 
@@ -132,7 +110,7 @@ export class Mischief {
 
   /**
    * Reference to the intercepter chosen for capture.
-   * @type {intercepters.MischiefIntercepter}
+   * @type {intercepters.ScoopIntercepter}
    */
   intercepter
 
@@ -173,6 +151,29 @@ export class Mischief {
    * }}
    */
   pageInfo = {}
+
+  /**
+   * @param {string} url - Must be a valid HTTP(S) url.
+   * @param {object} [options={}] - See `defaults`.
+   */
+  constructor (url, options = {}) {
+    this.options = filterOptions(options)
+    this.blocklist = this.options.blocklist.map(castBlocklistMatcher)
+    this.url = this.filterUrl(url)
+
+    // Logging setup (level, output formatting)
+    logPrefix.reg(this.log)
+    logPrefix.apply(log, {
+      format (level, _name, timestamp) {
+        const timestampColor = CONSTANTS.LOGGING_COLORS.DEFAULT
+        const msgColor = CONSTANTS.LOGGING_COLORS[level.toUpperCase()]
+        return `${timestampColor(`[${timestamp}]`)} ${msgColor(level)}`
+      }
+    })
+    this.log.setLevel(this.options.logLevel)
+
+    this.intercepter = new intercepters[this.options.intercepter](this)
+  }
 
   /**
    * Main capture process.
@@ -322,7 +323,7 @@ export class Mischief {
     steps.push({
       name: 'Teardown',
       main: async () => {
-        this.state = Mischief.states.COMPLETE
+        this.state = Scoop.states.COMPLETE
         await this.teardown()
       }
     })
@@ -336,11 +337,11 @@ export class Mischief {
       page = await this.setup()
       this.log.info(`Starting capture of ${this.url}.`)
       this.log.info(options)
-      this.state = Mischief.states.CAPTURE
+      this.state = Scoop.states.CAPTURE
     } catch (err) {
       this.log.error('An error ocurred during capture setup.')
       this.log.trace(err)
-      this.state = Mischief.states.FAILED
+      this.state = Scoop.states.FAILED
       return // exit early if the browser and proxy couldn't be launched
     }
 
@@ -355,13 +356,13 @@ export class Mischief {
     // Run capture steps
     //
     let i = -1
-    while (i++ < steps.length - 1 && this.state === Mischief.states.CAPTURE) {
+    while (i++ < steps.length - 1 && this.state === Scoop.states.CAPTURE) {
       const step = steps[i]
       try {
         this.log.info(`STEP [${i + 1}/${steps.length}]: ${step.name}`)
         await step.main(page)
       } catch (err) {
-        if (this.state === Mischief.states.CAPTURE) {
+        if (this.state === Scoop.states.CAPTURE) {
           this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} - failed.`)
           this.log.trace(err)
         } else {
@@ -378,7 +379,7 @@ export class Mischief {
    */
   async setup () {
     this.startedAt = new Date()
-    this.state = Mischief.states.SETUP
+    this.state = Scoop.states.SETUP
     const options = this.options
 
     // Create "base" temporary folder if it doesn't exist
@@ -387,7 +388,7 @@ export class Mischief {
       await access(CONSTANTS.TMP_PATH)
       tmpDirExists = true
     } catch (_err) {
-      this.log.info(`Base temporary folder ${CONSTANTS.TMP_PATH} does not exist or cannot be accessed. Mischief will attempt to create it.`)
+      this.log.info(`Base temporary folder ${CONSTANTS.TMP_PATH} does not exist or cannot be accessed. Scoop will attempt to create it.`)
     }
 
     if (!tmpDirExists) {
@@ -413,7 +414,7 @@ export class Mischief {
         await rm(this.captureTmpFolderPath)
       } catch { /* Ignore: Deletes the capture-specific folder if it was created, if possible. */ }
 
-      throw new Error(`Mischief was unable to create a capture-specific temporary folder.\n${err}`)
+      throw new Error(`Scoop was unable to create a capture-specific temporary folder.\n${err}`)
     }
 
     // Playwright init
@@ -439,7 +440,7 @@ export class Mischief {
 
     const totalTimeoutTimer = setTimeout(() => {
       this.log.info(`totalTimeout of ${options.totalTimeout}ms reached. Ending further capture.`)
-      this.state = Mischief.states.PARTIAL
+      this.state = Scoop.states.PARTIAL
       this.teardown()
     }, options.totalTimeout)
 
@@ -505,7 +506,7 @@ export class Mischief {
           response.headers,
           this.pageInfo.favicon,
           false,
-          'Favicon (captured out-of-band by Mischief)'
+          'Favicon (captured out-of-band by Scoop)'
         )
       } catch (err) {
         this.log.warn(`Could not fetch favicon at url ${this.pageInfo.faviconUrl}.`)
@@ -586,7 +587,8 @@ export class Mischief {
       ]
 
       const spawnOptions = {
-        timeout: this.options.captureVideoAsAttachmentTimeout
+        timeout: this.options.captureVideoAsAttachmentTimeout,
+        maxBuffer: 1024 * 1024 * 128
       }
 
       metadataRaw = await exec(ytDlpPath, dlpOptions, spawnOptions)
@@ -736,14 +738,6 @@ export class Mischief {
       height: dimensions.height
     })
 
-    // Try to apply compression if Ghostscript is available
-    try {
-      pdf = await gsCompress(pdf)
-    } catch (err) {
-      this.log.warn('gs command (Ghostscript) is not available or failed. The PDF Snapshot will be stored uncompressed.')
-      this.log.trace(err)
-    }
-
     const url = 'file:///pdf-snapshot.pdf'
     const httpHeaders = new Headers({ 'content-type': 'application/pdf' })
     const body = pdf
@@ -755,13 +749,13 @@ export class Mischief {
 
   /**
    * Populates `this.provenanceInfo`, which is then used to generate a `file:///provenance-summary.html` exchange and entry point.
-   * That property is also be used by `mischiefToWacz()` to populate the `extras` field of `datapackage.json`.
+   * That property is also be used by `scoopToWacz()` to populate the `extras` field of `datapackage.json`.
    *
    * Provenance info collected:
    * - Capture client IP, resolved using the endpoint provided in the `publicIpResolverEndpoint` option.
    * - Operating system details (type, name, major version, CPU architecture)
-   * - Mischief version
-   * - Mischief options object used during capture
+   * - Scoop version
+   * - Scoop options object used during capture
    *
    * @param {Page} page - A Playwright [Page]{@link https://playwright.dev/docs/api/class-page} object
    * @private
@@ -827,7 +821,7 @@ export class Mischief {
   }
 
   /**
-   * Generates a MischiefGeneratedExchange for generated content and adds it to `exchanges` unless time limit was reached.
+   * Generates a ScoopGeneratedExchange for generated content and adds it to `exchanges` unless time limit was reached.
    *
    * @param {string} url
    * @param {object} headers
@@ -839,15 +833,14 @@ export class Mischief {
   addGeneratedExchange (url, headers, body, isEntryPoint = false, description = '') {
     const remainingSpace = this.options.maxSize - this.intercepter.byteLength
 
-    if (this.state !== Mischief.states.CAPTURE ||
-        body.byteLength >= remainingSpace) {
-      this.state = Mischief.states.PARTIAL
+    if (this.state !== Scoop.states.CAPTURE || body.byteLength >= remainingSpace) {
+      this.state = Scoop.states.PARTIAL
       this.warn(`Generated exchange ${url} could not be saved (size limit reached).`)
       return false
     }
 
     this.exchanges.push(
-      new MischiefGeneratedExchange({
+      new ScoopGeneratedExchange({
         url,
         description,
         isEntryPoint: Boolean(isEntryPoint),
@@ -894,18 +887,18 @@ export class Mischief {
 
   /**
    * Returns a map of "generated" exchanges.
-   * Generated exchanges = anything generated directly by Mischief (PDF snapshot, full-page screenshot, videos ...)
-   * @returns {Object.<string, MischiefGeneratedExchange>}
+   * Generated exchanges = anything generated directly by Scoop (PDF snapshot, full-page screenshot, videos ...)
+   * @returns {Object.<string, ScoopGeneratedExchange>}
    */
   extractGeneratedExchanges () {
-    if (![Mischief.states.COMPLETE, Mischief.states.PARTIAL].includes(this.state)) {
+    if (![Scoop.states.COMPLETE, Scoop.states.PARTIAL].includes(this.state)) {
       throw new Error('Cannot export generated exchanges on a pending or failed capture.')
     }
 
     const generatedExchanges = {}
 
     for (const exchange of this.exchanges) {
-      if (exchange instanceof MischiefGeneratedExchange) {
+      if (exchange instanceof ScoopGeneratedExchange) {
         const key = exchange.url.replace('file:///', '')
         generatedExchanges[key] = exchange
       }
@@ -915,15 +908,15 @@ export class Mischief {
   }
 
   /**
-   * (Shortcut) Export this Mischief capture to WARC.
+   * (Shortcut) Export this Scoop capture to WARC.
    * @returns {Promise<ArrayBuffer>}
    */
   async toWarc () {
-    return await exporters.mischiefToWarc(this)
+    return await exporters.scoopToWarc(this)
   }
 
   /**
-   * (Shortcut) Export this Mischief capture to WACZ.
+   * (Shortcut) Export this Scoop capture to WACZ.
    * @param {boolean} [includeRaw=true] - Include a copy of RAW Http exchanges to the wacz (under `/raw`)?
    * @param {object} signingServer - Optional server information for signing the WACZ
    * @param {string} signingServer.url - url of the signing server
@@ -931,28 +924,28 @@ export class Mischief {
    * @returns {Promise<ArrayBuffer>}
    */
   async toWacz (includeRaw = true, signingServer) {
-    return await exporters.mischiefToWacz(this, includeRaw, signingServer)
+    return await exporters.scoopToWacz(this, includeRaw, signingServer)
   }
 
   /**
-   * Instantiates a Mischief instance and runs the capture
+   * Instantiates a Scoop instance and runs the capture
    *
    * @param {string} url - Must be a valid HTTP(S) url.
-   * @param {object} [options={}] - See {@link MischiefOptions#defaults} for details
-   * @returns {Promise<Mischief>}
+   * @param {object} [options={}] - See {@link options.defaults} for details.
+   * @returns {Promise<Scoop>}
    */
   static async capture (url, options) {
-    const instance = new Mischief(url, options)
+    const instance = new Scoop(url, options)
     await instance.capture()
     return instance
   }
 
   /**
-   * (Shortcut) Reconstructs a Mischief capture from a WACZ.
+   * (Shortcut) Reconstructs a Scoop capture from a WACZ.
    * @param {string} zipPath - Path to .wacz file.
-   * @returns {Promise<Mischief>}
+   * @returns {Promise<Scoop>}
    */
   static async fromWacz (zipPath) {
-    return await importers.waczToMischief(zipPath)
+    return await importers.waczToScoop(zipPath)
   }
 }
