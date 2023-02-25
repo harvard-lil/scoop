@@ -18,6 +18,7 @@ import * as CONSTANTS from './constants.js'
 import * as intercepters from './intercepters/index.js'
 import * as exporters from './exporters/index.js'
 import * as importers from './importers/index.js'
+
 import { filterOptions, defaults } from './options.js'
 
 export { defaults }
@@ -930,7 +931,7 @@ export class Scoop {
    * Instantiates a Scoop instance and runs the capture
    *
    * @param {string} url - Must be a valid HTTP(S) url.
-   * @param {object} [options={}] - See `defaults`.
+   * @param {object} [options={}] - See {@link options.defaults} for details.
    * @returns {Promise<Scoop>}
    */
   static async capture (url, options) {

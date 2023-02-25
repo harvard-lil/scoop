@@ -7,8 +7,8 @@ import { ScoopExchange } from './ScoopExchange.js'
 
 test('ScoopExchange constructor only accepts props for pre-defined properties.', async (_t) => {
   const exchange = new ScoopExchange({ isEntryPoint: true, foo: 'bar' })
-  assert(exchange.isEntryPoint === true)
-  assert(exchange.foo === undefined)
+  assert.equal(exchange.isEntryPoint, true)
+  assert.equal(exchange.foo, undefined)
 })
 
 test('ScoopExchange.id should be a valid v4 UUID by default.', async (_t) => {
