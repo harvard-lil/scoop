@@ -17,7 +17,7 @@ if (!globalThis.crypto) {
  * Scoop capture to WARC converter.
  *
  * Note:
- * -  Logs are added to capture object via `Scoop.log`.
+ * - Logs are added to capture object via `Scoop.log`.
  *
  * @param {Scoop} capture
  * @param {boolean} [gzip=false]
