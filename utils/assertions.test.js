@@ -4,7 +4,6 @@ import assert from 'node:assert/strict'
 import { readFile } from 'fs/promises'
 
 import { FIXTURES_PATH } from '../constants.js'
-import { hash } from './WACZ.js'
 
 import {
   assertString,
@@ -35,7 +34,7 @@ test('assertBase64 throws on non-base64 encoded strings.', async (_t) => {
 })
 
 test('assertSHA256WithPrefix throws on non-sha256 strings.', async (_t) => {
-  assert.doesNotThrow(() => assertSHA256WithPrefix(hash(Buffer.from('test'))))
+  assert.doesNotThrow(() => assertSHA256WithPrefix('sha256:fe8ddca93183ac43388431ecbf063df4fc637fa6f26851804ee29c65562e63ee'))
   assert.throws(() => assertSHA256WithPrefix('test'))
 })
 

@@ -1,2 +1,2 @@
-export * from './scoopToWarc.js'
-export * from './scoopToWacz.js'
+export * from './scoopToWARC.js'
+export * from './scoopToWACZ.js'

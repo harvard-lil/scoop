@@ -34,7 +34,7 @@ export { defaults }
  * import { Scoop } from "scoop";
  *
  * const myCapture = await Scoop.capture("https://example.com");
- * const myArchive = await myCapture.toWarc();
+ * const myArchive = await myCapture.toWARC();
  */
 export class Scoop {
   /** @type {string} */
@@ -176,9 +176,21 @@ export class Scoop {
   }
 
   /**
-   * Main capture process.
+   * Instantiates a Scoop instance and runs the capture
    *
-   * @returns {Promise}
+   * @param {string} url - Must be a valid HTTP(S) url.
+   * @param {object} [options={}] - See {@link options.defaults} for details.
+   * @returns {Promise<Scoop>}
+   */
+  static async capture (url, options) {
+    const instance = new Scoop(url, options)
+    await instance.capture()
+    return instance
+  }
+
+  /**
+   * Main capture process (internal).
+   * @returns {Promise<void>}
    * @private
    */
   async capture () {
@@ -749,7 +761,7 @@ export class Scoop {
 
   /**
    * Populates `this.provenanceInfo`, which is then used to generate a `file:///provenance-summary.html` exchange and entry point.
-   * That property is also be used by `scoopToWacz()` to populate the `extras` field of `datapackage.json`.
+   * That property is also be used by `scoopToWACZ()` to populate the `extras` field of `datapackage.json`.
    *
    * Provenance info collected:
    * - Capture client IP, resolved using the endpoint provided in the `publicIpResolverEndpoint` option.
@@ -908,11 +920,21 @@ export class Scoop {
   }
 
   /**
+   * (Shortcut) Reconstructs a Scoop capture from a WACZ.
+   * @param {string} zipPath - Path to .wacz file.
+   * @returns {Promise<Scoop>}
+   */
+  static async fromWACZ (zipPath) {
+    return await importers.WACZToScoop(zipPath)
+  }
+
+  /**
    * (Shortcut) Export this Scoop capture to WARC.
+   * @param {boolean} [gzip=false]
    * @returns {Promise<ArrayBuffer>}
    */
-  async toWarc () {
-    return await exporters.scoopToWarc(this)
+  async toWARC (gzip = false) {
+    return await exporters.scoopToWARC(this, Boolean(gzip))
   }
 
   /**
@@ -923,29 +945,7 @@ export class Scoop {
    * @param {string} signingServer.token - Optional token to be passed to the signing server via the Authorization header
    * @returns {Promise<ArrayBuffer>}
    */
-  async toWacz (includeRaw = true, signingServer) {
-    return await exporters.scoopToWacz(this, includeRaw, signingServer)
-  }
-
-  /**
-   * Instantiates a Scoop instance and runs the capture
-   *
-   * @param {string} url - Must be a valid HTTP(S) url.
-   * @param {object} [options={}] - See {@link options.defaults} for details.
-   * @returns {Promise<Scoop>}
-   */
-  static async capture (url, options) {
-    const instance = new Scoop(url, options)
-    await instance.capture()
-    return instance
-  }
-
-  /**
-   * (Shortcut) Reconstructs a Scoop capture from a WACZ.
-   * @param {string} zipPath - Path to .wacz file.
-   * @returns {Promise<Scoop>}
-   */
-  static async fromWacz (zipPath) {
-    return await importers.waczToScoop(zipPath)
+  async toWACZ (includeRaw = true, signingServer) {
+    return await exporters.scoopToWACZ(this, includeRaw, signingServer)
   }
 }

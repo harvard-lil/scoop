@@ -8,3 +8,4 @@ executables/
 tmp/
 docs
 example.js
+.env

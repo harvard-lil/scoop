@@ -17,7 +17,7 @@ async function getSampleScoopProxyExchange () {
     return _exchange
   }
 
-  const capture = await Scoop.fromWacz(`${FIXTURES_PATH}example.com.wacz`)
+  const capture = await Scoop.fromWACZ(`${FIXTURES_PATH}example.com.wacz`)
 
   for (const exchange of capture.exchanges) {
     if (exchange instanceof ScoopProxyExchange && exchange.requestRaw && exchange.responseRaw) {

@@ -28,9 +28,9 @@
   },
   "homepage": "https://github.com/harvard-lil/scoop#readme",
   "dependencies": {
+    "@harvard-lil/js-wacz": "^0.0.5",
     "@laverdet/beaugunderson-ip-address": "^8.1.0",
     "adm-zip": "^0.5.10",
-    "archiver": "^5.3.1",
     "browsertrix-behaviors": "^0.4.1",
     "chalk": "^5.2.0",
     "get-os-info": "^1.0.2",
@@ -50,6 +50,7 @@
     "@types/node": "^18.11.0",
     "detect-port": "^1.5.1",
     "docdash": "^2.0.1",
+    "dotenv": "^16.0.3",
     "eslint": "^8.31.0",
     "eslint-config-standard": "^17.0.0",
     "eslint-plugin-import": "^2.26.0",

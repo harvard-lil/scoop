@@ -1,4 +1,4 @@
-import { dirname } from 'path'
+import { dirname, sep } from 'path'
 import { fileURLToPath } from 'url'
 
 import chalk from 'chalk'
@@ -12,7 +12,7 @@ export const SOFTWARE = 'Scoop @ Harvard Library Innovation Lab'
 /**
  * The current version of Scoop. Also used in provenance data.
  */
-export const VERSION = 'v0.0.1'
+export const VERSION = '0.0.1'
 
 /**
  * The version of WARC this library exports
@@ -42,27 +42,27 @@ export const BASE_PATH = dirname(fileURLToPath(import.meta.url))
 /**
  * Location of the directory in which assets may be rendered (ex: the provenance summary)
  */
-export const ASSETS_PATH = `${BASE_PATH}/assets/`
+export const ASSETS_PATH = `${BASE_PATH}${sep}assets${sep}`
 
 /**
  * Path to the templates folder.
  */
-export const TEMPLATES_PATH = `${BASE_PATH}/assets/templates/`
+export const TEMPLATES_PATH = `${BASE_PATH}${sep}assets${sep}templates${sep}`
 
 /**
  * Path to the executables folder.
  */
-export const EXECUTABLES_PATH = `${BASE_PATH}/executables/`
+export const EXECUTABLES_PATH = `${BASE_PATH}${sep}executables${sep}`
 
 /**
  * Path to the temporary folder.
  */
-export const TMP_PATH = `${BASE_PATH}/tmp/`
+export const TMP_PATH = `${BASE_PATH}${sep}tmp${sep}`
 
 /**
  * Location of the testing fixtures folder.
  */
-export const FIXTURES_PATH = `${ASSETS_PATH}fixtures/`
+export const FIXTURES_PATH = `${ASSETS_PATH}fixtures${sep}`
 
 /**
  * Colors used by the logging function

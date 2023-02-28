@@ -8,7 +8,7 @@ High-fidelity, browser-based, single-page web archiving library.
 import { Scoop } from "scoop"
 
 const capture = await Scoop.capture("https://lil.law.harvard.edu")
-const wacz = await capture.toWacz()
+const wacz = await capture.toWACZ()
 ```
 
 [![npm version](https://badge.fury.io/js/@harvard-lil%2Fscoop.svg)](https://badge.fury.io/js/@harvard-lil%2Fscoop) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
