@@ -55,7 +55,7 @@ test('scoopToWACZ accounts for "includeRaw" option appropriately.', async (_t) =
         break
       }
     }
-    assert(containsRaw === withRaw)
+    assert.equal(containsRaw, withRaw)
   }
 })
 
