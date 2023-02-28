@@ -259,6 +259,14 @@ export class Scoop {
       }
     })
 
+    // Push step: scroll up
+    steps.push({
+      name: 'Scroll-up',
+      main: async (page) => {
+        await page.evaluate(() => window.scrollTo(0, 0))
+      }
+    })
+
     // Push step: Screenshot
     if (options.screenshot) {
       steps.push({
