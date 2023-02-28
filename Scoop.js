@@ -844,7 +844,7 @@ export class Scoop {
    * Generates a ScoopGeneratedExchange for generated content and adds it to `exchanges` unless time limit was reached.
    *
    * @param {string} url
-   * @param {object} headers
+   * @param {Headers} headers
    * @param {Buffer} body
    * @param {boolean} isEntryPoint
    * @param {string} description

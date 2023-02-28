@@ -60,7 +60,6 @@ export async function scoopToWACZ (capture, includeRaw = false, signingServer) {
     outputDir = await fs.mkdtemp(CONSTANTS.TMP_PATH)
     warcPath = `${outputDir}${sep}data.warc.gz`
     waczPath = `${outputDir}${sep}data.wacz`
-    capture.log.info(`Created a temporary folder for WACZ export: ${outputDir}`)
   } catch (err) {
     capture.log.trace(err)
     throw new Error(`scoopToWACZ was unable to create a temporary directory at ${outputDir}.`)
