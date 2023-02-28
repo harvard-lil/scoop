@@ -21,7 +21,7 @@ import * as importers from './importers/index.js'
 
 import { filterOptions, defaults } from './options.js'
 
-export { defaults }
+export { filterOptions, defaults }
 
 /**
  * @class Scoop
