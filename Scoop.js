@@ -1,3 +1,5 @@
+/// <reference path="types.js" />
+
 import os from 'os'
 import { readFile, rm, readdir, mkdir, mkdtemp, access } from 'fs/promises'
 import { constants as fsConstants } from 'node:fs'
@@ -20,8 +22,6 @@ import * as exporters from './exporters/index.js'
 import * as importers from './importers/index.js'
 
 import { filterOptions, defaults } from './options.js'
-
-export { filterOptions, defaults }
 
 /**
  * @class Scoop
@@ -70,10 +70,17 @@ export class Scoop {
 
   /**
    * Current settings.
-   * Should only contain keys defined in {@link options.defaults}.
-   * @type {object}
+   * @type {ScoopOptions}
    */
   options = {}
+
+  /**
+   * Returns a copy of Scoop's default settings.
+   * @type {ScoopOptions}
+   */
+  static get defaults () {
+    return Object.assign({}, defaults)
+  }
 
   /**
    * Array of HTTP exchanges that constitute the capture.
@@ -154,7 +161,7 @@ export class Scoop {
 
   /**
    * @param {string} url - Must be a valid HTTP(S) url.
-   * @param {object} [options={}] - See `defaults`.
+   * @param {?ScoopOptions} [options={}] - See {@link ScoopOptions}.
    */
   constructor (url, options = {}) {
     this.options = filterOptions(options)
@@ -179,7 +186,7 @@ export class Scoop {
    * Instantiates a Scoop instance and runs the capture
    *
    * @param {string} url - Must be a valid HTTP(S) url.
-   * @param {object} [options={}] - See {@link options.defaults} for details.
+   * @param {ScoopOptions} [options={}] - See {@link ScoopOptions}.
    * @returns {Promise<Scoop>}
    */
   static async capture (url, options) {

@@ -1,3 +1,5 @@
+/// <reference path="../types.js" />
+
 import {
   getStartLine,
   getBody,
