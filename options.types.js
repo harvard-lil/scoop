@@ -39,11 +39,3 @@
  * @property {string} publicIpResolverEndpoint="https://myip.lil.tools" - URL to be used to retrieve the client's public IP address for `provenanceSummary`. Endpoint requirements: must simply return a IPv4 or IPv6 address as text.
  * @property {string} ytDlpPath="./executables/yt-dlp" - Path to the yt-dlp executable to be used.
  */
-
-/**
- * @typedef ScoopExchange~Message
- * @property {String} startLine
- * @property {Headers} headers
- * @property {Buffer} body
- * @property {Buffer} bodyCombined - The body with all chunks combined
- */

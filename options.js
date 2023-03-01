@@ -1,4 +1,4 @@
-/// <reference path="types.js" />
+/// <reference path="./options.types.js" />
 
 import { statSync } from 'fs' // Cannot be promisified at this stage (used in constructor)
 import * as CONSTANTS from './constants.js'

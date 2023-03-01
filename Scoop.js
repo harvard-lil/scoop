@@ -1,4 +1,4 @@
-/// <reference path="types.js" />
+/// <reference path="./options.types.js" />
 
 import os from 'os'
 import { readFile, rm, readdir, mkdir, mkdtemp, access } from 'fs/promises'

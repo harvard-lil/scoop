@@ -1,4 +1,4 @@
-/// <reference path="../types.js" />
+/// <reference path="./ScoopExchange.types.js" />
 
 import {
   getStartLine,
