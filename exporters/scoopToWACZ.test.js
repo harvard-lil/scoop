@@ -59,23 +59,26 @@ test('scoopToWACZ accounts for "includeRaw" option appropriately.', async (_t) =
   }
 })
 
-// Note: This test only runs is credentials to a signing server are provided.
-if (process.env?.TEST_WACZ_SIGNING_URL) {
-  test('scoopToWACZ accounts for "signingServer" option appropriately.', async (_t) => {
-    const capture = await testCapture()
+test('scoopToWACZ accounts for "signingServer" option appropriately.', async (t) => {
+  // This test only runs if credentials to a signing server are provided.
+  if (!process.env?.TEST_WACZ_SIGNING_TOKEN) {
+    t.skip('No TEST_WACZ_SIGNING_URL env var present.')
+    return
+  }
 
-    const signingServer = {
-      url: process.env.TEST_WACZ_SIGNING_URL,
-      token: process.env?.TEST_WACZ_SIGNING_TOKEN
-    }
+  const capture = await testCapture()
 
-    // Load "datapackage-digest.json" to check that it contains a signature.
-    for (const signing of [signingServer, null]) {
-      const wacz = Buffer.from(await scoopToWACZ(capture, false, signing))
-      const zip = new AdmZip(wacz)
-      const datapackageDigest = zip.getEntry('datapackage-digest.json').getData().toString()
+  const signingServer = {
+    url: process.env.TEST_WACZ_SIGNING_URL,
+    token: process.env?.TEST_WACZ_SIGNING_TOKEN
+  }
 
-      assert.equal('signedData' in JSON.parse(datapackageDigest), !!signing)
-    }
-  })
-}
+  // Load "datapackage-digest.json" to check that it contains a signature.
+  for (const signing of [signingServer, null]) {
+    const wacz = Buffer.from(await scoopToWACZ(capture, false, signing))
+    const zip = new AdmZip(wacz)
+    const datapackageDigest = zip.getEntry('datapackage-digest.json').getData().toString()
+
+    assert.equal('signedData' in JSON.parse(datapackageDigest), !!signing)
+  }
+})
