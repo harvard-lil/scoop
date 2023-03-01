@@ -16,7 +16,7 @@ export const defaults = {
   totalTimeout: 60 * 1000,
   loadTimeout: 30 * 1000,
   networkIdleTimeout: 30 * 1000,
-  behaviorsTimeout: 60 * 1000,
+  behaviorsTimeout: 30 * 1000,
   captureVideoAsAttachmentTimeout: 30 * 1000,
 
   captureWindowX: 1600,

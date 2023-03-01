@@ -12,7 +12,7 @@
  * @property {number} totalTimeout=60000 - How long should Scoop wait for all steps in the capture to complete, in ms?
  * @property {number} loadTimeout=30000 - How long should Scoop wait for the page to load, in ms?
  * @property {number} networkIdleTimeout=30000 - How long should Scoop wait for network events to complete, in ms.
- * @property {number} behaviorsTimeout=60000 - How long should Scoop wait for media to play, secondary resources, and site specific behaviors (in total), in ms?
+ * @property {number} behaviorsTimeout=30000 - How long should Scoop wait for media to play, secondary resources, and site specific behaviors (in total), in ms?
  * @property {number} captureVideoAsAttachmentTimeout=30000 - How long should Scoop wait for `captureVideoAsAttachment` to finish.
  *
  * @property {number} captureWindowX=1600 - Browser window resolution in pixels: X axis.
