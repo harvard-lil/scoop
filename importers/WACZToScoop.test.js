@@ -18,6 +18,7 @@ test('WACZToScoop\'s roundtrip should produce identical Scoop object.', async (_
   const wacz = await capture.toWACZ()
 
   let reconstructedCapture
+
   try {
     await writeFile(fpath, Buffer.from(wacz))
     reconstructedCapture = await Scoop.fromWACZ(fpath)

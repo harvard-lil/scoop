@@ -8,27 +8,27 @@ export const defaults = {
   logLevel: 'info',
 
   screenshot: true,
-  pdfSnapshot: true,
+  pdfSnapshot: false,
   domSnapshot: false,
   captureVideoAsAttachment: true,
   provenanceSummary: true,
 
   totalTimeout: 60 * 1000,
-  loadTimeout: 30 * 1000,
-  networkIdleTimeout: 30 * 1000,
-  behaviorsTimeout: 30 * 1000,
+  loadTimeout: 20 * 1000,
+  networkIdleTimeout: 20 * 1000,
+  behaviorsTimeout: 20 * 1000,
   captureVideoAsAttachmentTimeout: 30 * 1000,
 
   captureWindowX: 1600,
   captureWindowY: 900,
 
-  maxSize: 200 * 1024 * 1024,
+  maxCaptureSize: 200 * 1024 * 1024,
   keepPartialResponses: true,
 
   autoScroll: true,
   autoPlayMedia: true,
   grabSecondaryResources: true,
-  runSiteSpecificBehaviors: true,
+  runSiteSpecificBehaviors: false,
 
   headless: true,
   userAgentSuffix: '',
@@ -70,7 +70,7 @@ export const defaults = {
   proxyPort: 9000,
   proxyVerbose: false,
 
-  publicIpResolverEndpoint: 'https://myip.lil.tools',
+  publicIpResolverEndpoint: 'https://icanhazip.com',
   ytDlpPath: `${CONSTANTS.EXECUTABLES_PATH}yt-dlp`
 }
 
