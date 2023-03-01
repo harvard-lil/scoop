@@ -1,11 +1,11 @@
-import { dirname, sep } from 'path'
+import { dirname, join, sep } from 'path'
 import { fileURLToPath } from 'url'
 
 import chalk from 'chalk'
 
 /**
  * Description of this software.
- * Used in provenance data to indicate which softare made the capture.
+ * Used in provenance data to indicate which software made the capture.
  */
 export const SOFTWARE = 'Scoop @ Harvard Library Innovation Lab'
 
@@ -42,27 +42,27 @@ export const BASE_PATH = dirname(fileURLToPath(import.meta.url))
 /**
  * Location of the directory in which assets may be rendered (ex: the provenance summary)
  */
-export const ASSETS_PATH = `${BASE_PATH}${sep}assets${sep}`
-
-/**
- * Path to the templates folder.
- */
-export const TEMPLATES_PATH = `${BASE_PATH}${sep}assets${sep}templates${sep}`
+export const ASSETS_PATH = join(BASE_PATH, 'assets', sep)
 
 /**
  * Path to the executables folder.
  */
-export const EXECUTABLES_PATH = `${BASE_PATH}${sep}executables${sep}`
+export const EXECUTABLES_PATH = join(BASE_PATH, 'executables', sep)
+
+/**
+ * Path to the templates folder.
+ */
+export const TEMPLATES_PATH = join(ASSETS_PATH, 'templates', sep)
 
 /**
  * Path to the temporary folder.
  */
-export const TMP_PATH = `${BASE_PATH}${sep}tmp${sep}`
+export const TMP_PATH = join(BASE_PATH, 'tmp', sep)
 
 /**
  * Location of the testing fixtures folder.
  */
-export const FIXTURES_PATH = `${ASSETS_PATH}fixtures${sep}`
+export const FIXTURES_PATH = join(ASSETS_PATH, 'fixtures', sep)
 
 /**
  * Colors used by the logging function
