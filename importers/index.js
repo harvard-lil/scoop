@@ -1,1 +1,1 @@
-export * from './waczToScoop.js'
+export * from './WACZToScoop.js'

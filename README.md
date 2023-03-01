@@ -1,14 +1,16 @@
 > 🚧 🚧 🚧
 
-# Scoop 🍨
+# Perma Scoop 🍨
 
 High-fidelity, browser-based, single-page web archiving library. 
 
+By the [perma.cc](https://perma.cc) team.
+
 ```javascript
-import { Scoop } from "scoop"
+import { Scoop } from "@harvard-lil/scoop"
 
 const capture = await Scoop.capture("https://lil.law.harvard.edu")
-const wacz = await capture.toWacz()
+const wacz = await capture.toWACZ()
 ```
 
 [![npm version](https://badge.fury.io/js/@harvard-lil%2Fscoop.svg)](https://badge.fury.io/js/@harvard-lil%2Fscoop) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
@@ -16,15 +18,38 @@ const wacz = await capture.toWacz()
 ---
 
 ## Summary
-- [Goals and Features](#goals-and-features)
+- [About](#about)
+- [Main Features](#main-features)
 - [Getting Started](#getting-started)
-- [Options and Advanced Features](#options-and-advanced-features)
+- [Scoop.capture()](#scoopcapture)
+- [Scoop.toWARC()](#scooptowarc)
+- [Scoop.toWACZ()](#scooptowacz)
 - [Integrations and Tooling](#integrations-and-tooling)
 - [Contributing](#contributing)
+- [Development](#development)
 
 ---
 
-## Goals and Features
+## About
+
+```mermaid
+flowchart LR
+    A[Scoop]
+    B[Playwright]
+    C[Chrome]
+    D[Website]
+    E[HTTP Proxy]
+    A <--> |Control| B
+    B <--> C
+    C <--> D
+    A <-.-> |Capture| E <-.-> C
+```
+
+[👆 Back to the summary](#summary)
+
+---
+
+## Main Features
 
 [👆 Back to the summary](#summary)
 
@@ -32,11 +57,62 @@ const wacz = await capture.toWacz()
 
 ## Getting Started
 
+### Dependencies 
+
+**Scoop** requires [Node.js 18+](https://nodejs.org/en/). 
+
+A system-wide [Python 3](https://www.python.org/) interpreter should also be available for `yt-dlp`, used for the `captureVideoAsAttachments` option to function.
+
+
+### Installation
+
+```bash
+npm install @harvard-lil/scoop
+npx playwright install chrome # If needed (first install)
+```
+
+### Example: Simple capture and export to WARC
+
+```javascript
+import { Scoop } from '@harvard-lil/scoop'
+
+const capture = await Scoop.capture('https://lil.law.harvard.edu')
+const warc = await capture.toWARC()
+```
+
+### Example: Customized capture and export to WACZ
+```javascript
+import { Scoop } from '@harvard-lil/scoop'
+
+const capture = await Scoop.capture('https://lil.law.harvard.edu', {
+  captureWindowX: 320,
+  captureWindowY: 480,
+  logLevel: 'trace'
+})
+
+const wacz = await Scoop.toWACZ()
+```
+
 [👆 Back to the summary](#summary)
 
 ---
 
-## Options and Advanced Features
+## Scoop.capture()
+
+
+[👆 Back to the summary](#summary)
+
+---
+
+## Scoop.toWARC()
+
+
+[👆 Back to the summary](#summary)
+
+---
+
+## Scoop.toWACZ()
+
 
 [👆 Back to the summary](#summary)
 
@@ -53,3 +129,7 @@ const wacz = await capture.toWacz()
 [👆 Back to the summary](#summary)
 
 ---
+
+## Development
+
+[👆 Back to the summary](#summary)

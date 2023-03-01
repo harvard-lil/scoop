@@ -10,17 +10,17 @@ import { valueOf } from '../utils/valueOf.js'
 
 import { testDefaults } from '../options.js'
 
-test('waczToScoop\'s roundtrip should produce identical Scoop object.', async (_t) => {
+test('WACZToScoop\'s roundtrip should produce identical Scoop object.', async (_t) => {
   const fpath = `${TMP_PATH}${uuidv4()}.wacz`
   const capture = new Scoop('https://example.com', testDefaults)
 
   await capture.capture()
-  const wacz = await capture.toWacz()
+  const wacz = await capture.toWACZ()
 
   let reconstructedCapture
   try {
     await writeFile(fpath, Buffer.from(wacz))
-    reconstructedCapture = await Scoop.fromWacz(fpath)
+    reconstructedCapture = await Scoop.fromWACZ(fpath)
   } finally {
     await rm(fpath, { force: true })
   }

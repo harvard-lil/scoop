@@ -20,7 +20,7 @@ test('ScoopIntercepter setup and teardown methods throw as not implemented.', as
 })
 
 test('checkExchangeForNoArchive returns true when noarchive directive is present in exchange.', async (_t) => {
-  const capture = await Scoop.fromWacz(`${FIXTURES_PATH}/noarchive.netlify.app.wacz`)
+  const capture = await Scoop.fromWACZ(`${FIXTURES_PATH}/noarchive.netlify.app.wacz`)
   const intercepter = new ScoopIntercepter(capture)
 
   // Exactly 1 ScoopProxyExchange in that capture bears the "noarchive" directive.
@@ -38,7 +38,7 @@ test('checkExchangeForNoArchive returns true when noarchive directive is present
 })
 
 test('checkExchangeForNoArchive returns false when noarchive directive is not present in exchange.', async (_t) => {
-  const capture = await Scoop.fromWacz(`${FIXTURES_PATH}/example.com.wacz`)
+  const capture = await Scoop.fromWACZ(`${FIXTURES_PATH}/example.com.wacz`)
   const intercepter = new ScoopIntercepter(capture)
 
   let noArchiveCount = 0

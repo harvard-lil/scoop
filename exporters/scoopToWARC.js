@@ -20,16 +20,21 @@ if (!globalThis.crypto) {
  * - Logs are added to capture object via `Scoop.log`.
  *
  * @param {Scoop} capture
+ * @param {boolean} [gzip=false]
  * @returns {Promise<ArrayBuffer>}
  */
-export async function scoopToWarc (capture) {
+export async function scoopToWARC (capture, gzip = false) {
   let serializedInfo = null
+
   const serializedRecords = []
+
   const validStates = [
     Scoop.states.PARTIAL,
     Scoop.states.COMPLETE,
     Scoop.states.RECONSTRUCTED
   ]
+
+  gzip = Boolean(gzip)
 
   // Check capture state
   if (!(capture instanceof Scoop) || !validStates.includes(capture.state)) {
@@ -43,7 +48,7 @@ export async function scoopToWarc (capture) {
     { filename: 'archive.warc', warcVersion: `WARC/${CONSTANTS.WARC_VERSION}` },
     { software: `${CONSTANTS.SOFTWARE} ${CONSTANTS.VERSION}` }
   )
-  serializedInfo = await WARCSerializer.serialize(info)
+  serializedInfo = await WARCSerializer.serialize(info, { gzip })
 
   //
   // Prepare WARC records section
@@ -93,7 +98,7 @@ export async function scoopToWarc (capture) {
           content()
         )
 
-        serializedRecords.push(await WARCSerializer.serialize(record))
+        serializedRecords.push(await WARCSerializer.serialize(record, { gzip }))
       } catch (err) {
         capture.log.warn(`${msg.url} ${type} could not be added to warc.`)
         capture.log.trace(err)

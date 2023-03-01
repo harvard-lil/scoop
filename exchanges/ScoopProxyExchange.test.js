@@ -11,7 +11,7 @@ test('ScoopProxyExchange must inherit from ScoopExchange.', async (_t) => {
 })
 
 test('ScoopProxyExchange request and response properties populate automatically from requestRaw and responseRaw.', async (_t) => {
-  const capture = await Scoop.fromWacz(`${FIXTURES_PATH}example.com.wacz`)
+  const capture = await Scoop.fromWACZ(`${FIXTURES_PATH}example.com.wacz`)
 
   for (const exchange of capture.exchanges) {
     if (exchange instanceof ScoopProxyExchange === false) {

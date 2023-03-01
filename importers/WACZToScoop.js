@@ -10,21 +10,20 @@ import { ScoopProxyExchange, ScoopGeneratedExchange } from '../exchanges/index.j
 import { EXCHANGE_ID_HEADER_LABEL, EXCHANGE_DESCRIPTION_HEADER_LABEL } from '../constants.js'
 
 /**
- * Reconstructs a Scoop capture from a WACZ
- * containing raw http traffic data.
- *
+ * (Experimental) Reconstructs a Scoop capture from a WACZ containing raw http traffic data.
  * @param {string} zipPath - path to the zipped WACZ
  * @returns {Promise<Scoop>} a reconstructed Scoop capture object
  */
-export async function waczToScoop (zipPath) {
+export async function WACZToScoop (zipPath) {
   const zip = new StreamZip.async({ file: zipPath }) // eslint-disable-line
-  const pageJSON = await getPagesJSON(zip)
   const datapackage = await getDataPackage(zip)
+  const options = datapackage.extras?.provenanceInfo?.options
 
-  const capture = new Scoop(pageJSON.url, datapackage.extras?.provenanceInfo?.options)
+  const capture = new Scoop(datapackage.mainPageUrl, options)
+
   Object.assign(capture, {
-    id: pageJSON.id,
-    startedAt: new Date(pageJSON.ts),
+    // TODO: id assignment was skipped during the transition to js-wacz. To reconsider?
+    startedAt: new Date(datapackage.mainPageDate),
     exchanges: await getExchanges(zip),
     state: Scoop.states.RECONSTRUCTED
   })
@@ -36,18 +35,6 @@ export async function waczToScoop (zipPath) {
 
   await zip.close()
   return capture
-}
-
-/**
- * Retrieves the pages.jsonl data from the WARC and parses it
- *
- * @param {StreamZipAsync} zip
- * @returns {object[]} an array of page entry objects
- * @private
- */
-const getPagesJSON = async (zip) => {
-  const data = await zip.entryData('pages/pages.jsonl')
-  return data.toString().split('\n').map(JSON.parse)[1]
 }
 
 /**
@@ -85,19 +72,18 @@ const getExchanges = async (zip) => {
   const rawPayloadDigests = zipDirs.raw.map(name => path.basename(name).split('_')[3])
     .filter(digest => digest)
 
-  // TODO: does the warc parser need any special handling for GZIPed warcs?
   for (const name of zipDirs.archive) {
     const zipData = await zip.entryData(name)
     const warc = new WARCParser(Readable.from(zipData))
 
     for await (const record of warc) {
-      // get data for rehydrating regular exchanges
+      // Get data for rehydrating regular exchanges
       const digest = record.warcHeader('WARC-Payload-Digest')
       if (rawPayloadDigests.includes(digest)) {
-        warcEntriesByDigest[digest] = await record.readFully(false)
+        warcEntriesByDigest[digest] = Buffer.from(await record.readFully(false))
       }
 
-      // get data for rehydrating generated exchanges
+      // Get data for rehydrating generated exchanges
       const url = record.warcHeader('WARC-Target-URI')
       if (url && (new URL(url)).protocol === 'file:') {
         generatedExchanges.push(new ScoopGeneratedExchange({
@@ -108,7 +94,7 @@ const getExchanges = async (zip) => {
           response: {
             startLine: record.httpHeaders.statusline,
             headers: new Headers(record.getResponseInfo().headers),
-            body: await record.readFully(false)
+            body: Buffer.from(await record.readFully(false))
           }
         }))
       }
