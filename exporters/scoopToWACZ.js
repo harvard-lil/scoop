@@ -87,12 +87,8 @@ export async function scoopToWACZ (capture, includeRaw = false, signingServer) {
       url: capture.url,
       ts: capture.startedAt,
       // Optional: signing url / token, provenance info
-      signingUrl: signingServer?.url
-        ? signingServer.url
-        : null,
-      signingToken: signingServer?.token
-        ? signingServer.token
-        : null,
+      signingUrl: signingServer?.url,
+      signingToken: signingServer?.token,
       datapackageExtras: capture.options.provenanceSummary
         ? { provenanceInfo: capture.provenanceInfo }
         : null
