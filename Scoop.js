@@ -20,8 +20,9 @@ import * as CONSTANTS from './constants.js'
 import * as intercepters from './intercepters/index.js'
 import * as exporters from './exporters/index.js'
 import * as importers from './importers/index.js'
-
 import { filterOptions, defaults } from './options.js'
+
+nunjucks.configure(CONSTANTS.TEMPLATES_PATH)
 
 /**
  * @class Scoop
@@ -238,7 +239,7 @@ export class Scoop {
         name: 'Browser scripts',
         setup: async (page) => {
           await page.addInitScript({
-            path: './node_modules/browsertrix-behaviors/dist/behaviors.js'
+            path: `${CONSTANTS.BASE_PATH}/node_modules/browsertrix-behaviors/dist/behaviors.js`
           })
           await page.addInitScript({
             content: `
@@ -466,14 +467,14 @@ export class Scoop {
       height: options.captureWindowY
     })
 
-    const totalTimeoutTimer = setTimeout(() => {
-      this.log.info(`totalTimeout of ${options.totalTimeout}ms reached. Ending further capture.`)
+    const captureTimeoutTimer = setTimeout(() => {
+      this.log.info(`captureTimeout of ${options.captureTimeout}ms reached. Ending further capture.`)
       this.state = Scoop.states.PARTIAL
       this.teardown()
-    }, options.totalTimeout)
+    }, options.captureTimeout)
 
     this.#browser.on('disconnected', () => {
-      clearTimeout(totalTimeoutTimer)
+      clearTimeout(captureTimeoutTimer)
     })
 
     return page
@@ -715,7 +716,7 @@ export class Scoop {
     // Generate summary page
     //
     try {
-      const html = nunjucks.render(`${CONSTANTS.TEMPLATES_PATH}video-extracted-summary.njk`, {
+      const html = nunjucks.render('video-extracted-summary.njk', {
         url: this.url,
         now: new Date().toISOString(),
         videoSaved,
@@ -830,7 +831,7 @@ export class Scoop {
 
     // Generate summary page
     try {
-      const html = nunjucks.render(`${CONSTANTS.TEMPLATES_PATH}provenance-summary.njk`, {
+      const html = nunjucks.render('provenance-summary.njk', {
         ...this.provenanceInfo,
         date: this.startedAt.toISOString(),
         url: this.url

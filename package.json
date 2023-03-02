@@ -1,9 +1,12 @@
 {
   "name": "scoop",
   "version": "0.0.1",
-  "description": "",
-  "main": "index.js",
+  "description": "🍨 High-fidelity, browser-based, single-page web archiving library.",
+  "main": "Scoop.js",
   "type": "module",
+  "bin": {
+    "scoop": "./bin/cli.js"
+  },
   "engines": {
     "node": ">=18.0.0"
   },
@@ -14,8 +17,9 @@
   },
   "scripts": {
     "postinstall": "bash postinstall.sh",
-    "standard-fix": "standard --fix",
-    "test": "standard && node --test"
+    "lint": "standard",
+    "lint-autofix": "standard --fix",
+    "test": "node --test"
   },
   "repository": {
     "type": "git",
@@ -32,6 +36,7 @@
     "@laverdet/beaugunderson-ip-address": "^8.1.0",
     "browsertrix-behaviors": "^0.4.1",
     "chalk": "^5.2.0",
+    "commander": "^10.0.0",
     "get-os-info": "^1.0.2",
     "http-parser-js": "^0.5.8",
     "loglevel": "^1.8.1",
@@ -39,7 +44,7 @@
     "node-html-parser": "^6.1.4",
     "node-stream-zip": "^1.15.0",
     "nunjucks": "^3.2.3",
-    "playwright": "^1.30.0",
+    "playwright": "^1.31.2",
     "transparent-proxy": "^1.9.1",
     "uuid": "^9.0.0",
     "warcio": "^2.0.1"
