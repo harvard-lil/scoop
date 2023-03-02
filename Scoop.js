@@ -1,3 +1,5 @@
+/// <reference path="./options.types.js" />
+
 import os from 'os'
 import { readFile, rm, readdir, mkdir, mkdtemp, access } from 'fs/promises'
 import { constants as fsConstants } from 'node:fs'
@@ -20,8 +22,6 @@ import * as exporters from './exporters/index.js'
 import * as importers from './importers/index.js'
 
 import { filterOptions, defaults } from './options.js'
-
-export { filterOptions, defaults }
 
 /**
  * @class Scoop
@@ -70,10 +70,17 @@ export class Scoop {
 
   /**
    * Current settings.
-   * Should only contain keys defined in {@link options.defaults}.
-   * @type {object}
+   * @type {ScoopOptions}
    */
   options = {}
+
+  /**
+   * Returns a copy of Scoop's default settings.
+   * @type {ScoopOptions}
+   */
+  static get defaults () {
+    return Object.assign({}, defaults)
+  }
 
   /**
    * Array of HTTP exchanges that constitute the capture.
@@ -132,7 +139,8 @@ export class Scoop {
    *   osVersion: ?string,
    *   cpuArchitecture: ?string,
    *   blockedRequests: Array.<{url: string, ip: string, rule: string}>,
-   *   noArchiveUrls: string[]
+   *   noArchiveUrls: string[],
+   *   options: ScoopOptions
    * }}
    */
   provenanceInfo = {
@@ -154,7 +162,7 @@ export class Scoop {
 
   /**
    * @param {string} url - Must be a valid HTTP(S) url.
-   * @param {object} [options={}] - See `defaults`.
+   * @param {?ScoopOptions} [options={}] - See {@link ScoopOptions}.
    */
   constructor (url, options = {}) {
     this.options = filterOptions(options)
@@ -179,7 +187,7 @@ export class Scoop {
    * Instantiates a Scoop instance and runs the capture
    *
    * @param {string} url - Must be a valid HTTP(S) url.
-   * @param {object} [options={}] - See {@link options.defaults} for details.
+   * @param {ScoopOptions} [options={}] - See {@link ScoopOptions}.
    * @returns {Promise<Scoop>}
    */
   static async capture (url, options) {
@@ -314,7 +322,7 @@ export class Scoop {
     // Push step: Capture of in-page videos as attachment
     if (options.captureVideoAsAttachment) {
       steps.push({
-        name: 'Out-of-browser capture of video as attachment',
+        name: 'Out-of-browser capture of video as attachment (if any)',
         main: async () => {
           await this.#captureVideoAsAttachment()
         }
@@ -788,7 +796,7 @@ export class Scoop {
     // Grab public IP address
     try {
       const response = await fetch(this.options.publicIpResolverEndpoint)
-      const ip = await response.text()
+      const ip = (await response.text()).trim()
 
       try {
         new Address4(ip) // eslint-disable-line
@@ -851,7 +859,7 @@ export class Scoop {
    * @returns {boolean} true if generated exchange is successfully added
    */
   addGeneratedExchange (url, headers, body, isEntryPoint = false, description = '') {
-    const remainingSpace = this.options.maxSize - this.intercepter.byteLength
+    const remainingSpace = this.options.maxCaptureSize - this.intercepter.byteLength
 
     if (this.state !== Scoop.states.CAPTURE || body.byteLength >= remainingSpace) {
       this.state = Scoop.states.PARTIAL

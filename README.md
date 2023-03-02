@@ -61,14 +61,16 @@ flowchart LR
 
 **Scoop** requires [Node.js 18+](https://nodejs.org/en/). 
 
-A system-wide [Python 3](https://www.python.org/) interpreter should also be available for `yt-dlp`, used for the `captureVideoAsAttachments` option to function.
+This library as been written for UNIX-like systems. We expect it to work on Linux, Mac OS, and Windows' WSL.
 
+**Recommended:**
+- `captureVideoAsAttachment` option: A Python 3 interpreter should be available for `yt-dlp` to function.
 
 ### Installation
 
 ```bash
 npm install @harvard-lil/scoop
-npx playwright install chrome # If needed (first install)
+npx playwright install chrome # Needed on first-ever install.
 ```
 
 ### Example: Simple capture and export to WARC

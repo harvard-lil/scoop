@@ -1,3 +1,5 @@
+/// <reference path="./ScoopExchange.types.js" />
+
 import {
   getStartLine,
   getBody,

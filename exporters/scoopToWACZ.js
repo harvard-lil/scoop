@@ -53,6 +53,18 @@ export async function scoopToWACZ (capture, includeRaw = false, signingServer) {
     firstExchange = capture.exchanges[0]
   }
 
+  /**
+   * Closure to be called on error or complete to dispose of temporary folder and associated files created for this WACZ.
+   * @returns {Promise<void>}
+   */
+  async function clearOutputDir () {
+    try {
+      await fs.rm(outputDir, { recursive: true, force: true })
+    } catch (err) {
+      capture.log.warn(`Temporary folder could not be cleared (${outputDir}.`)
+    }
+  }
+
   //
   // Create a temporary directory
   //
@@ -73,6 +85,7 @@ export async function scoopToWACZ (capture, includeRaw = false, signingServer) {
     await fs.writeFile(warcPath, Buffer.from(warc))
   } catch (err) {
     capture.log.trace(err)
+    await clearOutputDir()
     throw new Error('An error occurred while creating underlying WARC file.')
   }
 
@@ -95,6 +108,7 @@ export async function scoopToWACZ (capture, includeRaw = false, signingServer) {
     })
   } catch (err) {
     capture.log.trace(err)
+    await clearOutputDir()
     throw new Error('An error occurred while initializing WACZ output.')
   }
 
@@ -125,6 +139,7 @@ export async function scoopToWACZ (capture, includeRaw = false, signingServer) {
     }
   } catch (err) {
     capture.log.trace(err)
+    await clearOutputDir()
     throw new Error('An error occurred while adding pages to WACZ output.')
   }
 
@@ -166,6 +181,7 @@ export async function scoopToWACZ (capture, includeRaw = false, signingServer) {
       }
     } catch (err) {
       capture.log.trace(err)
+      await clearOutputDir()
       throw new Error('An error occurred while adding raw exchanges to WACZ output.')
     }
   }
@@ -178,17 +194,10 @@ export async function scoopToWACZ (capture, includeRaw = false, signingServer) {
     waczData = await fs.readFile(waczPath)
   } catch (err) {
     capture.log.trace(err)
+    await clearOutputDir()
     throw new Error('An error occurred while processing WACZ file.')
   }
 
-  //
-  // Clear temporary files and folder
-  //
-  try {
-    await fs.rm(outputDir, { recursive: true, force: true })
-  } catch (err) {
-    capture.log.warn(`Temporary folder could not be cleared (${outputDir}.`)
-  }
-
+  await clearOutputDir()
   return waczData.buffer
 }

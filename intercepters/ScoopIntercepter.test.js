@@ -53,7 +53,7 @@ test('checkAndEnforceSizeLimit interrupts capture when size limit is reached.', 
   const capture = new Scoop('https://example.com')
   const intercepter = new ScoopIntercepter(capture)
 
-  capture.options.maxSize = 100
+  capture.options.maxCaptureSize = 100
   capture.state = Scoop.states.CAPTURE
 
   // We mock Scoop.teardown to get a clear indication that it was called.

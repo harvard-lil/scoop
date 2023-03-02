@@ -1,3 +1,5 @@
+/// <reference path="./ScoopExchange.types.js" />
+
 import { v4 as uuidv4 } from 'uuid'
 
 /**
@@ -78,11 +80,3 @@ export class ScoopExchange {
     return this._response
   }
 }
-
-/**
- * @typedef ScoopExchange~Message
- * @property {String} startLine
- * @property {Headers} headers
- * @property {Buffer} body
- * @property {Buffer} bodyCombined - The body with all chunks combined
- */
