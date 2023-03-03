@@ -56,18 +56,14 @@ test('checkAndEnforceSizeLimit interrupts capture when size limit is reached.', 
   capture.options.maxCaptureSize = 100
   capture.state = Scoop.states.CAPTURE
 
-  // We mock Scoop.teardown to get a clear indication that it was called.
-  // The original method is async but not awaited by checkAndEnforceSizeLimit().
-  capture.teardown = () => {
-    throw new Error('TEARDOWN')
-  }
-
   // Size limit not reached
-  assert.doesNotThrow(() => intercepter.checkAndEnforceSizeLimit(), null, 'TEARDOWN')
-  assert(capture.state === Scoop.states.CAPTURE)
+  intercepter.checkAndEnforceSizeLimit()
+  assert.equal(capture.state, Scoop.states.CAPTURE)
+  assert.equal(intercepter.recordExchanges, true)
 
   // Size limit reached
   intercepter.byteLength = 1000
-  assert.throws(() => intercepter.checkAndEnforceSizeLimit(), null, 'TEARDOWN')
-  assert(capture.state === Scoop.states.PARTIAL)
+  intercepter.checkAndEnforceSizeLimit()
+  assert.equal(capture.state, Scoop.states.PARTIAL)
+  assert.equal(intercepter.recordExchanges, false)
 })

@@ -386,17 +386,40 @@ export class Scoop {
     // Run capture steps
     //
     let i = -1
-    while (i++ < steps.length - 1 && this.state === Scoop.states.CAPTURE) {
+    while (i++ < steps.length - 1) {
       const step = steps[i]
+
+      // Steps only run if Scoop is in CAPTURE state, with exceptions
       try {
-        this.log.info(`STEP [${i + 1}/${steps.length}]: ${step.name}`)
-        await step.main(page)
+        let shouldRun = this.state === Scoop.states.CAPTURE
+
+        // Exceptions:
+        // - Provenance Summary should still run if state is PARTIAL
+        // - Teardown step should always run if not already called
+        if (shouldRun === false) {
+          if (step.name === 'Provenance summary' && this.state === Scoop.states.PARTIAL) {
+            shouldRun = true
+          }
+
+          if (step.name === 'Teardown' && this.#browser) {
+            shouldRun = true
+          }
+        }
+
+        if (shouldRun === true) {
+          this.log.info(`STEP [${i + 1}/${steps.length}]: ${step.name}`)
+          await step.main(page)
+        } else {
+          this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} (skipped)`)
+        }
+      // On error:
+      // only deliver full trace if error is not due to time / size limit reached.
       } catch (err) {
-        if (this.state === Scoop.states.CAPTURE) {
+        if (this.state === Scoop.states.PARTIAL) {
+          this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} - ended due to max time or size reached.`)
+        } else {
           this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} - failed.`)
           this.log.trace(err)
-        } else {
-          this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} - ended due to max time or size reached.`)
         }
       }
     }
@@ -844,29 +867,34 @@ export class Scoop {
       const isEntryPoint = true
       const description = 'Provenance Summary'
 
-      this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description)
+      this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description, true)
     } catch (err) {
       throw new Error(`Error while creating exchange for file:///provenance-summary.html. ${err}`)
     }
   }
 
   /**
-   * Generates a ScoopGeneratedExchange for generated content and adds it to `exchanges` unless time limit was reached.
+   * Generates a ScoopGeneratedExchange for generated content and adds it to `exchanges`.
+   * Unless `force` argument is passed, generated exchanges count towards time / size limits.
    *
    * @param {string} url
    * @param {Headers} headers
    * @param {Buffer} body
-   * @param {boolean} isEntryPoint
-   * @param {string} description
+   * @param {boolean} [isEntryPoint=false]
+   * @param {string} [description='']
+   * @param {boolean} [force=false] if `true`, this exchange will be added to the list regardless of capture time and size constraints.
    * @returns {boolean} true if generated exchange is successfully added
    */
-  addGeneratedExchange (url, headers, body, isEntryPoint = false, description = '') {
-    const remainingSpace = this.options.maxCaptureSize - this.intercepter.byteLength
+  addGeneratedExchange (url, headers, body, isEntryPoint = false, description = '', force = false) {
+    // Check maxCaptureSize and capture state unless `force` was passed.
+    if (force === false) {
+      const remainingSpace = this.options.maxCaptureSize - this.intercepter.byteLength
 
-    if (this.state !== Scoop.states.CAPTURE || body.byteLength >= remainingSpace) {
-      this.state = Scoop.states.PARTIAL
-      this.warn(`Generated exchange ${url} could not be saved (size limit reached).`)
-      return false
+      if (this.state !== Scoop.states.CAPTURE || body.byteLength >= remainingSpace) {
+        this.state = Scoop.states.PARTIAL
+        this.log.warn(`Generated exchange ${url} could not be saved (size limit reached).`)
+        return false
+      }
     }
 
     this.exchanges.push(
