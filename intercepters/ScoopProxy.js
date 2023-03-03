@@ -1,7 +1,6 @@
 import ProxyServer from 'transparent-proxy'
 import Session from 'transparent-proxy/core/Session.js'
 
-import { Scoop } from '../Scoop.js'
 import { ScoopIntercepter } from './ScoopIntercepter.js'
 import { ScoopProxyExchange } from '../exchanges/index.js'
 import { searchBlocklistFor } from '../utils/blocklist.js'
