@@ -340,9 +340,7 @@ program.action(async (name, options, command) => {
 
     // Adjust filename
     if (currentExt !== expectedExt) {
-      let newOutput = options.output.substring(0, options.output.length - currentExt.length)
-      newOutput += expectedExt
-      options.output = newOutput
+      options.output = options.output.substring(0, options.output.length - currentExt.length) + expectedExt
     }
 
     // Store
