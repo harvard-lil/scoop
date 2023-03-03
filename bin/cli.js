@@ -314,7 +314,7 @@ program.action(async (name, options, command) => {
     const currentExt = path.extname(options.output)
     let expectedExt = '.wacz'
 
-    // Generate buffer
+    // Pack
     switch (options.format) {
       case 'warc':
       case 'warc-gzipped': {
@@ -338,7 +338,7 @@ program.action(async (name, options, command) => {
       }
     }
 
-    // Adjust filename
+    // Automatically adjust file extension of `output` if there is a mismatch with chosen format.
     if (currentExt !== expectedExt) {
       options.output = options.output.substring(0, options.output.length - currentExt.length) + expectedExt
     }
