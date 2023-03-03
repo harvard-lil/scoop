@@ -565,7 +565,7 @@ export class Scoop {
       contentLength = headRequest.headers.get('Content-Length')
     } catch (err) {
       this.log.trace(err)
-      this.log.warn('Resource type detection failed -skipping')
+      this.log.warn('Resource type detection failed - skipping')
       return
     }
 
