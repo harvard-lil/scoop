@@ -3,6 +3,7 @@
 import os from 'os'
 import { readFile, rm, readdir, mkdir, mkdtemp, access } from 'fs/promises'
 import { constants as fsConstants } from 'node:fs'
+import { sep } from 'path'
 
 import log from 'loglevel'
 import logPrefix from 'loglevel-plugin-prefix'
@@ -239,7 +240,7 @@ export class Scoop {
         name: 'Browser scripts',
         setup: async (page) => {
           await page.addInitScript({
-            path: `${CONSTANTS.BASE_PATH}/node_modules/browsertrix-behaviors/dist/behaviors.js`
+            path: `${CONSTANTS.BASE_PATH}${sep}node_modules${sep}browsertrix-behaviors${sep}dist${sep}behaviors.js`
           })
           await page.addInitScript({
             content: `
