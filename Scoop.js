@@ -517,7 +517,7 @@ export class Scoop {
    * @returns {Promise<void>}
    */
   async teardown () {
-    this.log.info('Closing browser and intercepter.')
+    this.log.info('Closing browser and intercepter')
     await this.intercepter.teardown()
     await this.#browser.close()
     this.exchanges = this.intercepter.exchanges.concat(this.exchanges)
@@ -565,18 +565,18 @@ export class Scoop {
       contentLength = headRequest.headers.get('Content-Length')
     } catch (err) {
       this.log.trace(err)
-      this.log.warn('Resource type detection failed. Skipping.')
+      this.log.warn('Resource type detection failed -skipping')
       return
     }
 
     // If text/html, continue capture as normal
     if (contentType?.startsWith('text/html')) {
-      this.log.info('Requested URL is a web page.')
+      this.log.info('Requested URL is a web page')
       return
     }
 
-    this.log.warn(`Requested URL is not a web page (detected: ${contentType}).`)
-    this.log.info('Scoop will attempt to capture this resource out-of-browser.')
+    this.log.warn(`Requested URL is not a web page (detected: ${contentType})`)
+    this.log.info('Scoop will attempt to capture this resource out-of-browser')
 
     //
     // Check if curl is present
@@ -585,7 +585,7 @@ export class Scoop {
       await exec('curl', ['-V'])
     } catch (err) {
       this.log.trace(err)
-      this.log.warn('curl is not present on this system. Skipping.')
+      this.log.warn('curl is not present on this system - skipping')
       return
     }
 
@@ -628,7 +628,7 @@ export class Scoop {
 
       this.state = Scoop.states.PARTIAL
     } else {
-      this.log.warn('Resource could not be captured.')
+      this.log.warn('Resource could not be captured')
     }
   }
 
