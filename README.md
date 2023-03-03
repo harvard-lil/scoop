@@ -63,8 +63,9 @@ flowchart LR
 
 This library as been written for UNIX-like systems. We expect it to work on Linux, Mac OS, and Windows' WSL.
 
-**Recommended:**
-- `captureVideoAsAttachment` option: A Python 3 interpreter should be available for `yt-dlp` to function.
+**Other (recommended) system-wide dependencies:**
+- `curl` 
+- `python3` (`--capture-video-as-attachment` feature relies on `yt-dlp`).
 
 ### Installation
 

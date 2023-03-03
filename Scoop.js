@@ -221,6 +221,14 @@ export class Scoop {
       }
     })
 
+    // Push step: early detection of non-web resources
+    steps.push({
+      name: 'Out-of-browser detection and capture of non-web resource',
+      main: async (page) => {
+        await this.#detectAndCaptureNonWebContent(page)
+      }
+    })
+
     // Push step: Initial page load
     steps.push({
       name: 'Initial page load',
@@ -494,7 +502,7 @@ export class Scoop {
     const captureTimeoutTimer = setTimeout(() => {
       this.log.info(`captureTimeout of ${options.captureTimeout}ms reached. Ending further capture.`)
       this.state = Scoop.states.PARTIAL
-      this.teardown()
+      this.intercepter.recordExchanges = false
     }, options.captureTimeout)
 
     this.#browser.on('disconnected', () => {
@@ -506,7 +514,7 @@ export class Scoop {
 
   /**
    * Tears down Playwright, intercepter resources, and capture-specific temporary folder.
-   * @returns {Promise}
+   * @returns {Promise<void>}
    */
   async teardown () {
     this.log.info('Closing browser and intercepter.')
@@ -519,12 +527,118 @@ export class Scoop {
   }
 
   /**
+   * Assesses whether `this.url` leads to a non-web resource and, if so:
+   * - Captures it via a curl behind our proxy
+   * - Sets capture state to `PARTIAL`
+   *
+   * @param {Page} page - A Playwright [Page]{@link https://playwright.dev/docs/api/class-page} object
+   * @returns {Promise<void>}
+   * @private
+   */
+  async #detectAndCaptureNonWebContent (page) {
+    /** @type {?string} */
+    let contentType = null
+
+    /** @type {?number} */
+    let contentLength = null
+
+    /**
+     * Time spent on the initial HEAD request, in ms.
+     * @type {?number}
+     */
+    let headRequestTimeMs = null
+
+    //
+    // Is `this.url` leading to a text/html resource?
+    //
+    try {
+      const before = new Date()
+      const headRequest = await fetch(this.url, {
+        method: 'HEAD',
+        timeout: this.options.loadTimeout
+      })
+      const after = new Date()
+
+      headRequestTimeMs = after - before
+
+      contentType = headRequest.headers.get('Content-Type')
+      contentLength = headRequest.headers.get('Content-Length')
+    } catch (err) {
+      this.log.trace(err)
+      this.log.warn('Resource type detection failed. Skipping.')
+      return
+    }
+
+    // If text/html, continue capture as normal
+    if (contentType?.startsWith('text/html')) {
+      this.log.info('Requested URL is a web page.')
+      return
+    }
+
+    this.log.warn(`Requested URL is not a web page (detected: ${contentType}).`)
+    this.log.info('Scoop will attempt to capture this resource out-of-browser.')
+
+    //
+    // Check if curl is present
+    //
+    try {
+      await exec('curl', ['-V'])
+    } catch (err) {
+      this.log.trace(err)
+      this.log.warn('curl is not present on this system. Skipping.')
+      return
+    }
+
+    //
+    // Capture using curl behind proxy
+    //
+    try {
+      const userAgent = await page.evaluate(() => window.navigator.userAgent) // Source user agent from the browser
+
+      const curlOptions = [
+        this.url,
+        '--header', `"User-Agent: ${userAgent}"`,
+        '--output', '/dev/null',
+        '--proxy', `'http://${this.options.proxyHost}:${this.options.proxyPort}'`,
+        '--insecure', // TBD: SSL checks are delegated to the proxy
+        '--location',
+        // This will be the only capture step running:
+        // use all available time - time spent on first request
+        '--max-time', Math.floor((this.options.captureTimeout - headRequestTimeMs) / 1000)
+      ]
+
+      await exec('curl', curlOptions)
+    } catch (err) {
+      this.log.trace(err)
+    }
+
+    //
+    // Report on results and:
+    // - Set capture state to PARTIAL if _anything_ was captured.
+    // - Leave capture state to CAPTURE otherwise.
+    //
+    if (this.intercepter.exchanges.length > 0) {
+      const intercepted = this.intercepter.exchanges[0]?.response?.body?.byteLength
+
+      if (intercepted === Number(contentLength)) {
+        this.log.info(`Resource fully captured (${contentLength} bytes)`)
+      } else {
+        this.log.warn(`Resource partially captured (${intercepted} of ${contentLength} bytes)`)
+      }
+
+      this.state = Scoop.states.PARTIAL
+    } else {
+      this.log.warn('Resource could not be captured.')
+    }
+  }
+
+  /**
    * Tries to populate `this.pageInfo`.
    * Captures page title, description, url and favicon url directly from the browser.
    * Will attempt to find the favicon in intercepted exchanges if running in headfull mode, and request it out-of-band otherwise.
    *
    * @param {Page} page - A Playwright [Page]{@link https://playwright.dev/docs/api/class-page} object
-   * @returns {Promise}
+   * @returns {Promise<void>}
    * @private
    */
   async #capturePageInfo (page) {
@@ -584,7 +698,7 @@ export class Scoop {
    * These elements are added as "attachments" to the archive, for context / playback fallback purposes.
    * A summary file and entry point, `file:///video-extracted-summary.html`, will be generated in the process.
    *
-   * @returns {Promise}
+   * @returns {Promise<void>}
    * @private
    */
   async #captureVideoAsAttachment () {
@@ -769,7 +883,7 @@ export class Scoop {
    * Dimensions of the PDF are based on current document width and height.
    *
    * @param {Page} page - A Playwright [Page]{@link https://playwright.dev/docs/api/class-page} object
-   * @returns {Promise}
+   * @returns {Promise<void>}
    */
   async #takePdfSnapshot (page) {
     let pdf = null

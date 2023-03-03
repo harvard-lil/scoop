@@ -19,8 +19,10 @@ export async function exec (file, args = [], options = {}) {
     promise.child.stdin.end()
   }
 
-  return promise.then(({ stdout, stderr }) => {
-    if (stderr) throw new Error(stderr)
+  try {
+    const { stdout } = await promise
     return stdout
-  })
+  } catch (err) {
+    throw new Error(err) // Should be stderr
+  }
 }

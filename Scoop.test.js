@@ -10,7 +10,7 @@ import { isPDF, getPageCount } from './utils/pdf.js'
 import { defaults } from './options.js'
 import { Scoop } from './Scoop.js'
 
-test('Scoop', async (t) => {
+await test('Scoop - capture of a web page.', async (t) => {
   const app = express()
   const PORT = 3000
   const URL = `http://localhost:${PORT}`
@@ -86,6 +86,48 @@ test('Scoop', async (t) => {
     const attachment = exchanges[exchanges.length - 1]
     assert.equal(attachment.url, 'file:///provenance-summary.html')
     assert(attachment.response.body.includes('<!DOCTYPE html>'))
+  })
+
+  /*
+   * TEARDOWN
+   */
+  server.close()
+})
+
+await test('Scoop - capture of a non-web resource.', async (t) => {
+  const app = express()
+  const PORT = 3000
+  const URL = `http://localhost:${PORT}`
+
+  const options = { logLevel: 'silent', headless: true, blocklist: [] }
+
+  const testPdfFixture = await readFile(`${FIXTURES_PATH}test.pdf`)
+
+  /*
+   * SETUP
+   */
+  const server = await app.listen(PORT, () => console.log(`Test webserver started on port ${PORT}`))
+  app.get('/redirect', (req, res) => res.redirect(parseInt(req.query.statusCode), req.query.path))
+  app.get('/:path', (req, res) => res.sendFile(FIXTURES_PATH + req.params.path))
+
+  /*
+   * TESTS
+   */
+  await t.test('Scoop captures the body of the PDF document', async (_t) => {
+    const { exchanges: [html] } = await Scoop.capture(`${URL}/test.pdf`, options)
+    assert.deepEqual(html.response.body, testPdfFixture)
+  })
+
+  await t.test('Scoop out-of-browser capture accounts for maxCaptureSize', async (_t) => {
+    const { exchanges: [html] } = await Scoop.capture(`${URL}/test.pdf`, { ...options, maxCaptureSize: 1000 })
+    assert.notEqual(html.response.body.byteLength, 0)
+    assert.notEqual(html.response.body, testPdfFixture)
+  })
+
+  await t.test('Scoop out-of-browser capture accounts for captureTimeout', async (_t) => {
+    const { exchanges: [html] } = await Scoop.capture(`${URL}/test.pdf`, { ...options, captureTimeout: 10 })
+    assert.notEqual(html.response.body.byteLength, 0)
+    assert.notEqual(html.response.body, testPdfFixture)
   })
 
   /*
