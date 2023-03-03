@@ -1,3 +1,4 @@
+import fs from 'fs/promises'
 import { dirname, join, sep } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -75,3 +76,12 @@ export const LOGGING_COLORS = {
   WARN: chalk.yellow,
   ERROR: chalk.red
 }
+
+/**
+ * This project's package.json as a frozen object.
+ * @constant
+ * @type {object}
+ */
+export const PACKAGE_INFO = Object.freeze(
+  JSON.parse(await fs.readFile(join(BASE_PATH, 'package.json')))
+)

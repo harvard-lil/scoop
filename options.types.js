@@ -9,7 +9,7 @@
  * @property {boolean} captureVideoAsAttachment=true - Should Scoop try to sae the main video(s) present on this page? Added as `file://` attachments, summarized under `file:///video-extracted-summary.html`. This capture happens out of the browser.
  * @property {boolean} provenanceSummary=true - If `true`, information about the capture process (public IP address, User Agent, software version ...) will be gathered and summarized under `file:///provenance-summary.html`. WACZ exports will also hold that information at `datapackage.json` level, under `extras`.
  *
- * @property {number} totalTimeout=60000 - How long should Scoop wait for all steps in the capture to complete, in ms?
+ * @property {number} captureTimeout=60000 - How long should Scoop wait for all steps in the capture to complete, in ms?
  * @property {number} loadTimeout=20000 - How long should Scoop wait for the page to load, in ms?
  * @property {number} networkIdleTimeout=20000 - How long should Scoop wait for network events to complete, in ms.
  * @property {number} behaviorsTimeout=20000 - How long should Scoop wait for media to play, secondary resources, and site specific behaviors (in total), in ms?
@@ -24,13 +24,12 @@
  * @property {boolean} autoScroll=true - Should Scoop try to scroll through the page?
  * @property {boolean} autoPlayMedia=true - Should Scoop try to autoplay `<audio>` and `<video>` tags?
  * @property {boolean} grabSecondaryResources=true - Should Scoop try to download img srcsets and secondary stylesheets?
- * @property {boolean} runSiteSpecificBehaviors=false - Should Scoop run behaviors tailored to specific sites (ex: Twitter) in an attempt to better grab the page?
+ * @property {boolean} runSiteSpecificBehaviors=false - Should Scoop run site-specific capture behaviors? (via: browsertrix-behaviors)
  *
  * @property {boolean} headless=true - Should Playwright run in headless mode?
  * @property {string} userAgentSuffix="" - String to append to the user agent.
  *
  * @property {string[]} blocklist - a list of patterns, to be matched against each request's URL and IP address, and subsequently blocked during capture. Valid entries include url strings, CIDR strings, and regular expressions in string form.
- *
  * @property {string} intercepter="ScoopProxy" - Network interception method to be used. Available at the moment: "ScoopProxy".
  * @property {string} proxyHost="localhost" - What host should Playwright proxy through for capture?
  * @property {number} proxyPort=9000 - What port should Playwright proxy through for capture?

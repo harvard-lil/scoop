@@ -13,7 +13,7 @@ export const defaults = {
   captureVideoAsAttachment: true,
   provenanceSummary: true,
 
-  totalTimeout: 60 * 1000,
+  captureTimeout: 60 * 1000,
   loadTimeout: 20 * 1000,
   networkIdleTimeout: 20 * 1000,
   behaviorsTimeout: 20 * 1000,
