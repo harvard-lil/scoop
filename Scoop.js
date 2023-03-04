@@ -402,7 +402,7 @@ export class Scoop {
     while (i++ < steps.length - 1) {
       const step = steps[i]
 
-      // Steps only run if Scoop is in CAPTURE state, with exceptions
+      // Steps only run if Scoop is in CAPTURE state, unless `alwaysRun` is set.
       try {
         const shouldRun = this.state === Scoop.states.CAPTURE || step.alwaysRun
 
