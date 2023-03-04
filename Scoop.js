@@ -402,10 +402,11 @@ export class Scoop {
         let shouldRun = this.state === Scoop.states.CAPTURE
 
         // Exceptions:
-        // - Provenance Summary should still run if state is PARTIAL
+        // - "Provenance Summary" and "Capture page info" should still run if state is PARTIAL
         // - Teardown step should always run if not already called
         if (shouldRun === false) {
-          if (step.name === 'Provenance summary' && this.state === Scoop.states.PARTIAL) {
+          if (['Provenance summary', 'Capture page info'].includes(step.name) &&
+              this.state === Scoop.states.PARTIAL) {
             shouldRun = true
           }
 
@@ -656,35 +657,31 @@ export class Scoop {
       return
     }
 
-    // If `headless`: request the favicon out of band,
+    // If `headless`: request the favicon using curl.
     if (this.options.headless) {
       try {
-        const response = await fetch(this.pageInfo.faviconUrl)
+        const userAgent = await page.evaluate(() => window.navigator.userAgent) // Source user agent from the browser
 
-        if (!response.headers?.get('content-type')?.startsWith('image/')) {
-          throw new Error(`Request for favicon returned mime type ${response.headers.get('content-type')}`)
-        }
-
-        this.pageInfo.favicon = Buffer.from(await response.arrayBuffer())
-
-        // Add favicon to exchanges as a generated exchange (as it was captured out of band)
-        this.addGeneratedExchange(
+        const curlOptions = [
           this.pageInfo.faviconUrl,
-          response.headers,
-          this.pageInfo.favicon,
-          false,
-          'Favicon (captured out-of-band by Scoop)'
-        )
+          '--header', `"User-Agent: ${userAgent}"`,
+          '--output', '/dev/null',
+          '--proxy', `'http://${this.options.proxyHost}:${this.options.proxyPort}'`,
+          '--insecure', // TBD: SSL checks are delegated to the proxy
+          '--max-time', 1000
+        ]
+
+        await exec('curl', curlOptions)
       } catch (err) {
         this.log.warn(`Could not fetch favicon at url ${this.pageInfo.faviconUrl}.`)
         this.log.trace(err)
       }
-    // Otherwise: look for it in exchanges
-    } else {
-      for (const exchange of this.intercepter.exchanges) {
-        if (exchange?.url && exchange.url === this.pageInfo.faviconUrl) {
-          this.pageInfo.favicon = exchange.response.body
-        }
+    }
+
+    // Look for favicon in in exchanges
+    for (const exchange of this.intercepter.exchanges) {
+      if (exchange?.url && exchange.url === this.pageInfo.faviconUrl) {
+        this.pageInfo.favicon = exchange.response.body
       }
     }
   }
