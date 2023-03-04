@@ -206,7 +206,7 @@ export class Scoop {
   async capture () {
     const options = this.options
 
-    /** @type {Array.<{name: String, setup: ?function, main: function}>} */
+    /** @type {{name: String, setup: ?function, main: function, alwaysRun: ?boolean}[]} */
     const steps = []
 
     //
@@ -224,6 +224,7 @@ export class Scoop {
     // Push step: early detection of non-web resources
     steps.push({
       name: 'Out-of-browser detection and capture of non-web resource',
+      alwaysRun: true,
       main: async (page) => {
         await this.#detectAndCaptureNonWebContent(page)
       }
@@ -343,6 +344,7 @@ export class Scoop {
     if (options.provenanceSummary) {
       steps.push({
         name: 'Provenance summary',
+        alwaysRun: true,
         main: async (page) => {
           await this.#captureProvenanceInfo(page)
         }
@@ -352,6 +354,7 @@ export class Scoop {
     // Push step: Capture page info
     steps.push({
       name: 'Capture page info',
+      alwaysRun: true,
       main: async (page) => {
         await this.#capturePageInfo(page)
       }
@@ -360,6 +363,7 @@ export class Scoop {
     // Push step: Teardown
     steps.push({
       name: 'Teardown',
+      alwaysRun: true,
       main: async () => {
         this.state = Scoop.states.COMPLETE
         await this.teardown()
@@ -373,8 +377,9 @@ export class Scoop {
 
     try {
       page = await this.setup()
-      this.log.info(`Starting capture of ${this.url}.`)
+      this.log.info('Scoop was initialized with the following options:')
       this.log.info(options)
+      this.log.info(`Starting capture of ${this.url}.`)
       this.state = Scoop.states.CAPTURE
     } catch (err) {
       this.log.error('An error ocurred during capture setup.')
@@ -399,21 +404,7 @@ export class Scoop {
 
       // Steps only run if Scoop is in CAPTURE state, with exceptions
       try {
-        let shouldRun = this.state === Scoop.states.CAPTURE
-
-        // Exceptions:
-        // - "Provenance Summary" and "Capture page info" should still run if state is PARTIAL
-        // - Teardown step should always run if not already called
-        if (shouldRun === false) {
-          if (['Provenance summary', 'Capture page info'].includes(step.name) &&
-              this.state === Scoop.states.PARTIAL) {
-            shouldRun = true
-          }
-
-          if (step.name === 'Teardown' && this.#browser) {
-            shouldRun = true
-          }
-        }
+        const shouldRun = this.state === Scoop.states.CAPTURE || step.alwaysRun
 
         if (shouldRun === true) {
           this.log.info(`STEP [${i + 1}/${steps.length}]: ${step.name}`)
