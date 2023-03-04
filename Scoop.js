@@ -678,7 +678,7 @@ export class Scoop {
       }
     }
 
-    // Look for favicon in in exchanges
+    // Look for favicon in exchanges
     for (const exchange of this.intercepter.exchanges) {
       if (exchange?.url && exchange.url === this.pageInfo.faviconUrl) {
         this.pageInfo.favicon = exchange.response.body
