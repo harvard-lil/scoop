@@ -7,6 +7,15 @@
   "bin": {
     "scoop": "./bin/cli.js"
   },
+  "files": [
+    "*.js",
+    "!example.js",
+    "!tmp.js",
+    "!*.test.js",
+    "*.sh",
+    ".keep",
+    "*/.keep"
+  ],
   "engines": {
     "node": ">=18.0.0"
   },
