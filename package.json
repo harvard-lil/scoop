@@ -9,8 +9,8 @@
   },
   "files": [
     "*.js",
-    "!example.js",
-    "!tmp.js",
+    "__*.js",
+    "example.js",
     "!*.test.js",
     "*.sh",
     ".keep",
