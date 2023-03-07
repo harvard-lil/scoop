@@ -170,6 +170,7 @@ export class ScoopProxy extends ScoopIntercepter {
 
     this.byteLength += data.byteLength
     this.checkAndEnforceSizeLimit() // From parent
+
     return data
   }
 }

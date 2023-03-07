@@ -23,7 +23,6 @@ export const defaults = {
   captureWindowY: 900,
 
   maxCaptureSize: 200 * 1024 * 1024,
-  keepPartialResponses: true,
 
   autoScroll: true,
   autoPlayMedia: true,

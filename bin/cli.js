@@ -148,14 +148,6 @@ program.addOption(
     .default(defaults.maxCaptureSize)
 )
 
-program.addOption(
-  new Option(
-    '--keep-partial-responses <bool>',
-    'Should Scoop keep partially downloaded resources?')
-    .choices(['true', 'false'])
-    .default(String(defaults.keepPartialResponses))
-)
-
 //
 // Behaviors
 //

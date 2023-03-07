@@ -1,11 +1,13 @@
 .DS_Store
+
 test.js
 tmp.js
+example.js
 __*.js
+
 node_modules/
 examples/
 executables/
 tmp/
-docs
-example.js
+
 .env

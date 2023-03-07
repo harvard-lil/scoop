@@ -131,13 +131,13 @@ export class ScoopIntercepter {
 
   /**
    * Checks whether the total byte length has exceeded
-   * the capture's limit and, if so, ends the capture
+   * the capture's limit and, if so, stops intercepting exchanges.
    */
   checkAndEnforceSizeLimit () {
     if (this.byteLength >= this.options.maxCaptureSize && this.capture.state === Scoop.states.CAPTURE) {
       this.capture.log.warn(`Max size ${this.options.maxCaptureSize} reached. Ending interception.`)
       this.capture.state = Scoop.states.PARTIAL
-      this.capture.teardown()
+      this.recordExchanges = false
     }
   }
 }

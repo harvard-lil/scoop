@@ -97,8 +97,15 @@ export async function scoopToWACZ (capture, includeRaw = false, signingServer) {
       input: warcPath,
       output: waczPath,
       detectPages: false,
+      // Capture info
       url: capture.url,
       ts: capture.startedAt,
+      title: capture.pageInfo?.title
+        ? capture.pageInfo.title
+        : capture.url,
+      description: capture.pageInfo?.description
+        ? capture.pageInfo.description
+        : `Captured by Scoop on ${capture.startedAt.toISOString()}`,
       // Optional: signing url / token, provenance info
       signingUrl: signingServer?.url,
       signingToken: signingServer?.token,

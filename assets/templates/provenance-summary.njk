@@ -109,6 +109,13 @@
             <td>{{ value }}</td>
           </tr>
           {% endfor %}
+
+          {% if ytDlpHash %}
+          <tr>
+            <td>ytDlpPath (redacted)<br>Replaced by executable checksum</td>
+            <td>{{ ytDlpHash }}</td>
+          </tr>
+          {% endif %}
         </table>
       </section>
 
