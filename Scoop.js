@@ -208,7 +208,7 @@ export class Scoop {
   async capture () {
     const options = this.options
 
-    /** @type {{name: String, setup: ?function, main: function, alwaysRun: ?boolean}[]} */
+    /** @type {Array.<{name: String, setup: ?function, main: function, alwaysRun: ?boolean}>} */
     const steps = []
 
     //
