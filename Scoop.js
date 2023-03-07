@@ -971,6 +971,9 @@ export class Scoop {
       options: structuredClone(this.options)
     }
 
+    // ytDlpPath should be excluded from provenance summary
+    delete this.provenanceInfo.options.ytDlpPath
+
     // Generate summary page
     try {
       const html = nunjucks.render('provenance-summary.njk', {
