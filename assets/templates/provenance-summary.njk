@@ -95,6 +95,10 @@
         <p>The data present in this capture was extracted from the url {{ url }} on {{ now }} using {{ software }} {{ version }} running on {{ osType }} {{ osName }} {{ osVersion }} {{ cpuArchitecture }}.</p>
         <p>The client's public IP address was {{ captureIp }}, according to {{ options.publicIpResolverEndpoint }}.<p>
         <p>The capture browser used the following user agent string:<br>{{ userAgent}}.</p>
+
+        {% if ytDlpHash %}
+        <p>Checksum of the yt-dlp executable used for capturing videos as attachments: {{ ytDlpHash }}.</p>
+        {% endif %}
       </header>
         
       <section>

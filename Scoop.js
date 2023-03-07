@@ -4,6 +4,7 @@ import os from 'os'
 import { readFile, rm, readdir, mkdir, mkdtemp, access } from 'fs/promises'
 import { constants as fsConstants } from 'node:fs'
 import { sep } from 'path'
+import { createHash } from 'crypto'
 
 import log from 'loglevel'
 import logPrefix from 'loglevel-plugin-prefix'
@@ -142,7 +143,8 @@ export class Scoop {
    *   cpuArchitecture: ?string,
    *   blockedRequests: Array.<{url: string, ip: string, rule: string}>,
    *   noArchiveUrls: string[],
-   *   options: ScoopOptions
+   *   ytDlpHash: string
+   *   options: ScoopOptions,
    * }}
    */
   provenanceInfo = {
@@ -919,6 +921,7 @@ export class Scoop {
     let captureIp = 'UNKNOWN'
     const osInfo = await getOSInfo()
     const userAgent = await page.evaluate(() => window.navigator.userAgent) // Source user agent from the browser in case it was altered during capture
+    let ytDlpHash = ''
 
     // Grab public IP address
     try {
@@ -941,6 +944,18 @@ export class Scoop {
       this.log.trace(err)
     }
 
+    // Compute yt-dlp hash
+    try {
+      ytDlpHash = createHash('sha256')
+        .update(await readFile(this.options.ytDlpPath))
+        .digest('hex')
+
+      ytDlpHash = `sha256:${ytDlpHash}`
+    } catch (err) {
+      this.log.warn('Could not compute SHA256 hash of yt-dlp executable')
+      this.log.trace(err)
+    }
+
     // Gather provenance info
     this.provenanceInfo = {
       ...this.provenanceInfo,
@@ -952,6 +967,7 @@ export class Scoop {
       osName: osInfo.name,
       osVersion: osInfo.version,
       cpuArchitecture: os.machine(),
+      ytDlpHash,
       options: structuredClone(this.options)
     }
 
