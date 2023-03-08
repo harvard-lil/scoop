@@ -58,7 +58,7 @@ allowing users to cryptographically sign their captures.
   - DOM snapshot
 - Support for `.warc.`, `.warc.gz` and `.wacz` output formats
   - Support for the [WACZ Signing and Verification specification](https://specs.webrecorder.net/wacz-auth/0.1.0/)
-  - Optional preservation of "raw" exchanges in WACZ files for later analysis or reprocessing _("wacz with raw exchanges"_)
+  - Optional preservation of _"raw"_ exchanges in WACZ files for later analysis or reprocessing _("wacz with raw exchanges"_)
 
 [👆 Back to the summary](#summary)
 
@@ -69,10 +69,11 @@ allowing users to cryptographically sign their captures.
 ### Dependencies 
 **Scoop** requires [Node.js 18+](https://nodejs.org/en/). 
 
-Other _recommended_ system-level dependencies: [curl](https://curl.se/), [python3](https://www.python.org/) (for `--capture-video-as-attachment` option).
+Other _recommended_ system-level dependencies: 
+[curl](https://curl.se/), [python3](https://www.python.org/) (for `--capture-video-as-attachment` option).
 
 ### Compatibility
-This program has been written for UNIX-like systems and is expected to work on Linux, Mac OS, and Windows Subsystem for Linux.
+This program has been written for UNIX-like systems and is expected to work on **Linux, Mac OS, and Windows Subsystem for Linux**.
 
 ### Installation
 
