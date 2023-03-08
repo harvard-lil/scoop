@@ -208,7 +208,7 @@ program.addOption(
   new Option(
     '--blocklist <string>',
     'If set, replaces Scoop\'s default list of url patterns and IP ranges Scoop should not capture. Coma-separated.')
-  // .default(defaults.blocklist.join(','))
+    .default(defaults.blocklist.join(','))
 )
 
 program.addOption(
@@ -277,8 +277,10 @@ program.action(async (name, options, command) => {
   let archive = null
 
   //
-  // Process options: convert 'true' / 'false' strings to booleans.
+  // Process options
   //
+
+  // Convert 'true' / 'false' strings to booleans.
   for (const [key, value] of Object.entries(options)) {
     if (value === 'true') {
       options[key] = true
@@ -287,6 +289,11 @@ program.action(async (name, options, command) => {
     if (value === 'false') {
       options[key] = false
     }
+  }
+
+  // Split blocklist
+  if (options.blocklist) {
+    options.blocklist = options.blocklist.split(',')
   }
 
   //
