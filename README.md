@@ -112,7 +112,7 @@ scoop --help
 ```
 
 <details>
-  <summary><strong>Output of Scoop's help</strong></summary>
+  <summary><strong>Output of Scoop's CLI help menu 🔍</strong></summary>
 
 ```
 Usage: scoop [options] <url>
@@ -122,65 +122,39 @@ More info: https://github.com/harvard-lil/scoop
 
 Options:
   -v, --version                                   Display Scoop and Scoop CLI version.
-  -o, --output <string>                           Output path. (default:
-                                                  "./archive.wacz")
-  -f, --format <string>                           Output format. (choices: "warc", "warc-gzipped", "wacz",
-                                                  "wacz-with-raw", default: "wacz")
+  -o, --output <string>                           Output path. (default: "./archive.wacz")
+  -f, --format <string>                           Output format. (choices: "warc", "warc-gzipped", "wacz", "wacz-with-raw", default: "wacz")
   --signing-url <string>                          Authsign-compatible endpoint for signing WACZ file.
   --signing-token <string>                        Authentication token to --signing-url, if needed.
-  --screenshot <bool>                             Add screenshot step to capture? (choices: "true", "false", default:
-                                                  "true")
-  --pdf-snapshot <bool>                           Add PDF snapshot step to capture? (choices: "true", "false",
-                                                  default: "false")
-  --dom-snapshot <bool>                           Add DOM snapshot step to capture? (choices: "true", "false",
-                                                  default: "false")
-  --capture-video-as-attachment <bool>            Add capture video(s) as attachment(s) step to capture? (choices:
-                                                  "true", "false", default: "true")
-  --provenance-summary <bool>                     Add provenance summary to capture? (choices: "true", "false",
-                                                  default: "true")
-  --capture-timeout <number>                      Maximum time allocated to capture process before hard cut-off, in
-                                                  ms. (default: 60000)
-  --load-timeout <number>                         Max time Scoop will wait for the page to load, in ms. (default:
-                                                  20000)
-  --network-idle-timeout <number>                 Max time Scoop will wait for the in-browser networking tasks to
-                                                  complete, in ms. (default: 20000)
-  --behaviors-timeout <number>                    Max time Scoop will wait for the browser behaviors to complete, in
-                                                  ms. (default: 20000)
-  --capture-video-as-attachment-timeout <number>  Max time Scoop will wait for the video capture process to complete,
-                                                  in ms. (default: 30000)
-  --capture-window-x <number>                     Width of the browser window Scoop will open to capture, in pixels.
-                                                  (default: 1600)
-  --capture-window-y <number>                     Height of the browser window Scoop will open to capture, in pixels.
-                                                  (default: 900)
-  --max-capture-size <number>                     Size limit for the capture's exchanges list, in bytes. (default:
-                                                  209715200)
-  --auto-scroll <bool>                            Should Scoop try to scroll through the page? (choices: "true",
-                                                  "false", default: "true")
-  --auto-play-media <bool>                        Should Scoop try to autoplay `<audio>` and `<video>` tags? (choices:
-                                                  "true", "false", default: "true")
-  --grab-secondary-resources <bool>               Should Scoop try to download img srcsets and secondary stylesheets?
-                                                  (choices: "true", "false", default: "true")
-  --run-site-specific-behaviors <bool>            Should Scoop run site-specific capture behaviors? (via:
-                                                  browsertrix-behaviors) (choices: "true", "false", default: "true")
-  --headless <bool>                               Should Chrome run in headless mode? (choices: "true", "false",
-                                                  default: "true")
+  --screenshot <bool>                             Add screenshot step to capture? (choices: "true", "false", default: "true")
+  --pdf-snapshot <bool>                           Add PDF snapshot step to capture? (choices: "true", "false", default: "false")
+  --dom-snapshot <bool>                           Add DOM snapshot step to capture? (choices: "true", "false", default: "false")
+  --capture-video-as-attachment <bool>            Add capture video(s) as attachment(s) step to capture? (choices: "true", "false", default: "true")
+  --provenance-summary <bool>                     Add provenance summary to capture? (choices: "true", "false", default: "true")
+  --capture-timeout <number>                      Maximum time allocated to capture process before hard cut-off, in ms. (default: 60000)
+  --load-timeout <number>                         Max time Scoop will wait for the page to load, in ms. (default: 20000)
+  --network-idle-timeout <number>                 Max time Scoop will wait for the in-browser networking tasks to complete, in ms. (default: 20000)
+  --behaviors-timeout <number>                    Max time Scoop will wait for the browser behaviors to complete, in ms. (default: 20000)
+  --capture-video-as-attachment-timeout <number>  Max time Scoop will wait for the video capture process to complete, in ms. (default: 30000)
+  --capture-window-x <number>                     Width of the browser window Scoop will open to capture, in pixels. (default: 1600)
+  --capture-window-y <number>                     Height of the browser window Scoop will open to capture, in pixels. (default: 900)
+  --max-capture-size <number>                     Size limit for the capture's exchanges list, in bytes. (default: 209715200)
+  --auto-scroll <bool>                            Should Scoop try to scroll through the page? (choices: "true", "false", default: "true")
+  --auto-play-media <bool>                        Should Scoop try to autoplay `<audio>` and `<video>` tags? (choices: "true", "false", default: "true")
+  --grab-secondary-resources <bool>               Should Scoop try to download img srcsets and secondary stylesheets? (choices: "true", "false", default: "true")
+  --run-site-specific-behaviors <bool>            Should Scoop run site-specific capture behaviors? (via: browsertrix-behaviors) (choices: "true", "false", default: "true")
+  --headless <bool>                               Should Chrome run in headless mode? (choices: "true", "false", default: "true")
   --user-agent-suffix <string>                    If provided, will be appended to Chrome's user agent. (default: "")
-  --blocklist <string>                            If set, replaces Scoop's default list of url patterns and IP ranges
-                                                  Scoop should not capture. Coma-separated. Example:
+  --blocklist <string>                            If set, replaces Scoop's default list of url patterns and IP ranges Scoop should not capture. Coma-separated. Example:
                                                   "/https?://localhost/,0.0.0.0/8,10.0.0.0".
-  --intercepter <string>                          ScoopIntercepter class to be used to intercept network exchanges.
-                                                  (default: "ScoopProxy")
+  --intercepter <string>                          ScoopIntercepter class to be used to intercept network exchanges. (default: "ScoopProxy")
   --proxy-host <string>                           Hostname to be used by Scoop's HTTP proxy. (default: "localhost")
   --proxy-port <string>                           Port to be used by Scoop's HTTP proxy. (default: 9000)
-  --proxy-verbose <bool>                          Should Scoop's HTTP proxy output logs to the console? (choices:
-                                                  "true", "false", default: "false")
-  --public-ip-resolver-endpoint <string>          API endpoint to be used to resolve the client's IP address. Used in
-                                                  the context of the provenance summary. (default:
+  --proxy-verbose <bool>                          Should Scoop's HTTP proxy output logs to the console? (choices: "true", "false", default: "false")
+  --public-ip-resolver-endpoint <string>          API endpoint to be used to resolve the client's IP address. Used in the context of the provenance summary. (default:
                                                   "https://icanhazip.com")
-  --yt-dlp-path <string>                          Path to the yt-dlp executable. Used for capturing videos. (default:
-                                                  "./executables/yt-dlp")
-  --log-level <string>                            Controls Scoop CLI's verbosity. (choices: "silent", "trace",
-                                                  "debug", "info", "warn", "error", default: "info")
+  --yt-dlp-path <string>                          Path to the yt-dlp executable. Used for capturing videos. (default: "[library]/executables/yt-dlp")
+  --log-level <string>                            Controls Scoop CLI's verbosity. (choices: "silent", "trace", "debug", "info", "warn", "error", default: "info")
   -h, --help                                      Show options list.
 ```
 </details>
