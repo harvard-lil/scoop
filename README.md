@@ -40,7 +40,7 @@ Fine-tune this custom web capture software to create robust single-page captures
 
 With extensive options for asset formats and inclusions, Scoop will create **.warc**, **warc.gz** or **.wacz** files to be stored by users and replayed using the web archive replay software of their choosing.
 
-Scoop also offers built-in support for the [WACZ Signing and Verification specification](https://specs.webrecorder.net/wacz-auth/0.1.0/), 
+Scoop also comes with built-in support for the [WACZ Signing and Verification specification](https://specs.webrecorder.net/wacz-auth/0.1.0/), 
 allowing users to cryptographically sign their captures. 
 
 [👆 Back to the summary](#summary)
