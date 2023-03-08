@@ -1,7 +1,7 @@
 {
   "name": "scoop",
   "version": "0.0.1",
-  "description": "🍨 High-fidelity, browser-based, single-page web archiving library.",
+  "description": "🍨 High-fidelity, browser-based, single-page web archiving library and CLI.",
   "main": "Scoop.js",
   "type": "module",
   "bin": {

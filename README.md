@@ -4,7 +4,7 @@
 
 [![npm version](https://badge.fury.io/js/@harvard-lil%2Fscoop.svg)](https://badge.fury.io/js/@harvard-lil%2Fscoop) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
-High-fidelity, browser-based, single-page web archiving library. 
+High-fidelity, browser-based, single-page web archiving library and CLI. 
 
 **Use it the terminal...**
 ```bash
@@ -119,7 +119,7 @@ scoop --help
 ```
 Usage: scoop [options] <url>
 
-🍨 High-fidelity, browser-based, single-page web archiving library.
+🍨 High-fidelity, browser-based, single-page web archiving library and CLI.
 More info: https://github.com/harvard-lil/scoop
 
 Options:
