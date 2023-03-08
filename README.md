@@ -13,9 +13,9 @@ scoop "https://lil.law.harvard.edu"
 
 **... or in your Node.js project**
 ```javascript
-import { Scoop } from "@harvard-lil/scoop"
+import { Scoop } from '@harvard-lil/scoop'
 
-const capture = await Scoop.capture("https://lil.law.harvard.edu")
+const capture = await Scoop.capture('https://lil.law.harvard.edu')
 const wacz = await capture.toWACZ()
 ```
 
