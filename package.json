@@ -28,7 +28,8 @@
     "postinstall": "bash postinstall.sh",
     "lint": "standard",
     "lint-autofix": "standard --fix",
-    "test": "node --test"
+    "test": "node --test",
+    "dev-signer": "echo 'TEST_WACZ_SIGNING_URL=http://127.0.0.1:5000/sign' > .env ; cd .services/signer ; bash ./run.sh"
   },
   "repository": {
     "type": "git",

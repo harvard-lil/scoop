@@ -11,3 +11,9 @@ executables/
 tmp/
 
 .env
+
+.venv/
+env/
+*.pem
+__pycache__/
+
