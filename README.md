@@ -6,12 +6,12 @@
 
 High-fidelity, browser-based, single-page web archiving library. 
 
-**Use it as a CLI command ...:**
+**Use it as a CLI command ...**
 ```bash
 scoop "https://lil.law.harvard.edu"
 ```
 
-**... or in your Node.js project:**
+**... or in your Node.js project**
 ```javascript
 import { Scoop } from "@harvard-lil/scoop"
 
