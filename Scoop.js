@@ -489,8 +489,7 @@ export class Scoop {
     this.log.info(`User Agent used for capture: ${userAgent}`)
 
     this.#browser = await chromium.launch({
-      headless: options.headless,
-      channel: 'chrome'
+      headless: options.headless
     })
 
     const context = await this.#browser.newContext({
