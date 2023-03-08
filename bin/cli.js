@@ -309,11 +309,12 @@ program.action(async (name, options, command) => {
   //
   // Save to disk
   //
+
+  // Pack
   try {
     const currentExt = path.extname(options.output)
     let expectedExt = '.wacz'
 
-    // Pack
     switch (options.format) {
       case 'warc':
       case 'warc-gzipped': {
@@ -341,12 +342,18 @@ program.action(async (name, options, command) => {
     if (currentExt !== expectedExt) {
       options.output = options.output.substring(0, options.output.length - currentExt.length) + expectedExt
     }
+  } catch (_err) {
+    process.exit(1) // Logs handled by Scoop
+  }
 
-    // Store
+  // Store
+  try {
     await fs.writeFile(options.output, Buffer.from(archive))
     capture.log.info(`${options.output} saved to disk.`)
   } catch (err) {
-    process.exit(1) // Logs handled by Scoop
+    capture.log.trace(err)
+    capture.log.error(`Something went wrong while saving ${options.output} to disk. Use --log-level trace for details.`)
+    process.exit(1)
   }
 
   process.exit(0)

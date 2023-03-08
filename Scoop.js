@@ -393,7 +393,7 @@ export class Scoop {
       page = await this.setup()
       this.log.info('Scoop was initialized with the following options:')
       this.log.info(options)
-      this.log.info(`Starting capture of ${this.url}.`)
+      this.log.info(`🍨 Starting capture of ${this.url}.`)
       this.state = Scoop.states.CAPTURE
     } catch (err) {
       this.log.error('An error ocurred during capture setup.')
