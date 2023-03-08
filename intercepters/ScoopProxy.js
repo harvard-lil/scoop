@@ -164,9 +164,13 @@ export class ScoopProxy extends ScoopIntercepter {
     const prop = `${type}Raw` // `responseRaw` | `requestRaw`
     ex[prop] = ex[prop] ? Buffer.concat([ex[prop], data], ex[prop].length + data.length) : data
 
+    // NOTE: Temporarily moved as a capture step until this proxy is replaced.
+    // The main issue was that we could not easily identify "when" to run this step, resulting in multiple, unnecessary calls.
+    /*
     if (type === 'response') {
       this.checkExchangeForNoArchive(ex)
     }
+    */
 
     this.byteLength += data.byteLength
     this.checkAndEnforceSizeLimit() // From parent

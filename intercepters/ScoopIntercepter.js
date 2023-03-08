@@ -3,6 +3,7 @@ import { parse as parseHTML } from 'node-html-parser'
 
 import { Scoop } from '../Scoop.js'
 import { bodyToString } from '../utils/http.js'
+import { ScoopProxyExchange } from '../exchanges/ScoopProxyExchange.js'
 
 /**
  * @class ScoopIntercepter
@@ -92,6 +93,11 @@ export class ScoopIntercepter {
    * @returns {boolean} - `true` if request contained "noarchive"
    */
   async checkExchangeForNoArchive (exchange) {
+    // Exit early if exchange is not a ScoopProxyExchange
+    if (exchange instanceof ScoopProxyExchange === false) {
+      return false
+    }
+
     // Exit early if this isn't an HTML document
     if (!exchange?.response?.bodyCombined ||
         !exchange?.response?.headers?.get('content-type')?.toLowerCase().startsWith('text/html')) {
@@ -124,7 +130,7 @@ export class ScoopIntercepter {
     }
 
     // If we reached this point: this exchange is "noarchive".
-    this.capture.log.info(`${exchange.url} was tagged with the "noarchive" directive.`)
+    this.capture.log.warn(`${exchange.url} was tagged with the "noarchive" directive.`)
     this.capture.provenanceInfo.noArchiveUrls.push(exchange.url)
     return true
   }

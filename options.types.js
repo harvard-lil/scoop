@@ -23,7 +23,7 @@
  * @property {boolean} autoScroll=true - Should Scoop try to scroll through the page?
  * @property {boolean} autoPlayMedia=true - Should Scoop try to autoplay `<audio>` and `<video>` tags?
  * @property {boolean} grabSecondaryResources=true - Should Scoop try to download img srcsets and secondary stylesheets?
- * @property {boolean} runSiteSpecificBehaviors=false - Should Scoop run site-specific capture behaviors? (via: browsertrix-behaviors)
+ * @property {boolean} runSiteSpecificBehaviors=true - Should Scoop run site-specific capture behaviors? (via: browsertrix-behaviors)
  *
  * @property {boolean} headless=true - Should Playwright run in headless mode?
  * @property {string} userAgentSuffix="" - String to append to the user agent.

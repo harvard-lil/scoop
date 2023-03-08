@@ -44,7 +44,7 @@
   "dependencies": {
     "@harvard-lil/js-wacz": "^0.0.6",
     "@laverdet/beaugunderson-ip-address": "^8.1.0",
-    "browsertrix-behaviors": "^0.4.1",
+    "browsertrix-behaviors": "^0.4.2",
     "chalk": "^5.2.0",
     "commander": "^10.0.0",
     "get-os-info": "^1.0.2",

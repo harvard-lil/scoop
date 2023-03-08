@@ -27,7 +27,7 @@ export const defaults = {
   autoScroll: true,
   autoPlayMedia: true,
   grabSecondaryResources: true,
-  runSiteSpecificBehaviors: false,
+  runSiteSpecificBehaviors: true,
 
   headless: true,
   userAgentSuffix: '',

@@ -131,7 +131,7 @@ export class Scoop {
   blocklist = []
 
   /**
-   * Will only be populated if `options.provenanceSummary` is `true`.
+   * Captures information about the context of this capture.
    * @type {{
    *   captureIp: ?string,
    *   userAgent: ?string,
@@ -359,6 +359,18 @@ export class Scoop {
       alwaysRun: true,
       main: async (page) => {
         await this.#capturePageInfo(page)
+      }
+    })
+
+    // Push step: noarchive directive detection
+    // TODO: Move this logic back to ScoopProxy.intercept() when new proxy implementation is ready.
+    steps.push({
+      name: 'Detecting "noarchive" directive',
+      alwaysRun: true,
+      main: async () => {
+        for (const exchange of this.intercepter.exchanges) {
+          this.intercepter.checkExchangeForNoArchive(exchange)
+        }
       }
     })
 
@@ -1044,21 +1056,32 @@ export class Scoop {
    * @param {string} url
    */
   filterUrl (url) {
+    let pass = true
+
+    // Is the url "valid"? (format)
     try {
       const filteredUrl = new URL(url) // Will throw if not a valid url
 
       if (filteredUrl.protocol !== 'https:' && filteredUrl.protocol !== 'http:') {
-        throw new Error('Invalid protocol.')
+        this.log.error('Invalid protocol.')
+        pass = false
       }
 
       url = filteredUrl.href
     } catch (err) {
-      throw new Error(`Invalid url provided.\n${err}`)
+      this.log.error(`Invalid url provided.\n${err}`)
+      pass = false
     }
 
+    // If the url part of the blocklist?
     const rule = this.blocklist.find(searchBlocklistFor(url))
     if (rule) {
-      throw new Error(`Blocked url provided matching blocklist rule: ${rule}`)
+      this.log.error(`Blocked url provided matching blocklist rule: ${rule}`)
+      pass = false
+    }
+
+    if (!pass) {
+      throw new Error('Invalid URL provided.')
     }
 
     return url
