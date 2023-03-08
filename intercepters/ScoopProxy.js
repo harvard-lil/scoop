@@ -1,5 +1,8 @@
-import ProxyServer from 'transparent-proxy'
-import Session from 'transparent-proxy/core/Session.js'
+import * as http from 'http'
+import * as net from 'net'
+import * as tls from 'tls'
+import { PassThrough } from 'node:stream'
+import { URL } from 'url'
 
 import { ScoopIntercepter } from './ScoopIntercepter.js'
 import { ScoopProxyExchange } from '../exchanges/index.js'
@@ -24,12 +27,10 @@ export class ScoopProxy extends ScoopIntercepter {
    * Initializes the proxy server
    */
   async setup () {
-    this.#connection = new ProxyServer({
-      intercept: true,
-      verbose: this.options.proxyVerbose,
-      injectData: this.interceptRequest,
-      injectResponse: this.interceptResponse
-    })
+    this.#connection = http.createServer()
+                           .on('connection', this.onConnection)
+                           .on('connect', (request, clientSocket, head) => this.onConnect(request, clientSocket, head))
+                           .on('request', (request) => this.onRequest(request))
 
     await this.#connection.listen(this.options.proxyPort, this.options.proxyHost, () => {
       this.capture.log.info(`TCP-Proxy-Server started ${JSON.stringify(this.#connection.address())}`)
@@ -49,6 +50,84 @@ export class ScoopProxy extends ScoopIntercepter {
     return true
   }
 
+  attachRequestParser (socket, callback) {
+    const mirror = new net.Socket()
+    socket.prependListener('data', data => { mirror.emit('data', data) })
+
+    http.createServer()
+      .on('request', callback)
+      .emit('connection', mirror)
+  }
+
+  attachResponseParser (socket, callback) {
+    const mirror = new net.Socket()
+    socket.prependListener('data', data => { mirror.emit('data', data) })
+
+    http.request({ createConnection: () => mirror })
+      .on('response', callback)
+  }
+
+  cacheBody (message) {
+    message.on('data', (data) => {
+      message.body = message.body
+        ? Buffer.concat([message.body, data], message.body.length + data.length)
+        : data
+    })
+  }
+
+  onConnection (socket) {
+    socket.mirror = new PassThrough()
+    socket.mirror.cork()
+    socket.pipe(socket.mirror)
+    // socket.on('data', (data) => { debugger })
+    // const kOnMessageBegin = socket.parser.constructor.kOnMessageBegin | 0
+    // socket.parser[kOnMessageBegin] = () => {
+    //   debugger
+    //   const connectionId = `${socket.remoteAddress}:${socket.remotePort}`
+    //   // this.exchanges.push(new ScoopProxyExchange({ connectionId }))
+    // }
+  }
+
+  onConnect (request, clientSocket, head) {
+    console.log('onConnect')
+    clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n')
+  }
+
+  onRequest (request) {
+    this.cacheBody(request)
+
+    const exchange = new ScoopProxyExchange({ request })
+    this.exchanges.push(exchange)
+
+    const url = new URL(request.url)
+
+    const options = {
+      port: parseInt(url.port) || 80,
+      host: url.hostname,
+      servername: url.hostname
+    }
+
+    const transport = options.port === 443 ? tls : net
+
+    const serverSocket = transport.connect(options, () => {
+      const clientSocket = request.socket
+      const clientMirror = request.socket.mirror
+
+      this.attachResponseParser(serverSocket, (response) => {
+        this.cacheBody(response)
+        exchange.response = response
+      })
+
+      clientMirror.on('data', data => this.intercept('request', data, exchange))
+      serverSocket.on('data', data => this.intercept('response', data, exchange))
+
+      serverSocket.pipe(clientSocket)
+      clientMirror.pipe(serverSocket)
+
+      process.nextTick(() => clientMirror.uncork())
+    })
+  }
+
   /**
    * The proxy info to be consumed by Playwright.
    * Includes a flag to ignore certificate errors introduced by proxying.
@@ -65,94 +144,30 @@ export class ScoopProxy extends ScoopIntercepter {
   }
 
   /**
-   * Returns an exchange based on the exchange connectionId and type.
-   * If the type is a request and there's already been a response on that same session,
-   * create a new exchange. Otherwise append to continue the exchange.
-   *
-   * @param {string} connectionId
-   * @param {string} [type='request'] - Can be "request" or "response"
-   */
-  getOrInitExchange (connectionId, type = 'request') {
-    if (!connectionId) {
-      throw new Error('"connectionId" must be provided.')
-    }
-
-    if (['response', 'request'].includes(type) === false) {
-      throw new Error('"type" must be "request" or "response".')
-    }
-
-    return (
-      this.exchanges.findLast(ex => ex.connectionId === connectionId && (type === 'response' || !ex.responseRaw)) ||
-        this.exchanges[this.exchanges.push(new ScoopProxyExchange({ connectionId })) - 1]
-    )
-  }
-
-  /**
    * Checks an outgoing request against the blocklist. Interrupts the request it needed.
    * Keeps trace of blocked requests in `Scoop.provenanceInfo`.
    *
-   * @param {object} session - ProxyServer session.
+   * @param {ScoopProxyExchange} exchange
    * @returns {boolean} - `true` if request was interrupted
    */
-  checkRequestAgainstBlocklist (session) {
-    if (session instanceof Session === false) {
-      throw new Error('"session" must be a valid "ProxyServer" session.')
-    }
-
-    const ip = session._dst.remoteAddress
-
-    // https doesn't have the protocol or host in the path so add it here
-    let url = ''
-
-    try {
-      url = (session.request.path[0] === '/')
-        ? `https://${session.request.headers.host}${session.request.path}`
-        : session.request.path
-    } catch (err) {
-      this.capture.log.trace(err)
-      this.capture.log.warn('A session could not be intercepted for comparison against the blocklist (parsing error). Skipping.')
-      return false
-    }
+  matchFoundInBlocklist (exchange) {
+    const ip = exchange.response?.socket?.remoteAddress
 
     // Search for a blocklist match:
     // Use the index to pull the original un-parsed rule from options so that the printing matches user expectations
-    const ruleIndex = this.capture.blocklist.findIndex(searchBlocklistFor(url, ip))
+    const ruleIndex = this.capture.blocklist.findIndex(searchBlocklistFor(exchange.url, ip))
 
     if (ruleIndex === -1) {
       return false
     }
 
     const rule = this.capture.options.blocklist[ruleIndex]
-    this.capture.log.warn(`Blocking ${url} resolved to IP ${ip} matching rule ${rule}`)
-    this.capture.provenanceInfo.blockedRequests.push({ url, ip, rule })
+    this.capture.log.warn(`Blocking ${exchange.url} resolved to IP ${ip} matching rule ${rule}`)
+    this.capture.provenanceInfo.blockedRequests.push({ url: exchange.url, ip, rule })
 
-    // TODO: confirm in transparent-proxy that this doesn't kill subsequent
-    // requests that were earmarked for this session
-    session.destroy()
+    exchange.request.socket.destroy()
 
     return true
-  }
-
-  /**
-   * @param {Buffer} data
-   * @param {Session} session
-   * @returns {?Buffer}
-   */
-  interceptRequest = (data, session) => {
-    this.checkRequestAgainstBlocklist(session) // May interrupt request
-
-    if (!session._src.destroyed && !session._dst.destroyed) {
-      return this.intercept('request', data, session)
-    }
-  }
-
-  /**
-   * @param {Buffer} data
-   * @param {Session} session
-   * @returns {Buffer}
-   */
-  interceptResponse = (data, session) => {
-    return this.intercept('response', data, session)
   }
 
   /**
@@ -161,30 +176,28 @@ export class ScoopProxy extends ScoopIntercepter {
    *
    * @param {string} type
    * @param {Buffer} data
-   * @param {Session} session
+   * @param {ScoopProxyExchange} exchange
    * @returns {Buffer}
    */
-  intercept (type, data, session) {
-    // Early exit with unmodified data if not recording exchanges
-    if (!this.recordExchanges) {
-      return data
+  intercept (type, data, exchange) {
+    // Early exit if not recording exchanges or request is blocked
+    if (!this.recordExchanges ||
+        (type === 'response' && this.matchFoundInBlocklist(exchange))) {
+      return
     }
 
-    const ex = this.getOrInitExchange(session._id, type)
     const prop = `${type}Raw` // `responseRaw` | `requestRaw`
-    ex[prop] = ex[prop] ? Buffer.concat([ex[prop], data], ex[prop].length + data.length) : data
+    exchange[prop] = Buffer.concat([exchange[prop], data], exchange[prop].length + data.length)
 
     // NOTE: Temporarily moved as a capture step until this proxy is replaced.
     // The main issue was that we could not easily identify "when" to run this step, resulting in multiple, unnecessary calls.
     /*
     if (type === 'response') {
-      this.checkExchangeForNoArchive(ex)
+      this.checkExchangeForNoArchive(exchange)
     }
     */
 
     this.byteLength += data.byteLength
     this.checkAndEnforceSizeLimit() // From parent
-
-    return data
   }
 }
