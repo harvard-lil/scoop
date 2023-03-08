@@ -28,19 +28,20 @@ const wacz = await capture.toWACZ()
 - [Using Scoop as a CLI command](#using-scoop-as-a-cli-command)
 - [Using Scoop as a JavaScript library](#using-scoop-as-a-javascript-library)
 - [Development](#development)
+- [FAQ](#faq)
 
 ---
 
 ## About
 
-Scoop is a high fidelity, browser-based, web archiving capture engine from the [Harvard Library Innovation Lab](https://lil.law.harvard.edu). 
-Fine-tune this custom web capturing software to create robust single-page captures of the internet with accurate and complete provenance information. 
+**Scoop** is a high fidelity, browser-based, web archiving capture engine from the [Harvard Library Innovation Lab](https://lil.law.harvard.edu). 
 
-Scoop has built-in support for the [WACZ Signing and Verification specification](https://specs.webrecorder.net/wacz-auth/0.1.0/), 
+Fine-tune this custom web capture software to create robust single-page captures of the internet with accurate and complete **provenance information**. 
+
+With extensive options for asset formats and inclusions, Scoop will create **.warc**, **warc.gz** or **.wacz** files to be stored by users and replayed using the web archive replay software of their choosing.
+
+Scoop also offers built-in support for the [WACZ Signing and Verification specification](https://specs.webrecorder.net/wacz-auth/0.1.0/), 
 allowing users to cryptographically sign their captures. 
-
-With extensive options for asset formats and inclusions, Scoop will create `.warc`, `.warc.gz` and `.wacz` files to be stored by users and replayed using the web archive replay software of their choosing.
-
 
 [👆 Back to the summary](#summary)
 
@@ -57,7 +58,7 @@ With extensive options for asset formats and inclusions, Scoop will create `.war
   - DOM snapshot
 - Support for `.warc.`, `.warc.gz` and `.wacz` output formats
   - Support for the [WACZ Signing and Verification specification](https://specs.webrecorder.net/wacz-auth/0.1.0/)
-  - Optional preservation of "raw" exchanges in WACZ files for later analysis or reprocessing
+  - Optional preservation of "raw" exchanges in WACZ files for later analysis or reprocessing _("wacz with raw exchanges"_)
 
 [👆 Back to the summary](#summary)
 
@@ -173,5 +174,12 @@ Options:
 
 
 ## Development
+
+[👆 Back to the summary](#summary)
+
+
+---
+
+## FAQ
 
 [👆 Back to the summary](#summary)
