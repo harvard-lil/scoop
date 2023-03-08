@@ -207,8 +207,8 @@ program.addOption(
 program.addOption(
   new Option(
     '--blocklist <string>',
-    'If set, replaces Scoop\'s default list of url patterns and IP ranges Scoop should not capture. Coma-separated.')
-    .default(defaults.blocklist.join(','))
+    'If set, replaces Scoop\'s default list of url patterns and IP ranges Scoop should not capture. Coma-separated. Example: "/https?://localhost/,0.0.0.0/8,10.0.0.0".')
+  // .default(defaults.blocklist.join(','))
 )
 
 program.addOption(
