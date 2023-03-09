@@ -286,9 +286,12 @@ flowchart LR
     A <-.-> |Capture| E <-.-> C
 ```
 
-The browser Scoop controls was installed specifically for programmatic access by [Playwright](https://playwright.dev), the underlying tool it uses to communicate with it, and is different from the default browser of the machine Scoop is running on.
+The browser Scoop controls was installed specifically for programmatic access by [Playwright](https://playwright.dev), the underlying tool it uses to communicate with it, and is different from the default browser of the machine Scoop is running on. 
+Additionally, Scoop creates a single-use, isolated browsing context for every capture it makes.
 
-More info: https://playwright.dev/docs/browsers
+**More info:**
+- https://playwright.dev/docs/browsers
+- https://playwright.dev/docs/api/class-browsercontext
 
 ### Does Scoop capture _everything_ through a browser?
 
