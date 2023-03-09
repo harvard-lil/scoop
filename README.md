@@ -280,7 +280,7 @@ flowchart LR
     C[Chromium]
     D[Website]
     E[HTTP Proxy]
-    A <--> |Control| B
+    A <--> |Controls| B
     B <--> C
     C <--> D
     A <-.-> |Capture| E <-.-> C
@@ -298,19 +298,19 @@ Additionally, Scoop creates a single-use, isolated browsing context for every ca
 Yes, and unless specified otherwise.
 
 Namely:
-- Videos captured as attachments are captured outside of the browser using `yt-dlp`.
-- If the main URL to capture is _not_ a web page _(for example: a PDF file)_, it will be captured using `curl`.
-- Favicons may be captured out-of-band using `curl`, if not intercepted during capture.
+- If the main URL to capture is _not_ a web page _(for example: a PDF file)_, it will be captured using [curl](https://curl.se/).
+- Videos captured as attachments are captured outside of the browser using [yt-dlp](https://github.com/yt-dlp/yt-dlp).
+- Favicons may be captured out-of-band using [curl](https://curl.se/), if not intercepted during capture.
 
-Exchanges captured in that context still go through Scoop's proxy.
+Exchanges captured in that context still go through Scoop's HTTP proxy.
 
 ```mermaid
 flowchart LR
     A[Scoop]
-    B[curl or yt-dlp]
+    B[curl]
     C[Resource]
     D[HTTP Proxy]
-    A <--> |Control| B
+    A <--> |Controls| B
     B <--> C
     A <-.-> |Capture| D <-.-> B
 
