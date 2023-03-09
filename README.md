@@ -236,13 +236,18 @@ try {
 import { Scoop } from '@harvard-lil/scoop'
 
 try {
-  const options = Scoop.defaults // options will be a copy of Scoop default settings
-  console.log(options) // It therefore becomes easier to inspect said defaults ...
+  // "options" will be a copy of Scoop's default settings
+  const options = Scoop.defaults
 
+  // It therefore becomes easier to inspect said defaults ...
+  console.log(options)
+
+  // ... and edit existing values
   options.pdfSnapshot = true
-  options.blocklist.push('/https?:\/\/foo/') // ... and edit existing values
+  options.blocklist.push('/https?:\/\/foo/')
 
   const capture = Scoop.capture('https://lil.law.harvard.edu', options)
+  
   // ...
 } catch(err) {
   // ...
