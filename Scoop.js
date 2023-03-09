@@ -1128,7 +1128,7 @@ export class Scoop {
 
   /**
    * (Shortcut) Export this Scoop capture to WACZ.
-   * @param {boolean} [includeRaw=true] - Include a copy of RAW Http exchanges to the wacz (under `/raw`)?
+   * @param {boolean} [includeRaw=true] - Include a copy of RAW HTTP exchanges to the wacz (under `/raw`)?
    * @param {object} signingServer - Optional server information for signing the WACZ
    * @param {string} signingServer.url - url of the signing server
    * @param {string} signingServer.token - Optional token to be passed to the signing server via the Authorization header

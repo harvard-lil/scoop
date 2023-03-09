@@ -1,5 +1,3 @@
-> 🚧 This `README.md` is under construction.
-
 # Scoop 🍨
 
 [![npm version](https://badge.fury.io/js/@harvard-lil%2Fscoop.svg)](https://badge.fury.io/js/@harvard-lil%2Fscoop) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
@@ -50,7 +48,7 @@ allowing users to cryptographically sign their captures.
 ## Main Features
 - High-fidelity, browser-based capture of singular web pages with no alterations
 - Highly configurable
-- Optional capture as attachments: 
+- Optional attachments: 
   - Provenance summary
   - Screenshot
   - Extracted videos with associated subtitles and metadata
@@ -203,6 +201,9 @@ import { Scoop } from '@harvard-lil/scoop'
 
 try {
   const capture = await Scoop.capture('https://lil.law.harvard.edu', {
+    screenshot: true,
+    pdfSnapshot: true,
+    captureVideoAsAttachment: false,
     captureTimeout: 120 * 1000,
     loadTimeout: 60 * 1000,
     captureWindowX: 320,
@@ -248,7 +249,7 @@ try {
   const capture = await Scoop.capture('https://lil.law.harvard.edu')
 
   const signedWacz = await capture.toWACZ(true, {
-    url: 'https://example.com/sign'
+    url: 'https://example.com/sign',
     token: 'some-very-secret-token'
   })
 
@@ -265,21 +266,94 @@ try {
 
 ## Development
 
-[👆 Back to the summary](#summary)
+### Standard JS
+This codebase uses the [Standard JS](https://standardjs.com/) coding style. 
+- `npm run lint` can be used to check formatting.
+- `npm run lint-autofix` can be used to check formatting _and_ automatically edit files accordingly when possible.
+- Most IDEs can be configured to automatically check and enforce this coding style.
 
+### JSDoc
+[JSDoc](https://jsdoc.app/) is used for both documentation and loose type checking purposes on this project.
+
+### Testing
+This project uses [Node.js' built-in test runner](https://nodejs.org/api/test.html).
+
+```bash
+npm run test
+```
+
+#### Tests-specific environment variables
+The following environment variables allow for testing features requiring access to a third-party server. 
+
+These are optional, and can be added to a local `.env` file which will be automatically interpreted by the test runner. 
+
+| Name | Description |
+| --- | --- |
+| `TEST_WACZ_SIGNING_URL` | URL of an [authsign-compatible endpoint](https://github.com/webrecorder/authsign) for signing WACZ files.<br>To run such an endpoint locally, use `npm run dev-signer`, which will overwrite `.env` and set this variable to `http://localhost:5000/sign`; see [.services/signer](.services/signer).|
+| `TEST_WACZ_SIGNING_TOKEN` | If required by the server at `TEST_WACZ_SIGNING_URL`, an authentication token. |
+
+[👆 Back to the summary](#summary)
 
 ---
 
 ## FAQ
 
-```
-What do you mean by "browser-based"? Is it _my_ browser?
-+ Diagram
+> 🚧 Under construction
 
-Does Scoop capture _everything_ through the browser?
-(Yes unless explicitly mentioned)
+### What does "browser-based" capture mean? Is it using _my_ browser?
 
-What is "WACZ with raw"?
+Browser-based capture means that Scoop uses a browser - [Chromium](https://www.chromium.org/Home/) - to visit the web page to capture and collect resources. 
+
+Specifically, it uses an HTTP proxy to _"intercept"_ network exchanges as early as possible and preserve them _"as is"_.
+
+```mermaid
+flowchart LR
+    A[Scoop]
+    B[Playwright]
+    C[Chromium]
+    D[Website]
+    E[HTTP Proxy]
+    A <--> |Control| B
+    B <--> C
+    C <--> D
+    A <-.-> |Capture| E <-.-> C
 ```
+
+The browser Scoop controls was installed specifically for programmatic access by [Playwright](https://playwright.dev), the underlying tool it uses to communicate with it, and is different from the default browser of the machine Scoop is running on.
+
+More info: https://playwright.dev/docs/browsers
+
+### Does Scoop capture _everything_ through a browser?
+
+Yes, and unless specified otherwise.
+
+Namely:
+- Videos captured as attachments are captured outside of the browser using `yt-dlp`.
+- If the main URL to capture is _not_ a web page _(for example: a PDF file)_, it will be captured using `curl`.
+- Favicons may be captured out-of-band using `curl`, if not intercepted during capture.
+
+Exchanges captured in that context still go through Scoop's proxy.
+
+```mermaid
+flowchart LR
+    A[Scoop]
+    B[curl or yt-dlp]
+    C[Resource]
+    D[HTTP Proxy]
+    A <--> |Control| B
+    B <--> C
+    A <-.-> |Capture| D <-.-> B
+
+```
+
+### What is "WACZ with RAW exchanges"?
+
+The `includeRaw` option of `Scoop.toWACZ()` allows for adding a folder named _"raw"_ in the WACZ file, which contains a copy of unprocessed HTTP exchanges coming directly from Scoop's HTTP proxy.
+
+This feature may be used to preserve elements that would otherwise be lost, such as ill-formed HTTP headers, and could be relevant in certain contexts, such as forensic analysis.
+
+In order to prevent unnecessary storage use, Scoop only keeps in "raw" the contents of exchange it assessed required alterations to be stored in WARCs.
+
+**Experimental:** WACZ files stored with the `includeRaw` option can be ingested by Scoop for analysis and processing via the `Scoop.fromWACZ()` method.
 
 [👆 Back to the summary](#summary)
