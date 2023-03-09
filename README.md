@@ -263,39 +263,6 @@ try {
 
 ---
 
-
-## Development
-
-### Standard JS
-This codebase uses the [Standard JS](https://standardjs.com/) coding style. 
-- `npm run lint` can be used to check formatting.
-- `npm run lint-autofix` can be used to check formatting _and_ automatically edit files accordingly when possible.
-- Most IDEs can be configured to automatically check and enforce this coding style.
-
-### JSDoc
-[JSDoc](https://jsdoc.app/) is used for both documentation and loose type checking purposes on this project.
-
-### Testing
-This project uses [Node.js' built-in test runner](https://nodejs.org/api/test.html).
-
-```bash
-npm run test
-```
-
-#### Tests-specific environment variables
-The following environment variables allow for testing features requiring access to a third-party server. 
-
-These are optional, and can be added to a local `.env` file which will be automatically interpreted by the test runner. 
-
-| Name | Description |
-| --- | --- |
-| `TEST_WACZ_SIGNING_URL` | URL of an [authsign-compatible endpoint](https://github.com/webrecorder/authsign) for signing WACZ files.<br>To run such an endpoint locally, use `npm run dev-signer`, which will overwrite `.env` and set this variable to `http://localhost:5000/sign`; see [.services/signer](.services/signer).|
-| `TEST_WACZ_SIGNING_TOKEN` | If required by the server at `TEST_WACZ_SIGNING_URL`, an authentication token. |
-
-[👆 Back to the summary](#summary)
-
----
-
 ## FAQ
 
 > 🚧 Under construction
@@ -355,5 +322,53 @@ This feature may be used to preserve elements that would otherwise be lost, such
 In order to prevent unnecessary storage use, Scoop only keeps in "raw" the contents of exchange it assessed required alterations to be stored in WARCs.
 
 **Experimental:** WACZ files stored with the `includeRaw` option can be ingested by Scoop for analysis and processing via the `Scoop.fromWACZ()` method.
+
+[👆 Back to the summary](#summary)
+
+---
+
+## Development
+
+### Standard JS
+This codebase uses the [Standard JS](https://standardjs.com/) coding style. 
+- `npm run lint` can be used to check formatting.
+- `npm run lint-autofix` can be used to check formatting _and_ automatically edit files accordingly when possible.
+- Most IDEs can be configured to automatically check and enforce this coding style.
+
+### JSDoc
+[JSDoc](https://jsdoc.app/) is used for both documentation and loose type checking purposes on this project.
+
+### Testing
+This project uses [Node.js' built-in test runner](https://nodejs.org/api/test.html).
+
+```bash
+npm run test
+```
+
+#### Tests-specific environment variables
+The following environment variables allow for testing features requiring access to a third-party server. 
+
+These are optional, and can be added to a local `.env` file which will be automatically interpreted by the test runner. 
+
+| Name | Description |
+| --- | --- |
+| `TEST_WACZ_SIGNING_URL` | URL of an [authsign-compatible endpoint](https://github.com/webrecorder/authsign) for signing WACZ files.<br>To run such an endpoint locally, use `npm run dev-signer`, which will overwrite `.env` and set this variable to `http://localhost:5000/sign`; see [.services/signer](.services/signer).|
+| `TEST_WACZ_SIGNING_TOKEN` | If required by the server at `TEST_WACZ_SIGNING_URL`, an authentication token. |
+
+### Available CLI
+
+```bash
+# Runs test suite
+npm run test
+
+# Runs linter
+npm run lint
+
+# Runs linter and attempts to automatically fix issues
+npm run lint-autofix
+
+# Runs a local instance of wacz-signer for test purposes (see "Testing" section)
+npm run dev-signer
+```
 
 [👆 Back to the summary](#summary)
