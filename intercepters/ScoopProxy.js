@@ -95,7 +95,6 @@ export class ScoopProxy extends ScoopIntercepter {
 
   onRequest (request) {
     this.cacheBody(request)
-
     const exchange = new ScoopProxyExchange({ request })
     this.exchanges.push(exchange)
 
@@ -107,25 +106,49 @@ export class ScoopProxy extends ScoopIntercepter {
       servername: url.hostname
     }
 
-    const transport = options.port === 443 ? tls : net
+    console.log('request')
+    http
+      .request(options)
+      .on('socket', (serverSocket) => {
+        const clientSocket = request.socket
+        const clientMirror = request.socket.mirror
 
-    const serverSocket = transport.connect(options, () => {
-      const clientSocket = request.socket
-      const clientMirror = request.socket.mirror
+        clientMirror.on('data', data => this.intercept('request', data, exchange))
+        serverSocket.on('data', data => this.intercept('response', data, exchange))
 
-      this.attachResponseParser(serverSocket, (response) => {
+        clientSocket.on('end', () => console.log('clientSocket ended'))
+        clientMirror.on('end', () => console.log('clientMirror ended'))
+
+        serverSocket.pipe(clientSocket)
+        clientMirror.pipe(serverSocket)
+
+        process.nextTick(() => clientMirror.uncork())
+      })
+      .on('response', (response) => {
+        console.log('response')
         this.cacheBody(response)
         exchange.response = response
+        // response.on('data', (data) => console.log(data.toString()))
       })
 
-      clientMirror.on('data', data => this.intercept('request', data, exchange))
-      serverSocket.on('data', data => this.intercept('response', data, exchange))
+    // const serverSocket = transport.connect(options, () => {
+    //   const clientSocket = request.socket
+    //   const clientMirror = request.socket.mirror
 
-      serverSocket.pipe(clientSocket)
-      clientMirror.pipe(serverSocket)
+    //   this.attachResponseParser(serverSocket, (response) => {
+    //     console.log('response', response.headers['content-type'])
+    //     this.cacheBody(response)
+    //     exchange.response = response
+    //   })
 
-      process.nextTick(() => clientMirror.uncork())
-    })
+    //   clientMirror.on('data', data => this.intercept('request', data, exchange))
+    //   serverSocket.on('data', data => this.intercept('response', data, exchange))
+
+    //   serverSocket.pipe(clientSocket)
+    //   clientMirror.pipe(serverSocket)
+
+    //   process.nextTick(() => clientMirror.uncork())
+    // })
   }
 
   /**
@@ -185,7 +208,7 @@ export class ScoopProxy extends ScoopIntercepter {
         (type === 'response' && this.matchFoundInBlocklist(exchange))) {
       return
     }
-
+    // console.log('intercept', type, data.toString())
     const prop = `${type}Raw` // `responseRaw` | `requestRaw`
     exchange[prop] = Buffer.concat([exchange[prop], data], exchange[prop].length + data.length)
 
