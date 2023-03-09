@@ -372,6 +372,9 @@ npm run lint-autofix
 
 # Runs a local instance of wacz-signer for test purposes (see "Testing" section)
 npm run dev-signer
+
+# Step-by-step NPM publishing helper
+npm run publish-util
 ```
 
 [👆 Back to the summary](#summary)
