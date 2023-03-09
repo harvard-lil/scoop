@@ -1,0 +1,42 @@
+name: Test suite
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  TEST_SIGNING_URL: "http://127.0.0.1:5000/sign"
+
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '18.x'
+
+    - name: Install mkcert
+      run: |
+        sudo apt-get update
+        sudo apt install wget libnss3-tools
+        curl -s https://api.github.com/repos/FiloSottile/mkcert/releases/latest | grep browser_download_url  | grep linux-amd64 | cut -d '"' -f 4 | wget -qi -
+        mv mkcert-v*-linux-amd64 mkcert
+        chmod a+x mkcert
+        sudo mv mkcert /usr/local/bin/
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Run signer
+      run: |
+        cd .services/signer/
+        bash ./run.sh &
+        sleep 5
+
+    - name: Run tests
+      run: npm run test
