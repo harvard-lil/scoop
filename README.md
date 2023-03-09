@@ -114,7 +114,7 @@ scoop --help
 ```
 
 <details>
-  <summary><strong>Output of Scoop's CLI help menu 🔍</strong></summary>
+  <summary><strong>See: Output of scoop --help 🔍</strong></summary>
 
 ```
 Usage: scoop [options] <url>
@@ -168,6 +168,86 @@ Options:
 
 ## Using Scoop as a JavaScript library
 
+**Scoop** can be used as a library in a Node.js project. 
+Here are a few examples of how to programmatically capture web pages using the `Scoop.capture()` method, which returns [an instance of the `Scoop` class](https://github.com/harvard-lil/scoop/blob/main/Scoop.js). 
+
+### Quick access
+- [List of available options for `Scoop.capture()`](https://github.com/harvard-lil/scoop/blob/main/options.types.js)
+- [`Scoop.toWACZ()` method](https://github.com/harvard-lil/scoop/blob/main/Scoop.js#L1138)
+- [`Scoop.toWARC()` method](https://github.com/harvard-lil/scoop/blob/main/Scoop.js#L1126)
+- [`Scoop.fromWACZ()` method (experimental)](https://github.com/harvard-lil/scoop/blob/main/Scoop.js#L1117)
+
+
+### Example: Simple capture with default settings
+```javascript
+import fs from 'fs/promises'
+import { Scoop } from '@harvard-lil/scoop'
+
+try {
+  const capture = await Scoop.capture('https://lil.law.harvard.edu')
+  const wacz = await capture.toWACZ()
+  await fs.writeFile('archive.wacz', Buffer.from(wacz))
+} catch(err) {
+  // ...
+}
+```
+
+### Example: Advanced capture with custom settings
+```javascript
+import fs from 'fs/promises'
+import { Scoop } from '@harvard-lil/scoop'
+
+try {
+  const capture = await Scoop.capture('https://lil.law.harvard.edu', {
+    captureTimeout: 120 * 1000,
+    loadTimeout: 60 * 1000,
+    captureWindowX: 320,
+    captureWindowY: 480
+  })
+
+  const warc = await capture.toWARC()
+  await fs.writeFile('archive.warc', Buffer.from(warc))
+} catch(err) {
+  // ...
+}
+```
+
+### Example: Using a signing server
+```javascript
+import fs from 'fs/promises'
+import { Scoop } from '@harvard-lil/scoop'
+
+try {
+  const capture = await Scoop.capture('https://lil.law.harvard.edu')
+
+  const signedWacz = await capture.toWACZ(true, {
+    url: 'https://example.com/sign'
+    token: 'some-very-secret-token'
+  })
+
+  await fs.writeFile('archive.wacz', Buffer.from(signedWacz))
+} catch(err) {
+  // ...
+}
+```
+
+### Tip: Working with a copy of default settings
+```javascript
+import { Scoop } from '@harvard-lil/scoop'
+
+try {
+  const options = Scoop.defaults // options will be a copy of Scoop default settings
+  console.log(options) // It therefore becomes easier to inspect said defaults ...
+
+  options.pdfSnapshot = true
+  options.blocklist.push('/https?:\/\/foo/') // ... and edit existing values
+
+  const capture = Scoop.capture('https://lil.law.harvard.edu', options)
+  // ...
+} catch(err) {
+  // ...
+}
+```
 
 [👆 Back to the summary](#summary)
 
@@ -182,5 +262,15 @@ Options:
 ---
 
 ## FAQ
+
+```
+What do you mean by "browser-based"? Is it _my_ browser?
++ Diagram
+
+Does Scoop capture _everything_ through the browser?
+(Yes unless explicitly mentioned)
+
+What is "WACZ with raw"?
+```
 
 [👆 Back to the summary](#summary)
