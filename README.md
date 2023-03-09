@@ -171,6 +171,10 @@ Options:
 **Scoop** can be used as a library in a Node.js project. 
 Here are a few examples of how to programmatically capture web pages using the `Scoop.capture()` method, which returns [an instance of the `Scoop` class](https://github.com/harvard-lil/scoop/blob/main/Scoop.js). 
 
+```javascript
+const capture = await Scoop.capture(url, options)
+```
+
 ### Quick access
 - [List of available options for `Scoop.capture()`](https://github.com/harvard-lil/scoop/blob/main/options.types.js)
 - [`Scoop.toWACZ()` method](https://github.com/harvard-lil/scoop/blob/main/Scoop.js#L1138)
@@ -178,7 +182,7 @@ Here are a few examples of how to programmatically capture web pages using the `
 - [`Scoop.fromWACZ()` method (experimental)](https://github.com/harvard-lil/scoop/blob/main/Scoop.js#L1117)
 
 
-### Example: Simple capture with default settings
+### Example: Capture with default settings
 ```javascript
 import fs from 'fs/promises'
 import { Scoop } from '@harvard-lil/scoop'
@@ -192,7 +196,7 @@ try {
 }
 ```
 
-### Example: Advanced capture with custom settings
+### Example: Capture with custom settings
 ```javascript
 import fs from 'fs/promises'
 import { Scoop } from '@harvard-lil/scoop'
@@ -212,26 +216,7 @@ try {
 }
 ```
 
-### Example: Using a signing server
-```javascript
-import fs from 'fs/promises'
-import { Scoop } from '@harvard-lil/scoop'
-
-try {
-  const capture = await Scoop.capture('https://lil.law.harvard.edu')
-
-  const signedWacz = await capture.toWACZ(true, {
-    url: 'https://example.com/sign'
-    token: 'some-very-secret-token'
-  })
-
-  await fs.writeFile('archive.wacz', Buffer.from(signedWacz))
-} catch(err) {
-  // ...
-}
-```
-
-### Tip: Working with a copy of default settings
+### Example: Working with a copy of default settings
 ```javascript
 import { Scoop } from '@harvard-lil/scoop'
 
@@ -247,8 +232,27 @@ try {
   options.blocklist.push('/https?:\/\/foo/')
 
   const capture = Scoop.capture('https://lil.law.harvard.edu', options)
-  
+
   // ...
+} catch(err) {
+  // ...
+}
+```
+
+### Example: Using a signing server
+```javascript
+import fs from 'fs/promises'
+import { Scoop } from '@harvard-lil/scoop'
+
+try {
+  const capture = await Scoop.capture('https://lil.law.harvard.edu')
+
+  const signedWacz = await capture.toWACZ(true, {
+    url: 'https://example.com/sign'
+    token: 'some-very-secret-token'
+  })
+
+  await fs.writeFile('archive.wacz', Buffer.from(signedWacz))
 } catch(err) {
   // ...
 }
