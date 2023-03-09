@@ -320,9 +320,9 @@ flowchart LR
 
 The `includeRaw` option of `Scoop.toWACZ()` allows for adding a folder named _"raw"_ in the WACZ file, which contains a copy of unprocessed HTTP exchanges coming directly from Scoop's HTTP proxy.
 
-This feature may be used to preserve elements that would otherwise be lost, such as ill-formed HTTP headers, and could be relevant in certain contexts, such as forensic analysis.
+This feature may be used to preserve finer elements that would otherwise be lost, such as ill-formed HTTP headers, and could be relevant in certain contexts such as forensic analysis.
 
-In order to prevent unnecessary storage use, Scoop only keeps in "raw" the contents of exchange it assessed required alterations to be stored in WARCs.
+In order to prevent unnecessary storage use, Scoop only keeps in _"/raw"_ the contents of exchanges it assessed to be presented differently in WARCs.
 
 **Experimental:** WACZ files stored with the `includeRaw` option can be ingested by Scoop for analysis and processing via the `Scoop.fromWACZ()` method.
 
