@@ -331,7 +331,7 @@ The `includeRaw` option of `Scoop.toWACZ()` allows for adding a folder named _"r
 
 This feature may be used to preserve finer elements that would otherwise be lost, such as ill-formed HTTP headers, and could be relevant in certain contexts such as forensic analysis.
 
-In order to prevent unnecessary storage use, Scoop only keeps in _"/raw"_ the contents of exchanges it assessed to be presented differently in WARCs.
+In order to prevent unnecessary use of storage, Scoop only keeps in _"/raw"_ the contents of exchanges it assesses are presented differently in WARCs.
 
 **Experimental:** WACZ files stored with the `includeRaw` option can be ingested by Scoop for analysis and processing via the `Scoop.fromWACZ()` method.
 
