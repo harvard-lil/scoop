@@ -116,7 +116,7 @@ scoop "https://lil.law.harvard.edu" -f warc -o my-collection/lil.warc
 # Although it comes with "good defaults", scoop is highly configurable ...
 scoop "https://lil.law.harvard.edu" --capture-video-as-attachment false --screenshot false --capture-window-x 320 --capture-window-y 480 --capture-timeout 30000 --max-capture-size 100000 --signing-url "https://example.com/sign"
 
-# ... use --help to list out all the available options, and see what the default are.
+# ... use --help to list the available options, and see what the defaults are.
 scoop --help
 ```
 
