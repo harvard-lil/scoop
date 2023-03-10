@@ -98,7 +98,7 @@ npm install @harvard-lil/scoop --save
 
 ---
 
-## Using Scoop as a CLI command
+## Using Scoop on the command line
 
 Here are a few examples of how the `scoop` command can be used to make a customized capture of a web page.
 
