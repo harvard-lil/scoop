@@ -59,13 +59,13 @@ allowing users to cryptographically sign their captures.
   - Optional preservation of _"raw"_ exchanges in WACZ files for later analysis or reprocessing _("wacz with raw exchanges"_)
 
 ### Examples and screenshots
-- 💾 [Sample WACZ file captured with Scoop](/.github/assets/example.wacz).
+- 💾 [Sample WACZ file captured with Scoop](/.github/assets/example.wacz?raw=true).
 [replayweb.page](https://replayweb.page/) player can be used to explore this sample capture.
-- 📷 [Entry points](/.github/assets/screenshot-entry-points.png)
-- 📷 [Web Capture](/.github/assets/screenshot-web-capture.png)
-- 📷 [Provenance Summary](/.github/assets/screenshot-web-capture.png)
-- 📷 [PDF Snapshot](/.github/assets/screenshot-pdf-snapshot.png)
-- 📷 Embedded videos as attachments [[1]](/.github/assets/screenshot-video-as-attachment-1.png) [[2]](/.github/assets/screenshot-video-as-attachment-2.png)
+- 📷 [Entry points](/.github/assets/screenshot-entry-points.png?raw=true)
+- 📷 [Web Capture](/.github/assets/screenshot-web-capture.png?raw=true)
+- 📷 [Provenance Summary](/.github/assets/screenshot-web-capture.png?raw=true)
+- 📷 [PDF Snapshot](/.github/assets/screenshot-pdf-snapshot.png?raw=true)
+- 📷 Embedded videos as attachments [[1]](/.github/assets/screenshot-video-as-attachment-1.png?raw=true) [[2]](/.github/assets/screenshot-video-as-attachment-2.png?raw=true)
 
 [👆 Back to the summary](#summary)
 
