@@ -4,7 +4,7 @@
 
 High-fidelity, browser-based, single-page web archiving library and CLI. 
 
-**Use it the terminal...**
+**Use it in the terminal...**
 ```bash
 scoop "https://lil.law.harvard.edu"
 ```
