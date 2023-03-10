@@ -60,7 +60,7 @@ allowing users to cryptographically sign their captures.
 
 ### Examples and screenshots
 - 💾 [Sample WACZ file captured with Scoop](/.github/assets/example.wacz?raw=true).<br>
-[replayweb.page](https://replayweb.page/) player can be used to explore this sample capture.
+Playback software such as [replayweb.page](https://replayweb.page/) can be used to explore this sample capture.
 - 📷 [Entry points](/.github/assets/screenshot-entry-points.png?raw=true)
 - 📷 [Web Capture](/.github/assets/screenshot-web-capture.png?raw=true)
 - 📷 [Provenance Summary](/.github/assets/screenshot-web-capture.png?raw=true)
