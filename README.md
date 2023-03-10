@@ -58,6 +58,15 @@ allowing users to cryptographically sign their captures.
   - Support for the [WACZ Signing and Verification specification](https://specs.webrecorder.net/wacz-auth/0.1.0/)
   - Optional preservation of _"raw"_ exchanges in WACZ files for later analysis or reprocessing _("wacz with raw exchanges"_)
 
+### Examples and screenshots
+- 💾 [Sample WACZ file captured with Scoop](/.github/assets/example.wacz).
+[replayweb.page](https://replayweb.page/) player can be used to explore this sample capture.
+- 📷 [Entry points](/.github/assets/screenshot-entry-points.png)
+- 📷 [Web Capture](/.github/assets/screenshot-web-capture.png)
+- 📷 [Provenance Summary](/.github/assets/screenshot-web-capture.png)
+- 📷 [PDF Snapshot](/.github/assets/screenshot-pdf-snapshot.png)
+- 📷 Embedded videos as attachments [[1]](/.github/assets/screenshot-video-as-attachment-1.png) [[2]](/.github/assets/screenshot-video-as-attachment-2.png)
+
 [👆 Back to the summary](#summary)
 
 ---
