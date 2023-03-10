@@ -1,7 +1,7 @@
 import * as http from 'http'
 import * as net from 'net'
-import * as tls from 'tls'
-import { PassThrough } from 'node:stream'
+import { PassThrough, Transform } from 'node:stream'
+import { pipeline } from 'node:stream/promises'
 import { URL } from 'url'
 
 import { ScoopIntercepter } from './ScoopIntercepter.js'
@@ -50,23 +50,6 @@ export class ScoopProxy extends ScoopIntercepter {
     return true
   }
 
-  attachRequestParser (socket, callback) {
-    const mirror = new net.Socket()
-    socket.prependListener('data', data => { mirror.emit('data', data) })
-
-    http.createServer()
-      .on('request', callback)
-      .emit('connection', mirror)
-  }
-
-  attachResponseParser (socket, callback) {
-    const mirror = new net.Socket()
-    socket.prependListener('data', data => { mirror.emit('data', data) })
-
-    http.request({ createConnection: () => mirror })
-      .on('response', callback)
-  }
-
   cacheBody (message) {
     message.on('data', (data) => {
       message.body = message.body
@@ -77,23 +60,16 @@ export class ScoopProxy extends ScoopIntercepter {
 
   onConnection (socket) {
     socket.mirror = new PassThrough()
-    socket.mirror.cork()
-    socket.pipe(socket.mirror)
-    // socket.on('data', (data) => { debugger })
-    // const kOnMessageBegin = socket.parser.constructor.kOnMessageBegin | 0
-    // socket.parser[kOnMessageBegin] = () => {
-    //   debugger
-    //   const connectionId = `${socket.remoteAddress}:${socket.remotePort}`
-    //   // this.exchanges.push(new ScoopProxyExchange({ connectionId }))
-    // }
+    socket.pipe(socket.mirror, { end: false })
   }
 
-  onConnect (request, clientSocket, head) {
+  onConnect (_request, clientSocket, _head) {
     console.log('onConnect')
     clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n')
   }
 
   onRequest (request) {
+    console.log('request', request.socket._handle.fd, request.url)
     this.cacheBody(request)
     const exchange = new ScoopProxyExchange({ request })
     this.exchanges.push(exchange)
@@ -101,54 +77,38 @@ export class ScoopProxy extends ScoopIntercepter {
     const url = new URL(request.url)
 
     const options = {
-      port: parseInt(url.port) || 80,
+      port: url.port || 80,
       host: url.hostname,
       servername: url.hostname
     }
 
-    console.log('request')
     http
       .request(options)
       .on('socket', (serverSocket) => {
+        console.log('socket', serverSocket._handle.fd, request.url, serverSocket.parser.outgoing.method)
         const clientSocket = request.socket
         const clientMirror = request.socket.mirror
 
-        clientMirror.on('data', data => this.intercept('request', data, exchange))
-        serverSocket.on('data', data => this.intercept('response', data, exchange))
+        const requestTransformer = new Transform({
+          transform: (chunk, _encoding, callback) => {
+            callback(null, this.intercept('request', chunk, exchange))
+          }
+        })
 
-        clientSocket.on('end', () => console.log('clientSocket ended'))
-        clientMirror.on('end', () => console.log('clientMirror ended'))
+        const responseTransformer = new Transform({
+          transform: (chunk, _encoding, callback) => {
+            callback(null, this.intercept('request', chunk, exchange))
+          }
+        })
 
-        serverSocket.pipe(clientSocket)
-        clientMirror.pipe(serverSocket)
-
-        process.nextTick(() => clientMirror.uncork())
+        serverSocket.pipe(responseTransformer).pipe(clientSocket)
+        clientMirror.pipe(requestTransformer).pipe(serverSocket)
       })
       .on('response', (response) => {
-        console.log('response')
+        console.log('response', response.socket._handle.fd, request.url, response.statusMessage, response.headers['content-type'])
         this.cacheBody(response)
         exchange.response = response
-        // response.on('data', (data) => console.log(data.toString()))
       })
-
-    // const serverSocket = transport.connect(options, () => {
-    //   const clientSocket = request.socket
-    //   const clientMirror = request.socket.mirror
-
-    //   this.attachResponseParser(serverSocket, (response) => {
-    //     console.log('response', response.headers['content-type'])
-    //     this.cacheBody(response)
-    //     exchange.response = response
-    //   })
-
-    //   clientMirror.on('data', data => this.intercept('request', data, exchange))
-    //   serverSocket.on('data', data => this.intercept('response', data, exchange))
-
-    //   serverSocket.pipe(clientSocket)
-    //   clientMirror.pipe(serverSocket)
-
-    //   process.nextTick(() => clientMirror.uncork())
-    // })
   }
 
   /**
@@ -196,6 +156,8 @@ export class ScoopProxy extends ScoopIntercepter {
   /**
    * Collates network data (both requests and responses) from the proxy.
    * Post-capture checks and capture size enforcement happens here.
+   * Acts as a transformer in the proxy pipeline and therefor must return
+   * the data to be passed forward.
    *
    * @param {string} type
    * @param {Buffer} data
@@ -206,7 +168,7 @@ export class ScoopProxy extends ScoopIntercepter {
     // Early exit if not recording exchanges or request is blocked
     if (!this.recordExchanges ||
         (type === 'response' && this.matchFoundInBlocklist(exchange))) {
-      return
+      return data
     }
     // console.log('intercept', type, data.toString())
     const prop = `${type}Raw` // `responseRaw` | `requestRaw`
@@ -222,5 +184,7 @@ export class ScoopProxy extends ScoopIntercepter {
 
     this.byteLength += data.byteLength
     this.checkAndEnforceSizeLimit() // From parent
+
+    return data
   }
 }
