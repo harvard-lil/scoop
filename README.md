@@ -59,7 +59,7 @@ allowing users to cryptographically sign their captures.
   - Optional preservation of _"raw"_ exchanges in WACZ files for later analysis or reprocessing _("wacz with raw exchanges"_)
 
 ### Examples and screenshots
-- 💾 [Sample WACZ file captured with Scoop](/.github/assets/example.wacz?raw=true).
+- 💾 [Sample WACZ file captured with Scoop](/.github/assets/example.wacz?raw=true).<br>
 [replayweb.page](https://replayweb.page/) player can be used to explore this sample capture.
 - 📷 [Entry points](/.github/assets/screenshot-entry-points.png?raw=true)
 - 📷 [Web Capture](/.github/assets/screenshot-web-capture.png?raw=true)
