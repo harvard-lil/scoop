@@ -7,7 +7,7 @@ const defaults = {
   responseTransformer: (_response, _request) => new PassThrough()
 }
 
-export function createProxy(options) {
+export function createProxy (options) {
   const { requestTransformer, responseTransformer } = { ...defaults, ...options }
   const proxy = http.createServer()
 
