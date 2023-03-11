@@ -59,7 +59,6 @@ export class ScoopProxy extends ScoopIntercepter {
   }
 
   onConnect (_request, clientSocket, _head) {
-    console.log('onConnect')
     clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n')
   }
 

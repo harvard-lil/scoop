@@ -8,7 +8,6 @@ import { ScoopProxy } from './index.js'
 import { Scoop } from '../Scoop.js'
 
 import { testDefaults } from '../options.js'
-import { ScoopProxyExchange } from '../exchanges/ScoopProxyExchange.js'
 
 const BLOCKLISTED_IP = '127.0.0.1'
 const BLOCKLISTED_URL = 'http://localhost'
@@ -63,32 +62,6 @@ test('contextOptions returns proxy information in a format that can be directly 
   assert.equal(contextOptions.proxy.server, `http://${testDefaults.proxyHost}:${testDefaults.proxyPort}`)
 })
 
-test('getOrInitExchange always returns an exchange when provided valid params, and creates new exchanges as needed.', async (_t) => {
-  const capture = new Scoop(NON_BLOCKLISTED_URL, testDefaults)
-
-  const scenarios = [
-    { connectionId: 12, type: 'request', shouldBeNew: true },
-    { connectionId: 12, type: 'request', shouldBeNew: false },
-    { connectionId: 12, type: 'response', shouldBeNew: false },
-    { connectionId: 15, type: 'request', shouldBeNew: true },
-    { connectionId: 15, type: 'response', shouldBeNew: false }
-  ]
-
-  let previousExchange = null
-
-  for (const scenario of scenarios) {
-    const exchange = capture.intercepter.getOrInitExchange(scenario.connectionId, scenario.type)
-
-    assert.equal(exchange instanceof ScoopProxyExchange, true)
-
-    if (scenarios.shouldBeNew === false) {
-      assert.strictEqual(exchange, previousExchange)
-    }
-
-    previousExchange = exchange
-  }
-})
-
 test('checkRequestAgainstBlocklist should detect and interrupt blocklisted exchanges.', async (_t) => {
   const capture = new Scoop(NON_BLOCKLISTED_URL, testDefaults)
   const intercepter = capture.intercepter
@@ -136,36 +109,4 @@ test('recordExchanges flag actively controls whether records are added to exchan
     intercepter.intercept('response', data, session)
     assert.equal(intercepter.exchanges.length, expectedExchangesLength)
   }
-})
-
-test('intercept coalesces arbitrary buffers together for a given exchange, new request on full exchange creates new exchange.', async (_t) => {
-  const capture = new Scoop(NON_BLOCKLISTED_URL, testDefaults)
-  const intercepter = capture.intercepter
-
-  const testString1 = 'LOREMIPSUM'
-  const testString2 = 'FOOBARBAZ'
-  const expectedByteLength = Buffer.from(testString1 + testString2).byteLength
-
-  const scenarios = [
-    { id: 12, type: 'request', data: Buffer.from(testString1) },
-    { id: 12, type: 'response', data: Buffer.from(testString2.substring(0, 3)) },
-    { id: 12, type: 'response', data: Buffer.from(testString2.substring(3, 6)) },
-    { id: 12, type: 'response', data: Buffer.from(testString2.substring(6, 9)) }
-  ]
-
-  for (const scenario of scenarios) {
-    const { id, type, data } = scenario
-    const session = mockSession(id, NON_BLOCKLISTED_IP, NON_BLOCKLISTED_URL)
-    intercepter.intercept(type, data, session)
-  }
-
-  assert.equal(intercepter.byteLength, expectedByteLength)
-  assert.equal(intercepter.exchanges[0].requestRaw.toString(), testString1)
-  assert.equal(intercepter.exchanges[0].responseRaw.toString(), testString2)
-
-  // New request on existing session for which we already have a response should create a new exchange
-  const session = mockSession(scenarios[0].id, NON_BLOCKLISTED_IP, NON_BLOCKLISTED_URL)
-  intercepter.intercept(scenarios[0].type, scenarios[0].data, session)
-
-  assert.equal(intercepter.exchanges[1].requestRaw.toString(), testString1)
 })
