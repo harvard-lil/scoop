@@ -28,7 +28,6 @@ export class ScoopProxy extends ScoopIntercepter {
       requestTransformer: this.requestTransformer.bind(this),
       responseTransformer: this.responseTransformer.bind(this)
     })
-      .on('connect', (request, clientSocket, head) => this.onConnect(request, clientSocket, head))
       .on('request', (request) => this.onRequest(request))
       .on('response', (response, request) => this.onResponse(response, request))
 
@@ -56,10 +55,6 @@ export class ScoopProxy extends ScoopIntercepter {
         ? Buffer.concat([message.body, data], message.body.length + data.length)
         : data
     })
-  }
-
-  onConnect (_request, clientSocket, _head) {
-    clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n')
   }
 
   onRequest (request) {
@@ -105,7 +100,7 @@ export class ScoopProxy extends ScoopIntercepter {
    */
   urlFoundInBlocklist (request) {
     const url = request.url.startsWith('/')
-      ? `https://${request.url}`
+      ? `https://${request.headers.host}${request.url}`
       : request.url
 
     // Search for a blocklist match:
