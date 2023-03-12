@@ -66,7 +66,7 @@ export function createProxy (options) {
     const url = new URL(urlString)
 
     const options = {
-      port: url.port || 80,
+      port: parseInt(url.port) || 80,
       host: url.hostname,
       servername: url.hostname
     }
