@@ -292,7 +292,8 @@ program.action(async (name, options, command) => {
         break
 
       case 'warc-gzipped':
-        assert(extension, '.warc.gz')
+        assert(extension, '.gz')
+        assert(options.output.endsWith('.warc.gz'), true)
         break
 
       case 'wacz':
