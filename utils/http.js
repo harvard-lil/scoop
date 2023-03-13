@@ -91,22 +91,3 @@ export async function bodyToString (body, contentEncoding = null) {
 
   return body.toString('utf-8')
 }
-
-/**
- * Maps HTTP headers into an key / value association.
- * @param {Array} headersArray - Parsed HTTP headers presented as a flat array.
- * @returns {Headers}
- */
-export function flatArrayToHeadersObject (headersArray) {
-  if (headersArray?.constructor !== Array || headersArray.length % 2 === 1) {
-    throw new Error('headers must be an array with an even number of items as matched key value pairs')
-  }
-
-  return new Headers(
-    headersArray.reduce(
-      (result, _value, index, sourceArray) =>
-        index % 2 === 0 ? [...result, sourceArray.slice(index, index + 2)] : result,
-      []
-    )
-  )
-}

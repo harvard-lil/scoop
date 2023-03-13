@@ -50,9 +50,33 @@ export class ScoopExchange {
   /** @type {?string} */
   connectionId
 
-  /** @type {?ScoopExchange~Message} */
-  request
+  /**
+   * @type {object}
+   * @private
+   */
+  _request
+
+  set request (val) {
+    this._request = val
+  }
 
   /** @type {?ScoopExchange~Message} */
-  response
+  get request () {
+    return this._request
+  }
+
+  /**
+   * @type {?object}
+   * @private
+   */
+  _response
+
+  set response (val) {
+    this._response = val
+  }
+
+  /** @type {?ScoopExchange~Message} */
+  get response () {
+    return this._response
+  }
 }

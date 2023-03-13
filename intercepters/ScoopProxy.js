@@ -59,7 +59,7 @@ export class ScoopProxy extends ScoopIntercepter {
 
   onRequest (request) {
     if (this.recordExchanges && !this.urlFoundInBlocklist(request)) {
-      const exchange = new ScoopProxyExchange({ request })
+      const exchange = new ScoopProxyExchange({ requestParsed: request })
       this.exchanges.push(exchange)
       this.cacheBody(request)
     }
@@ -67,9 +67,9 @@ export class ScoopProxy extends ScoopIntercepter {
 
   onResponse (response, request) {
     // there will not be an exchange with this request if we're, for instance, not recording
-    const exchange = this.exchanges.find(ex => ex.request === request)
+    const exchange = this.exchanges.find(ex => ex.requestParsed === request)
     if (exchange && !this.ipFoundInBlocklist(request)) {
-      exchange.response = response
+      exchange.responseParsed = response
       response.on('end', () => this.checkExchangeForNoArchive(exchange))
       this.cacheBody(response)
     }
@@ -99,6 +99,7 @@ export class ScoopProxy extends ScoopIntercepter {
    * @returns {boolean} - `true` if request was interrupted
    */
   urlFoundInBlocklist (request) {
+    return false
     const url = request.url.startsWith('/')
       ? `https://${request.headers.host}${request.url}`
       : request.url
@@ -128,6 +129,7 @@ export class ScoopProxy extends ScoopIntercepter {
    * @returns {boolean} - `true` if request was interrupted
    */
   ipFoundInBlocklist (response) {
+    return false
     const ip = response.socket.remoteAddress
 
     // Search for a blocklist match:
@@ -176,7 +178,7 @@ export class ScoopProxy extends ScoopIntercepter {
    */
   intercept (type, data, request) {
     // Early exit if not recording exchanges or request is blocked
-    const exchange = this.exchanges.find(ex => ex.request === request)
+    const exchange = this.exchanges.find(ex => ex.requestParsed === request)
     if (!exchange) return data
 
     const prop = `${type}Raw` // `responseRaw` | `requestRaw`

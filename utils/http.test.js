@@ -12,8 +12,7 @@ import {
   getStartLine,
   getBody,
   bodyStartIndex,
-  bodyToString,
-  flatArrayToHeadersObject
+  bodyToString
 } from './http.js'
 
 const CRLF = '\r\n'
@@ -72,27 +71,4 @@ test('bodyToString should handle gzip encoded bodies.', async (_t) => {
 test('bodyToString should handle brotli encoded bodies.', async (_t) => {
   const body = await bodyToString(brotliCompressSync(bodyFixture), 'br')
   assert.equal(body, bodyFixture)
-})
-
-test('flatArrayToHeadersObject should throw if given anything other than an array with key value pairs.', async (_t) => {
-  for (const headers of [null, true, false, 12, 'FOO', {}, () => {}, ['foo']]) {
-    assert.throws(() => flatArrayToHeadersObject(headers))
-  }
-})
-
-test('flatArrayToHeadersObject should return a Headers object for a given linear representation of headers.', async (_t) => {
-  const input = [
-    'age', '76448',
-    'content-encoding', 'gzip',
-    'content-encoding', 'br', // Checking dedupe
-    'content-type', 'text/html; charset=utf-8'
-  ]
-
-  const expectedOutput = new Headers({
-    age: '76448',
-    'content-encoding': 'gzip, br',
-    'content-type': 'text/html; charset=utf-8'
-  })
-
-  assert.deepEqual(flatArrayToHeadersObject(input), expectedOutput)
 })
