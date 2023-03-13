@@ -9,7 +9,6 @@ import {
 
 import {
   getHead,
-  getStartLine,
   getBody,
   bodyStartIndex,
   bodyToString
@@ -39,12 +38,6 @@ test('getHead returns the start line, headers, and trailing newline as a buffer'
   assert.equal(getHead(properlyConfiguredResponse).constructor, Buffer)
   assert.equal(getHead(properlyConfiguredResponse).toString(), msgParts.slice(0, -1).join(CRLF) + CRLF)
   assert.equal(getHead(misconfiguredResponse).toString(), msgParts.slice(0, -1).join(LF) + LF)
-})
-
-test('getStartLine returns the start line as a buffer', async (_t) => {
-  assert.equal(getStartLine(properlyConfiguredResponse).constructor, Buffer)
-  assert.equal(getStartLine(properlyConfiguredResponse).toString(), msgParts[0])
-  assert.equal(getStartLine(misconfiguredResponse).toString(), msgParts[0])
 })
 
 test('getBody returns the body as a buffer', async (_t) => {

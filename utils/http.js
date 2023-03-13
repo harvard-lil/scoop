@@ -53,15 +53,6 @@ export function getHead (buffer) {
  * @param {any} buffer -
  * @returns {any} -
  */
-export function getStartLine (buffer) {
-  return buffer.subarray(0, firstIndexOf([CRLF, LF], buffer))
-}
-
-/**
- *
- * @param {any} buffer -
- * @returns {any} -
- */
 export function getBody (buffer) {
   return buffer.subarray(bodyStartIndex(buffer))
 }
