@@ -393,7 +393,7 @@ export class Scoop {
       page = await this.setup()
       this.log.info('Scoop was initialized with the following options:')
       this.log.info(options)
-      this.log.info(`Starting capture of ${this.url}.`)
+      this.log.info(`🍨 Starting capture of ${this.url}.`)
       this.state = Scoop.states.CAPTURE
     } catch (err) {
       this.log.error('An error ocurred during capture setup.')
@@ -489,8 +489,7 @@ export class Scoop {
     this.log.info(`User Agent used for capture: ${userAgent}`)
 
     this.#browser = await chromium.launch({
-      headless: options.headless,
-      channel: 'chrome'
+      headless: options.headless
     })
 
     const context = await this.#browser.newContext({
@@ -1129,7 +1128,7 @@ export class Scoop {
 
   /**
    * (Shortcut) Export this Scoop capture to WACZ.
-   * @param {boolean} [includeRaw=true] - Include a copy of RAW Http exchanges to the wacz (under `/raw`)?
+   * @param {boolean} [includeRaw=true] - Include a copy of RAW HTTP exchanges to the wacz (under `/raw`)?
    * @param {object} signingServer - Optional server information for signing the WACZ
    * @param {string} signingServer.url - url of the signing server
    * @param {string} signingServer.token - Optional token to be passed to the signing server via the Authorization header

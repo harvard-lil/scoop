@@ -207,7 +207,7 @@ program.addOption(
 program.addOption(
   new Option(
     '--blocklist <string>',
-    'If set, replaces Scoop\'s default list of url patterns and IP ranges Scoop should not capture. Coma-separated.')
+    'If set, replaces Scoop\'s default list of url patterns and IP ranges Scoop should not capture. Coma-separated. Example: "/https?:\/\/localhost/,0.0.0.0/8,10.0.0.0".') // eslint-disable-line
   // .default(defaults.blocklist.join(','))
 )
 
@@ -277,8 +277,10 @@ program.action(async (name, options, command) => {
   let archive = null
 
   //
-  // Process options: convert 'true' / 'false' strings to booleans.
+  // Process options
   //
+
+  // Convert 'true' / 'false' strings to booleans.
   for (const [key, value] of Object.entries(options)) {
     if (value === 'true') {
       options[key] = true
@@ -287,6 +289,11 @@ program.action(async (name, options, command) => {
     if (value === 'false') {
       options[key] = false
     }
+  }
+
+  // Split blocklist
+  if (options.blocklist) {
+    options.blocklist = options.blocklist.replaceAll(' ', '').split(',')
   }
 
   //
@@ -302,11 +309,12 @@ program.action(async (name, options, command) => {
   //
   // Save to disk
   //
+
+  // Pack
   try {
     const currentExt = path.extname(options.output)
     let expectedExt = '.wacz'
 
-    // Pack
     switch (options.format) {
       case 'warc':
       case 'warc-gzipped': {
@@ -334,12 +342,18 @@ program.action(async (name, options, command) => {
     if (currentExt !== expectedExt) {
       options.output = options.output.substring(0, options.output.length - currentExt.length) + expectedExt
     }
+  } catch (_err) {
+    process.exit(1) // Logs handled by Scoop
+  }
 
-    // Store
+  // Store
+  try {
     await fs.writeFile(options.output, Buffer.from(archive))
     capture.log.info(`${options.output} saved to disk.`)
   } catch (err) {
-    process.exit(1) // Logs handled by Scoop
+    capture.log.trace(err)
+    capture.log.error(`Something went wrong while saving ${options.output} to disk. Use --log-level trace for details.`)
+    process.exit(1)
   }
 
   process.exit(0)
