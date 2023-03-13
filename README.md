@@ -113,6 +113,10 @@ scoop "https://lil.law.harvard.edu" -o my-collection/lil.wacz
 # But what if I want to change the output format itself?
 scoop "https://lil.law.harvard.edu" -f warc -o my-collection/lil.warc
 
+# By default, Scoop runs in headless mode. 
+# I can turn the "headless" flag off to see what happens in Chromium during capture.
+scoop "https://lil.law.harvard.edu" --headless false
+
 # Although it comes with "good defaults", scoop is highly configurable ...
 scoop "https://lil.law.harvard.edu" --capture-video-as-attachment false --screenshot false --capture-window-x 320 --capture-window-y 480 --capture-timeout 30000 --max-capture-size 100000 --signing-url "https://example.com/sign"
 
@@ -331,7 +335,8 @@ The `includeRaw` option of `Scoop.toWACZ()` allows for adding a folder named _"r
 
 This feature may be used to preserve finer elements that would otherwise be lost, such as ill-formed HTTP headers, and could be relevant in certain contexts such as forensic analysis.
 
-In order to prevent unnecessary use of storage, Scoop only keeps in _"/raw"_ the contents of exchanges it assesses are presented differently in WARCs.
+In order to prevent unnecessary use of storage, Scoop only keeps in _"/raw"_ the contents of exchanges it assesses are presented differently in WARCs. 
+In practice, this most often means the bodies of HTTP exchanges are not included in the _"/raw"_ files because the WARCs already contain the same data.
 
 **Experimental:** WACZ files stored with the `includeRaw` option can be ingested by Scoop for analysis and processing via the `Scoop.fromWACZ()` method.
 

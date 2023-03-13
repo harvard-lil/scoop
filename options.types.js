@@ -28,7 +28,7 @@
  * @property {boolean} headless=true - Should Playwright run in headless mode?
  * @property {string} userAgentSuffix="" - String to append to the user agent.
  *
- * @property {string[]} blocklist - A list of patterns, to be matched against each request's URL and IP address, and subsequently blocked during capture. Valid entries include url strings, CIDR strings, and regular expressions in string form.
+ * @property {string[]} blocklist - A list of patterns to be matched against each request's URL and IP address and subsequently blocked during capture. Valid entries include url strings, CIDR strings, and regular expressions in string form.
  * @property {string} intercepter="ScoopProxy" - Network interception method to be used. Available at the moment: "ScoopProxy".
  * @property {string} proxyHost="localhost" - What host should Playwright proxy through for capture?
  * @property {number} proxyPort=9000 - What port should Playwright proxy through for capture?
