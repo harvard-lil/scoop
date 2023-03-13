@@ -306,6 +306,16 @@ Additionally, Scoop creates a single-use, isolated browsing context for every ca
 - https://playwright.dev/docs/browsers
 - https://playwright.dev/docs/api/class-browsercontext
 
+### Can I capture content behind login / password with Scoop? 
+
+Not yet - for security reasons - but we're working on it. 
+
+Although Playwright [supports loading browser profiles](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context) doing so:
+- Breaks context isolation
+- May lead to the presence of credentials / tokens in the captured exchanges
+
+Help us design this feature: https://github.com/harvard-lil/scoop/issues/118
+
 ### Does Scoop capture _everything_ through a browser?
 
 Yes, and unless specified otherwise.
