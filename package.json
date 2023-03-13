@@ -43,7 +43,7 @@
   },
   "homepage": "https://github.com/harvard-lil/scoop#readme",
   "dependencies": {
-    "@harvard-lil/js-wacz": "^0.0.6",
+    "@harvard-lil/js-wacz": "^0.0.7",
     "@laverdet/beaugunderson-ip-address": "^8.1.0",
     "browsertrix-behaviors": "^0.4.2",
     "chalk": "^5.2.0",

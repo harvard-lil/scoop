@@ -1,5 +1,6 @@
 #! /usr/bin/env node
 
+import { equal as assert } from 'node:assert/strict'
 import fs from 'fs/promises'
 import path from 'path'
 
@@ -276,9 +277,48 @@ program.action(async (name, options, command) => {
   /** @type {?ArrayBuffer} */
   let archive = null
 
+  /** @type {string}  */
+  const extension = path.extname(options.output)
+
   //
   // Process options
   //
+
+  // `options.output` must end with appropriate extension, matching selected file format
+  try {
+    switch (options.format) {
+      case 'warc':
+        assert(extension, '.warc')
+        break
+
+      case 'warc-gzipped':
+        assert(extension, '.warc.gz')
+        break
+
+      case 'wacz':
+      case 'wacz-with-raw':
+        assert(extension, '.wacz')
+        break
+
+      default:
+        throw new Error(`Unspecified or invalid extension (${extension})`)
+    }
+  } catch (err) {
+    // We have to manually handle log level at this stage
+    if (options.logLevel === 'trace') {
+      console.trace(err)
+    }
+    console.error(`Mismatch between selected output path ("${options.output}") and output format ("${options.format}").`)
+    process.exit(1)
+  }
+
+  // `options.output` folder must be accessible.
+  try {
+    await fs.access(path.dirname(options.output))
+  } catch (err) {
+    console.error(`Output path does not exist or is not accessible: "${path.dirname(options.output)}"`)
+    process.exit(1)
+  }
 
   // Convert 'true' / 'false' strings to booleans.
   for (const [key, value] of Object.entries(options)) {
@@ -307,20 +347,17 @@ program.action(async (name, options, command) => {
   }
 
   //
-  // Save to disk
+  // Pack using chosen output format
   //
-
-  // Pack
   try {
-    const currentExt = path.extname(options.output)
-    let expectedExt = '.wacz'
-
     switch (options.format) {
       case 'warc':
       case 'warc-gzipped': {
         const gzipped = options.format === 'warc-gzipped'
+
+        capture.log.info(`Exporting capture to WARC ${gzipped ? '(Gzipped)' : ''}`)
+
         archive = await capture.toWARC(gzipped)
-        expectedExt = gzipped ? '.warc.gz' : '.warc'
         break
       }
 
@@ -328,25 +365,25 @@ program.action(async (name, options, command) => {
       case 'wacz-with-raw': {
         const includeRaw = options.format === 'wacz-with-raw'
 
+        capture.log.info(`Exporting capture to WACZ ${includeRaw ? 'with raw exchanges' : ''}`)
+
         archive = await capture.toWACZ(includeRaw, {
           url: options?.signingUrl,
           token: options?.signingToken
         })
 
-        expectedExt = '.wacz'
         break
       }
     }
-
-    // Automatically adjust file extension of `output` if there is a mismatch with chosen format.
-    if (currentExt !== expectedExt) {
-      options.output = options.output.substring(0, options.output.length - currentExt.length) + expectedExt
-    }
-  } catch (_err) {
-    process.exit(1) // Logs handled by Scoop
+  } catch (err) {
+    capture.log.trace(err)
+    capture.log.error(`Something went wrong while preparing ${options.output}. Use --log-level trace for details.`)
+    process.exit(1)
   }
 
-  // Store
+  //
+  // Save to disk
+  //
   try {
     await fs.writeFile(options.output, Buffer.from(archive))
     capture.log.info(`${options.output} saved to disk.`)
