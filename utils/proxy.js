@@ -70,22 +70,15 @@ export function createProxy (options) {
       : request.url
 
     const url = new URL(urlString)
-    const port = parseInt(url.port)
-
-    let protocol
-    if (url.protocol === UNKNOWN_PROTOCOL) {
-      protocol = (request.socket instanceof TLSSocket && port !== 80) ? 'https:' : 'http:'
-    } else {
-      protocol = url.protocol.toLowerCase()
-    }
 
     const options = {
-      port: port || protocol === 'https:' ? 443 : 80,
+      port: parseInt(url.port) || (url.protocol === 'https:' ? 443 : 80),
       host: url.hostname,
       servername: url.hostname
     }
 
-    const httpModule = protocol === 'https:' ? https : http
+    const httpModule = url.protocol === 'https:' || request.socket instanceof TLSSocket ? https : http
+
     httpModule
       .request(options)
       .on('socket', (socket) => {
