@@ -89,7 +89,7 @@ export function createProxy (options) {
     httpModule
       .request(options)
       .on('socket', (socket) => {
-        request.socket.mirror.pipe(requestTransformer(request)).pipe(socket)
+        request.socket.mirror.pipe(requestTransformer(request)).pipe(socket, { end: false })
         socket.mirror = new PassThrough()
         socket.pipe(socket.mirror)
       })
