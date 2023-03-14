@@ -85,8 +85,7 @@ export class ScoopProxy extends ScoopIntercepter {
    */
   get contextOptions () {
     return {
-      proxy: { server: `http:${this.options.proxyHost}:${this.options.proxyPort}` },
-      // proxy: { server: `http://127.0.0.1:1337` },
+      proxy: { server: `http://${this.options.proxyHost}:${this.options.proxyPort}` },
       ignoreHTTPSErrors: true
     }
   }
