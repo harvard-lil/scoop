@@ -58,9 +58,11 @@ export class ScoopProxy extends ScoopIntercepter {
   }
 
   onRequest (request) {
-    if (this.recordExchanges && !this.urlFoundInBlocklist(request)) {
-      const exchange = new ScoopProxyExchange({ requestParsed: request })
-      this.exchanges.push(exchange)
+    const url = request.url.startsWith('/')
+      ? `https://${request.headers.host}${request.url}`
+      : request.url
+    if (this.recordExchanges && !this.foundInBlocklist(url, request)) {
+      this.exchanges.push(new ScoopProxyExchange({ requestParsed: request }))
       this.cacheBody(request)
     }
   }
@@ -68,7 +70,7 @@ export class ScoopProxy extends ScoopIntercepter {
   onResponse (response, request) {
     // there will not be an exchange with this request if we're, for instance, not recording
     const exchange = this.exchanges.find(ex => ex.requestParsed === request)
-    if (exchange && !this.ipFoundInBlocklist(request)) {
+    if (exchange && !this.foundInBlocklist(response.socket.remoteAddress, request)) {
       exchange.responseParsed = response
       response.on('end', () => this.checkExchangeForNoArchive(exchange))
       this.cacheBody(response)
@@ -97,53 +99,20 @@ export class ScoopProxy extends ScoopIntercepter {
    * @param {ScoopProxyExchange} exchange
    * @returns {boolean} - `true` if request was interrupted
    */
-  urlFoundInBlocklist (request) {
-    return false
-    const url = request.url.startsWith('/')
-      ? `https://${request.headers.host}${request.url}`
-      : request.url
-
+  foundInBlocklist (toMatch, request) {
     // Search for a blocklist match:
     // Use the index to pull the original un-parsed rule from options so that the printing matches user expectations
-    const ruleIndex = this.capture.blocklist.findIndex(searchBlocklistFor(url))
+    const ruleIndex = this.capture.blocklist.findIndex(searchBlocklistFor(toMatch))
 
     if (ruleIndex === -1) {
       return false
     }
 
     const rule = this.capture.options.blocklist[ruleIndex]
-    this.capture.log.warn(`Blocking ${url} matching rule ${rule}`)
-    this.capture.provenanceInfo.blockedRequests.push({ url, rule })
+    this.capture.log.warn(`Blocking ${toMatch} matching rule ${rule}`)
+    this.capture.provenanceInfo.blockedRequests.push({ match: toMatch, rule })
 
     request.socket.destroy()
-
-    return true
-  }
-
-  /**
-   * Checks an outgoing request against the blocklist. Interrupts the request it needed.
-   * Keeps trace of blocked requests in `Scoop.provenanceInfo`.
-   *
-   * @param {ScoopProxyExchange} exchange
-   * @returns {boolean} - `true` if request was interrupted
-   */
-  ipFoundInBlocklist (response) {
-    return false
-    const ip = response.socket.remoteAddress
-
-    // Search for a blocklist match:
-    // Use the index to pull the original un-parsed rule from options so that the printing matches user expectations
-    const ruleIndex = this.capture.blocklist.findIndex(searchBlocklistFor(ip))
-
-    if (ruleIndex === -1) {
-      return false
-    }
-
-    const rule = this.capture.options.blocklist[ruleIndex]
-    this.capture.log.warn(`Blocking IP ${ip} matching rule ${rule}`)
-    this.capture.provenanceInfo.blockedRequests.push({ ip, rule })
-
-    response.socket.destroy()
 
     return true
   }
