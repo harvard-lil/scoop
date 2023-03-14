@@ -96,7 +96,14 @@ export function createProxy (options) {
       .on('response', (response) => {
         response.socket.mirror.pipe(responseTransformer(response, request)).pipe(request.socket)
         proxy.emit('response', response, request)
+
+        // The response must be fully consumed else the response.socket listeners will
+        // not get all of the chunks. {@link https://nodejs.org/api/http.html#class-httpclientrequest}
+        response.resume()
       })
+    // ensure the entire request can be consumed. This isn't documented but is here
+    // on the suspicion that it functions similarly to response
+    request.resume()
   })
 
   return proxy
