@@ -2,7 +2,7 @@ import * as http from 'http'
 import * as https from 'https'
 import { TLSSocket } from 'tls'
 import { URL } from 'url'
-import { Transform, PassThrough } from 'node:stream'
+import { PassThrough } from 'node:stream'
 
 const defaults = {
   requestTransformer: (_request) => new PassThrough(),
@@ -41,11 +41,7 @@ export function createProxy (options) {
   const proxy = http.createServer()
 
   proxy.on('connection', (socket) => {
-    socket.mirror = new Transform({
-      transform: (chunk, _encoding, callback) => {
-        process.nextTick(callback, null, chunk)
-      }
-    })
+    socket.mirror = new PassThrough()
     socket.pipe(socket.mirror)
   })
 
@@ -65,6 +61,10 @@ export function createProxy (options) {
   })
 
   proxy.on('request', (request) => {
+    // clear existing pipes from previous requests
+    // otherwise the previous request will be sent to the transformer
+    request.socket.mirror.unpipe()
+
     const urlString = request.url.startsWith('/')
       ? `${UNKNOWN_PROTOCOL}//${request.headers.host}${request.url}`
       : request.url
@@ -82,7 +82,7 @@ export function createProxy (options) {
     httpModule
       .request(options)
       .on('socket', (socket) => {
-        request.socket.mirror.pipe(requestTransformer(request)).pipe(socket, { end: false })
+        request.socket.mirror.pipe(requestTransformer(request)).pipe(socket)
         socket.mirror = new PassThrough()
         socket.pipe(socket.mirror)
       })

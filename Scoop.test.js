@@ -45,7 +45,7 @@ await test('Scoop - capture of a web page.', async (t) => {
   await t.test('Scoop follows redirects', async (_t) => {
     const statusCode = 301
     const { exchanges: [redirect, html] } = await Scoop.capture(`${URL}/redirect?statusCode=${statusCode}&path=test.html`, options)
-    assert.equal(redirect.response.statusCode, statusCode)
+    assert.equal(redirect.response.startLine.split(' ')[1], statusCode.toString())
     assert.equal(html.response.body.toString(), testHtmlFixture.toString())
   })
 

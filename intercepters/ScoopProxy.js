@@ -177,9 +177,8 @@ export class ScoopProxy extends ScoopIntercepter {
    * @returns {Buffer}
    */
   intercept (type, data, request) {
-    // Early exit if not recording exchanges or request is blocked
     const exchange = this.exchanges.find(ex => ex.requestParsed === request)
-    if (!exchange) return data
+    if (!exchange) return data // Early exit if not recording exchanges or request is blocked
 
     const prop = `${type}Raw` // `responseRaw` | `requestRaw`
     exchange[prop] = Buffer.concat([exchange[prop], data], exchange[prop].length + data.length)
