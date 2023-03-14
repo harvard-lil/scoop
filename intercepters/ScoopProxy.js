@@ -28,8 +28,8 @@ export class ScoopProxy extends ScoopIntercepter {
       requestTransformer: this.requestTransformer.bind(this),
       responseTransformer: this.responseTransformer.bind(this)
     })
-      .on('request', (request) => this.onRequest(request))
-      .on('response', (response, request) => this.onResponse(response, request))
+      .on('request', this.onRequest.bind(this))
+      .on('response', this.onResponse.bind(this))
 
     await this.#connection.listen(this.options.proxyPort, this.options.proxyHost, () => {
       this.capture.log.info(`TCP-Proxy-Server started ${JSON.stringify(this.#connection.address())}`)
