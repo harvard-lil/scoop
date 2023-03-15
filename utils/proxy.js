@@ -41,6 +41,7 @@ export function createProxy (options) {
   const proxy = http.createServer()
 
   proxy.on('connection', (socket) => {
+    socket.setMaxListeners(100) // there will be a lot of concurrent requests
     socket.mirror = new PassThrough()
     socket.pipe(socket.mirror)
   })
