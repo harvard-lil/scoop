@@ -1,6 +1,6 @@
 # Scoop 🍨
 
-[![npm version](https://badge.fury.io/js/@harvard-lil%2Fscoop.svg)](https://badge.fury.io/js/@harvard-lil%2Fscoop) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
+[![npm version](https://badge.fury.io/js/@harvard-lil%2Fscoop.svg)](https://badge.fury.io/js/@harvard-lil%2Fscoop) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com) [![Linting](https://github.com/harvard-lil/scoop/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/harvard-lil/scoop/actions/workflows/lint.yml) [![Test suite](https://github.com/harvard-lil/scoop/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/harvard-lil/scoop/actions/workflows/test.yml)
 
 High-fidelity, browser-based, single-page web archiving library and CLI. 
 
@@ -16,6 +16,8 @@ import { Scoop } from '@harvard-lil/scoop'
 const capture = await Scoop.capture('https://lil.law.harvard.edu')
 const wacz = await capture.toWACZ()
 ```
+
+<a href="https://tools.perma.cc"><img src="https://github.com/harvard-lil/tools.perma.cc/blob/main/perma-tools.png?raw=1" alt="Perma Tools" width="150"></a>
 
 ---
 
