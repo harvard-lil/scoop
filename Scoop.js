@@ -432,7 +432,7 @@ export class Scoop {
         if (this.state === Scoop.states.PARTIAL) {
           this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} - ended due to max time or size reached.`)
         } else {
-          this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} - failed.`)
+          this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} - failed`)
           this.log.trace(err)
         }
       }

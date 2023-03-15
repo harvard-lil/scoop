@@ -97,6 +97,7 @@ export async function scoopToWACZ (capture, includeRaw = false, signingServer) {
       input: warcPath,
       output: waczPath,
       detectPages: false,
+      log: capture.log,
       // Capture info
       url: capture.url,
       ts: capture.startedAt,
@@ -197,7 +198,7 @@ export async function scoopToWACZ (capture, includeRaw = false, signingServer) {
   // Process WACZ file
   //
   try {
-    await transformer.process(false)
+    await transformer.process(true)
     waczData = await fs.readFile(waczPath)
   } catch (err) {
     capture.log.trace(err)
