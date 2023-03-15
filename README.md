@@ -123,10 +123,14 @@ scoop "https://lil.law.harvard.edu" -f warc -o my-collection/lil.warc
 scoop "https://lil.law.harvard.edu" --headless false
 
 # Although it comes with "good defaults", scoop is highly configurable ...
+# timeout-related options are good 
 scoop "https://lil.law.harvard.edu" --capture-video-as-attachment false --screenshot false --capture-window-x 320 --capture-window-y 480 --capture-timeout 30000 --max-capture-size 100000 --signing-url "https://example.com/sign"
 
 # ... use --help to list the available options, and see what the defaults are.
 scoop --help
+
+# Timeout-related options are good dials to turn first when trying to customize "how much" of a page to capture.
+scoop "https://lil.law.harvard.edu" --capture-timeout 90000 --load-timeout 60000 --network-idle-timeout 30000
 ```
 
 <details>

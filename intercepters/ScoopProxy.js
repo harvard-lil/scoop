@@ -100,9 +100,17 @@ export class ScoopProxy extends ScoopIntercepter {
     const ip = session._dst.remoteAddress
 
     // https doesn't have the protocol or host in the path so add it here
-    const url = (session.request.path[0] === '/')
-      ? `https://${session.request.headers.host}${session.request.path}`
-      : session.request.path
+    let url = ''
+
+    try {
+      url = (session.request.path[0] === '/')
+        ? `https://${session.request.headers.host}${session.request.path}`
+        : session.request.path
+    } catch (err) {
+      this.capture.log.trace(err)
+      this.capture.log.warn('A session was skipped (missing "path")')
+      return true
+    }
 
     // Search for a blocklist match:
     // Use the index to pull the original un-parsed rule from options so that the printing matches user expectations
