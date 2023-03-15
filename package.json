@@ -9,12 +9,13 @@
   },
   "files": [
     "*.js",
-    "__*.js",
-    "example.js",
+    "!__*.js",
+    "!example.js",
     "!*.test.js",
     "*.sh",
     ".keep",
-    "*/.keep"
+    "*/.keep",
+    "assets/templates/*.njk"
   ],
   "engines": {
     "node": ">=18.0.0"
