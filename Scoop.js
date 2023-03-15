@@ -255,7 +255,7 @@ export class Scoop {
           try {
             await access(behaviorsPath)
           } catch (_err) {
-            behaviorsPath = `${CONSTANTS.BASE_PATH}node_modules/browsertrix-behaviors/dist/behaviors.js`
+            behaviorsPath = `${CONSTANTS.BASE_PATH}/node_modules/browsertrix-behaviors/dist/behaviors.js`
           }
 
           await page.addInitScript({
