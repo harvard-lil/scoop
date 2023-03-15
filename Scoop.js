@@ -3,7 +3,6 @@
 import os from 'os'
 import { readFile, rm, readdir, mkdir, mkdtemp, access } from 'fs/promises'
 import { constants as fsConstants } from 'node:fs'
-import { sep } from 'path'
 import { createHash } from 'crypto'
 
 import log from 'loglevel'
@@ -250,8 +249,17 @@ export class Scoop {
       steps.push({
         name: 'Browser scripts',
         setup: async (page) => {
+          // Determine path of `behaviors.js`
+          let behaviorsPath = './node_modules/browsertrix-behaviors/dist/behaviors.js'
+
+          try {
+            await access(behaviorsPath)
+          } catch (_err) {
+            behaviorsPath = `${CONSTANTS.BASE_PATH}node_modules/browsertrix-behaviors/dist/behaviors.js`
+          }
+
           await page.addInitScript({
-            path: `${CONSTANTS.BASE_PATH}${sep}node_modules${sep}browsertrix-behaviors${sep}dist${sep}behaviors.js`
+            path: behaviorsPath
           })
           await page.addInitScript({
             content: `

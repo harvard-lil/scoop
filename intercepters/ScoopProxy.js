@@ -108,8 +108,8 @@ export class ScoopProxy extends ScoopIntercepter {
         : session.request.path
     } catch (err) {
       this.capture.log.trace(err)
-      this.capture.log.warn('A session was skipped (missing "path")')
-      return true
+      this.capture.log.warn('A session could not be intercepted for comparison against the blocklist (parsing error). Skipping.')
+      return false
     }
 
     // Search for a blocklist match:
