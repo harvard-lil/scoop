@@ -1,5 +1,6 @@
 import * as http from 'http'
 import * as https from 'https'
+import * as crypto from 'node:crypto'
 import { TLSSocket } from 'tls'
 import { URL } from 'url'
 import { PassThrough } from 'node:stream'
@@ -79,7 +80,9 @@ export function createProxy (options) {
     const options = {
       port: parseInt(url.port) || (protocol === 'https:' ? 443 : 80),
       host: url.hostname,
-      servername: url.hostname
+      servername: url.hostname,
+      rejectUnauthorized: false,
+      secureOptions: crypto.constants.SSL_OP_LEGACY_SERVER_CONNECT
     }
 
     const httpModule = protocol === 'https:' ? https : http
