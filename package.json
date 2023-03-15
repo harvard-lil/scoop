@@ -1,6 +1,6 @@
 {
   "name": "@harvard-lil/scoop",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "🍨 High-fidelity, browser-based, single-page web archiving library and CLI.",
   "main": "Scoop.js",
   "type": "module",
@@ -57,7 +57,7 @@
     "node-stream-zip": "^1.15.0",
     "nunjucks": "^3.2.3",
     "playwright": "^1.31.2",
-    "transparent-proxy": "^1.9.1",
+    "transparent-proxy": "1.9.1",
     "uuid": "^9.0.0",
     "warcio": "^2.0.1"
   },
