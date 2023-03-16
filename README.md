@@ -99,6 +99,23 @@ npm install @harvard-lil/scoop --save
 sudo npx playwright install-deps
 ```
 
+<details>
+  <summary><strong>Trouble installing the CLI?</strong></summary>
+
+
+- Make sure you are running Node JS 18+ (`node -v`)
+- Permissions issues are a common when installing `npm` packages globally for the first time. 
+See [npm's documentation](https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally) for solutions.
+- [npx may be used](https://docs.npmjs.com/cli/v9/commands/npx) as an alternative to a global installation:
+```bash
+# In a new folder
+npm init
+npm install @havard-lil/scoop
+npx scoop "https://example.com"
+```
+</details>
+
+
 [👆 Back to the summary](#summary)
 
 ---
