@@ -65,7 +65,7 @@ allowing users to cryptographically sign their captures.
 Playback software such as [replayweb.page](https://replayweb.page/) can be used to explore this sample capture.
 - 📷 [Entry points](/.github/assets/screenshot-entry-points.png?raw=true)
 - 📷 [Web Capture](/.github/assets/screenshot-web-capture.png?raw=true)
-- 📷 [Provenance Summary](/.github/assets/screenshot-web-capture.png?raw=true)
+- 📷 [Provenance Summary](/.github/assets/screenshot-provenance-summary.png?raw=true)
 - 📷 [PDF Snapshot](/.github/assets/screenshot-pdf-snapshot.png?raw=true)
 - 📷 Embedded videos as attachments [[1]](/.github/assets/screenshot-video-as-attachment-1.png?raw=true) [[2]](/.github/assets/screenshot-video-as-attachment-2.png?raw=true)
 
