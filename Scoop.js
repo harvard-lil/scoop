@@ -239,6 +239,15 @@ export class Scoop {
       }
     })
 
+    // Push step: Capture page info
+    steps.push({
+      name: 'Capture page info',
+      alwaysRun: options.attachmentsBypassLimits,
+      main: async (page) => {
+        await this.#capturePageInfo(page)
+      }
+    })
+
     // Push step: Browser scripts
     if (
       options.grabSecondaryResources ||
@@ -367,15 +376,6 @@ export class Scoop {
       })
     }
 
-    // Push step: Capture page info
-    steps.push({
-      name: 'Capture page info',
-      alwaysRun: options.attachmentsBypassLimits,
-      main: async (page) => {
-        await this.#capturePageInfo(page)
-      }
-    })
-
     // Push step: noarchive directive detection
     // TODO: Move this logic back to ScoopProxy.intercept() when new proxy implementation is ready.
     steps.push({
@@ -437,19 +437,25 @@ export class Scoop {
         if (shouldRun === true) {
           this.log.info(`STEP [${i + 1}/${steps.length}]: ${step.name}`)
 
+          /** @type {?function} */
+          let stateCheckInterval = null
+
           await Promise.race([
             // Run current step
             step.main(page),
 
             // Check capture state every second - so current step can be interrupted if state changes
             new Promise(resolve => {
-              setInterval(() => {
+              stateCheckInterval = setInterval(() => {
                 if (this.state !== Scoop.states.CAPTURE) {
-                  resolve()
+                  resolve(true)
                 }
               }, 1000)
             })
           ])
+
+          // Clear "state checker" interval in case it is still running
+          clearInterval(stateCheckInterval)
         } else {
           this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} (skipped)`)
         }
@@ -551,7 +557,9 @@ export class Scoop {
   async teardown () {
     this.log.info('Closing browser and intercepter')
     await this.intercepter.teardown()
+
     await this.#browser.close()
+
     this.exchanges = this.intercepter.exchanges.concat(this.exchanges)
 
     this.log.info(`Clearing capture-specific temporary folder ${this.captureTmpFolderPath}`)

@@ -154,7 +154,7 @@ scoop "https://lil.law.harvard.edu" --capture-timeout 90000 --load-timeout 60000
   <summary><strong>See: Output of scoop --help 🔍</strong></summary>
 
 ```
-Usage: @harvard-lil/scoop [options] <url>
+Usage: scoop [options] <url>
 
 🍨 High-fidelity, browser-based, single-page web archiving library and CLI.
 More info: https://github.com/harvard-lil/scoop

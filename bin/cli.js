@@ -19,7 +19,7 @@ const defaults = Scoop.defaults
 // Program info
 //
 program
-  .name(PACKAGE_INFO.name)
+  .name('scoop')
   .description(`${PACKAGE_INFO.description}\nMore info: https://github.com/harvard-lil/scoop`)
   .version(PACKAGE_INFO.version, '-v, --version', 'Display Scoop and Scoop CLI version.')
   .helpOption(null, 'Show options list.')
