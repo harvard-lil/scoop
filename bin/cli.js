@@ -19,7 +19,7 @@ const defaults = Scoop.defaults
 // Program info
 //
 program
-  .name(PACKAGE_INFO.name)
+  .name('scoop')
   .description(`${PACKAGE_INFO.description}\nMore info: https://github.com/harvard-lil/scoop`)
   .version(PACKAGE_INFO.version, '-v, --version', 'Display Scoop and Scoop CLI version.')
   .helpOption(null, 'Show options list.')
@@ -82,6 +82,12 @@ program.addOption(
   new Option('--provenance-summary <bool>', 'Add provenance summary to capture?')
     .choices(['true', 'false'])
     .default(String(defaults.captureVideoAsAttachment))
+)
+
+program.addOption(
+  new Option('--attachments-bypass-limits <bool>', 'If active, attachments will not count towards time and size constraints imposed on capture.')
+    .choices(['true', 'false'])
+    .default(String(defaults.attachmentsBypassLimits))
 )
 
 //

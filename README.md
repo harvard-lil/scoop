@@ -96,7 +96,7 @@ npm install -g @harvard-lil/scoop
 npm install @harvard-lil/scoop --save
 
 # In both cases, you may need to install Playwright's dependencies: 
-sudo npx playwright install-deps
+sudo npx playwright install-deps chromium
 ```
 
 <details>
@@ -170,6 +170,7 @@ Options:
   --dom-snapshot <bool>                           Add DOM snapshot step to capture? (choices: "true", "false", default: "false")
   --capture-video-as-attachment <bool>            Add capture video(s) as attachment(s) step to capture? (choices: "true", "false", default: "true")
   --provenance-summary <bool>                     Add provenance summary to capture? (choices: "true", "false", default: "true")
+  --attachments-bypass-limits <bool>              If active, attachments will not count towards time and size constraints imposed on capture. (choices: "true", "false", default: "true")
   --capture-timeout <number>                      Maximum time allocated to capture process before hard cut-off, in ms. (default: 60000)
   --load-timeout <number>                         Max time Scoop will wait for the page to load, in ms. (default: 20000)
   --network-idle-timeout <number>                 Max time Scoop will wait for the in-browser networking tasks to complete, in ms. (default: 20000)

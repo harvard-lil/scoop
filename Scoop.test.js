@@ -99,7 +99,7 @@ await test('Scoop - capture of a non-web resource.', async (t) => {
   const PORT = 3000
   const URL = `http://localhost:${PORT}`
 
-  const options = { logLevel: 'silent', headless: true, blocklist: [] }
+  const options = { logLevel: 'silent', headless: true, blocklist: [], attachmentsBypassLimits: false }
 
   const testPdfFixture = await readFile(`${FIXTURES_PATH}test.pdf`)
 
@@ -125,9 +125,10 @@ await test('Scoop - capture of a non-web resource.', async (t) => {
   })
 
   await t.test('Scoop out-of-browser capture accounts for captureTimeout', async (_t) => {
-    const { exchanges: [html] } = await Scoop.capture(`${URL}/test.pdf`, { ...options, captureTimeout: 10 })
-    assert.notEqual(html.response.body.byteLength, 0)
-    assert.notEqual(html.response.body, testPdfFixture)
+    const { exchanges: [html] } = await Scoop.capture(`${URL}/test.pdf`, { ...options, captureTimeout: 100 })
+    assert.equal(html, undefined) // Scoop's intercepter shouldn't have had time to boot up
+    // assert.notEqual(html.response.body.byteLength, testPdfFixture.byteLength)
+    // assert.notEqual(html.response.body, testPdfFixture)
   })
 
   /*
