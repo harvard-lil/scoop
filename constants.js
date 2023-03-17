@@ -11,11 +11,6 @@ import chalk from 'chalk'
 export const SOFTWARE = 'Scoop @ Harvard Library Innovation Lab'
 
 /**
- * The current version of Scoop. Also used in provenance data.
- */
-export const VERSION = '0.0.1'
-
-/**
  * The version of WARC this library exports
  */
 export const WARC_VERSION = '1.1'
@@ -85,3 +80,8 @@ export const LOGGING_COLORS = {
 export const PACKAGE_INFO = Object.freeze(
   JSON.parse(await fs.readFile(join(BASE_PATH, 'package.json')))
 )
+
+/**
+ * The current version of Scoop. Also used in provenance data.
+ */
+export const VERSION = PACKAGE_INFO.version
