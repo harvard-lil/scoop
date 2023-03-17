@@ -5,6 +5,9 @@ import { TLSSocket } from 'tls'
 import { URL } from 'url'
 import { PassThrough } from 'node:stream'
 
+const httpAgent = new http.Agent({ keepAlive: true })
+const httpsAgent = new https.Agent({ keepAlive: true })
+
 const defaults = {
   requestTransformer: (_request) => new PassThrough(),
   responseTransformer: (_response, _request) => new PassThrough(),
@@ -127,6 +130,7 @@ export function createProxy (options) {
       : 'http:'
 
     const options = {
+      agent: protocol === 'https:' ? httpsAgent : httpAgent,
       port: parseInt(url.port) || (protocol === 'https:' ? 443 : 80),
       host: url.hostname,
       servername: url.hostname,
