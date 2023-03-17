@@ -3,7 +3,7 @@ import { Transform } from 'node:stream'
 import { ScoopIntercepter } from './ScoopIntercepter.js'
 import { ScoopProxyExchange } from '../exchanges/index.js'
 import { searchBlocklistFor } from '../utils/blocklist.js'
-import { createProxy } from '../utils/proxy.js'
+import { createServer } from '../utils/proxy.js'
 
 /**
  * @class ScoopProxy
@@ -24,7 +24,7 @@ export class ScoopProxy extends ScoopIntercepter {
    * Initializes the proxy server
    */
   async setup () {
-    this.#connection = createProxy({
+    this.#connection = createServer({
       requestTransformer: this.requestTransformer.bind(this),
       responseTransformer: this.responseTransformer.bind(this)
     })

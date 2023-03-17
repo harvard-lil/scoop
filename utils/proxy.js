@@ -49,7 +49,7 @@ const defaults = {
  * @param {?(request:http.IncomingMessage) => Promise<{key: string, cert: string}>|{key: string, cert: string}} keyAndCertGenerator - A function which receives the parsed request headers and returns a key and cert to be used in the TLS connection to the server, optionally wrapped in a Promise.
  * @returns {http.Server}
  */
-export function createProxy (options) {
+export function createServer (options) {
   // Filter options and backfill with defaults.
   // TODO: allow select options to be passed through to http.createServer
   const {
