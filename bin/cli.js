@@ -84,6 +84,12 @@ program.addOption(
     .default(String(defaults.captureVideoAsAttachment))
 )
 
+program.addOption(
+  new Option('--attachments-bypass-limits <bool>', 'If active, attachments will not count towards time and size constraints imposed on capture.')
+    .choices(['true', 'false'])
+    .default(String(defaults.attachmentsBypassLimits))
+)
+
 //
 // Timeouts
 //

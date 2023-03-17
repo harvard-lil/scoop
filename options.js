@@ -12,6 +12,7 @@ export const defaults = {
   domSnapshot: false,
   captureVideoAsAttachment: true,
   provenanceSummary: true,
+  attachmentsBypassLimits: true,
 
   captureTimeout: 60 * 1000,
   loadTimeout: 20 * 1000,

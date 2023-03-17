@@ -291,6 +291,7 @@ export class Scoop {
     // Push step: scroll up
     steps.push({
       name: 'Scroll-up',
+      alwaysRun: options.attachmentsBypassLimits,
       main: async (page) => {
         await page.evaluate(() => window.scrollTo(0, 0))
       }
@@ -300,12 +301,14 @@ export class Scoop {
     if (options.screenshot) {
       steps.push({
         name: 'Screenshot',
+        alwaysRun: options.attachmentsBypassLimits,
         main: async (page) => {
           const url = 'file:///screenshot.png'
           const httpHeaders = new Headers({ 'content-type': 'image/png' })
           const body = await page.screenshot({ fullPage: true })
           const isEntryPoint = true
           const description = `Capture Time Screenshot of ${this.url}`
+
           this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description)
         }
       })
@@ -315,6 +318,7 @@ export class Scoop {
     if (options.domSnapshot) {
       steps.push({
         name: 'DOM snapshot',
+        alwaysRun: options.attachmentsBypassLimits,
         main: async (page) => {
           const url = 'file:///dom-snapshot.html'
           const httpHeaders = new Headers({
@@ -334,6 +338,7 @@ export class Scoop {
     if (options.pdfSnapshot) {
       steps.push({
         name: 'PDF snapshot',
+        alwaysRun: options.attachmentsBypassLimits,
         main: async (page) => {
           await this.#takePdfSnapshot(page)
         }
@@ -344,6 +349,7 @@ export class Scoop {
     if (options.captureVideoAsAttachment) {
       steps.push({
         name: 'Out-of-browser capture of video as attachment (if any)',
+        alwaysRun: options.attachmentsBypassLimits,
         main: async () => {
           await this.#captureVideoAsAttachment()
         }
@@ -354,7 +360,7 @@ export class Scoop {
     if (options.provenanceSummary) {
       steps.push({
         name: 'Provenance summary',
-        alwaysRun: true,
+        alwaysRun: options.attachmentsBypassLimits,
         main: async (page) => {
           await this.#captureProvenanceInfo(page)
         }
@@ -364,7 +370,7 @@ export class Scoop {
     // Push step: Capture page info
     steps.push({
       name: 'Capture page info',
-      alwaysRun: true,
+      alwaysRun: options.attachmentsBypassLimits,
       main: async (page) => {
         await this.#capturePageInfo(page)
       }
@@ -430,7 +436,20 @@ export class Scoop {
 
         if (shouldRun === true) {
           this.log.info(`STEP [${i + 1}/${steps.length}]: ${step.name}`)
-          await step.main(page)
+
+          await Promise.race([
+            // Run current step
+            step.main(page),
+
+            // Check capture state every second - so current step can be interrupted if state changes
+            new Promise(resolve => {
+              setInterval(() => {
+                if (this.state !== Scoop.states.CAPTURE) {
+                  resolve()
+                }
+              }, 1000)
+            })
+          ])
         } else {
           this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} (skipped)`)
         }
@@ -1007,7 +1026,7 @@ export class Scoop {
       const isEntryPoint = true
       const description = 'Provenance Summary'
 
-      this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description, true)
+      this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description)
     } catch (err) {
       throw new Error(`Error while creating exchange for file:///provenance-summary.html. ${err}`)
     }
@@ -1022,12 +1041,11 @@ export class Scoop {
    * @param {Buffer} body
    * @param {boolean} [isEntryPoint=false]
    * @param {string} [description='']
-   * @param {boolean} [force=false] if `true`, this exchange will be added to the list regardless of capture time and size constraints.
    * @returns {boolean} true if generated exchange is successfully added
    */
-  addGeneratedExchange (url, headers, body, isEntryPoint = false, description = '', force = false) {
-    // Check maxCaptureSize and capture state unless `force` was passed.
-    if (force === false) {
+  addGeneratedExchange (url, headers, body, isEntryPoint = false, description = '') {
+    // Check maxCaptureSize and capture state unless `attachmentsBypassLimits` flag was raised.
+    if (this.options.attachmentsBypassLimits === false) {
       const remainingSpace = this.options.maxCaptureSize - this.intercepter.byteLength
 
       if (this.state !== Scoop.states.CAPTURE || body.byteLength >= remainingSpace) {
