@@ -5,6 +5,11 @@ import { TLSSocket } from 'tls'
 import { URL } from 'url'
 import { PassThrough } from 'node:stream'
 
+const UNKNOWN_PROTOCOL = 'unknown:'
+
+/**
+ * Use http agents to keep sockets alive for greater efficiency
+ */
 const httpAgent = new http.Agent({ keepAlive: true })
 const httpsAgent = new https.Agent({ keepAlive: true })
 
@@ -32,8 +37,6 @@ const defaults = {
     }
   }
 }
-
-const UNKNOWN_PROTOCOL = 'unknown:'
 
 /**
  * Creates a new proxy using the provided options.
