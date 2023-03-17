@@ -85,7 +85,7 @@ program.addOption(
 )
 
 program.addOption(
-  new Option('--attachments-bypass-limits <bool>', 'If active, attachments will not count towards time and size constraints imposed on capture.')
+  new Option('--attachments-bypass-limits <bool>', 'If active, attachments will not count towards time and size constraints imposed on capture (--capture-timeout, --max--capture-size).')
     .choices(['true', 'false'])
     .default(String(defaults.attachmentsBypassLimits))
 )
