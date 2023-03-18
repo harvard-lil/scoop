@@ -1,3 +1,4 @@
+import * as crypto from 'node:crypto'
 import { Transform } from 'node:stream'
 
 import { ScoopIntercepter } from './ScoopIntercepter.js'
@@ -26,7 +27,14 @@ export class ScoopProxy extends ScoopIntercepter {
   async setup () {
     this.#connection = createServer({
       requestTransformer: this.requestTransformer.bind(this),
-      responseTransformer: this.responseTransformer.bind(this)
+      responseTransformer: this.responseTransformer.bind(this),
+      serverOptions: () => {
+        return {
+          // This flag allows legacy insecure renegotiation between OpenSSL and unpatched servers
+          // @see {@link https://stackoverflow.com/questions/74324019/allow-legacy-renegotiation-for-nodejs}
+          secureOptions: crypto.constants.SSL_OP_LEGACY_SERVER_CONNECT
+        }
+      }
     })
       .on('request', this.onRequest.bind(this))
       .on('response', this.onResponse.bind(this))
