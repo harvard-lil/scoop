@@ -1,7 +1,7 @@
 import * as http from 'http'
 import { TLSSocket } from 'tls'
 import { Transform } from 'node:stream'
-import { createServer } from './utils/proxy.js'
+import { createServer } from './Portal.js'
 
 const PORT = 1337
 const HOST = '127.0.0.1'
