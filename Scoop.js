@@ -400,7 +400,7 @@ export class Scoop {
       name: 'Teardown',
       alwaysRun: true,
       main: async () => {
-        if (this.state !== Scoop.states.PARTIAL) {
+        if (this.state === Scoop.states.CAPTURE) {
           this.state = Scoop.states.COMPLETE
         }
         await this.teardown()
@@ -439,27 +439,33 @@ export class Scoop {
     while (i++ < steps.length - 1) {
       const step = steps[i]
 
-      // Edge cases:
-      // Page can't still be "about:blank" after step #2
-      // This condition must interrupt capture immediately when capturing a web page.
+      //
+      // Edge cases requiring immediate interruption
+      //
+      let shouldStop = false
+
+      // Page is a web document and is still "about:blank" after step #2
       if (this.targetUrlIsWebPage && i > 2 && page.url() === 'about:blank') {
-        await page.close()
-        this.state = Scoop.states.FAILED
         this.log.error('Navigation to page failed (about:blank).')
-        await this.teardown()
-        break
+        shouldStop = true
       }
 
-      // Page automatically closed
-      // This condition must interrupt capture in all cases.
+      // Page was closed
       if (page.isClosed()) {
-        this.state = Scoop.states.FAILED
         this.log.error('Page closed before it could be captured.')
+        shouldStop = true
+      }
+
+      if (shouldStop) {
+        this.state = Scoop.states.FAILED
         await this.teardown()
         break
       }
 
-      // Steps only run if Scoop is in CAPTURE state, unless `alwaysRun` is set.
+      //
+      // If capture was not interrupted, run steps:
+      // - Only if state is `CAPTURE`, unless `alwaysRun` is set.
+      //
       try {
         const shouldRun = this.state === Scoop.states.CAPTURE || step.alwaysRun
 
@@ -488,8 +494,10 @@ export class Scoop {
         } else {
           this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} (skipped)`)
         }
+      //
       // On error:
-      // only deliver full trace if error is not due to time / size limit reached.
+      // - Only deliver full trace if error is not due to time / size limit reached.
+      //
       } catch (err) {
         if (this.state === Scoop.states.PARTIAL) {
           this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} - ended due to max time or size reached.`)
