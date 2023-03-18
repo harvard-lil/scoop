@@ -73,6 +73,14 @@ export class ScoopProxyExchange extends ScoopExchange {
     this._responseRaw = val
   }
 
+  cacheBody (message) {
+    message.on('data', (data) => {
+      message.body = message.body
+        ? Buffer.concat([message.body, data], message.body.length + data.length)
+        : data
+    })
+  }
+
   /**
    * @type {?IncomingMessage}
    * @private
@@ -86,6 +94,7 @@ export class ScoopProxyExchange extends ScoopExchange {
 
   set requestParsed (val) {
     this._request = null
+    this.cacheBody(val)
     this._requestParsed = val
   }
 
@@ -102,6 +111,7 @@ export class ScoopProxyExchange extends ScoopExchange {
 
   set responseParsed (val) {
     this._response = null
+    this.cacheBody(val)
     this._responseParsed = val
   }
 

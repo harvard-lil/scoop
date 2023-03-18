@@ -57,21 +57,12 @@ export class ScoopProxy extends ScoopIntercepter {
     return true
   }
 
-  cacheBody (message) {
-    message.on('data', (data) => {
-      message.body = message.body
-        ? Buffer.concat([message.body, data], message.body.length + data.length)
-        : data
-    })
-  }
-
   onRequest (request) {
     const url = request.url.startsWith('/')
       ? `https://${request.headers.host}${request.url}`
       : request.url
     if (this.recordExchanges && !this.foundInBlocklist(url, request)) {
       this.exchanges.push(new ScoopProxyExchange({ requestParsed: request }))
-      this.cacheBody(request)
     }
   }
 
@@ -81,7 +72,6 @@ export class ScoopProxy extends ScoopIntercepter {
     if (exchange && !this.foundInBlocklist(response.socket.remoteAddress, request)) {
       exchange.responseParsed = response
       response.on('end', () => this.checkExchangeForNoArchive(exchange))
-      this.cacheBody(response)
     }
   }
 
