@@ -71,6 +71,13 @@ export class Scoop {
   url = ''
 
   /**
+   * Is the target url a web page?
+   * Assumed `true` until detected otherwise.
+   * @type {boolean}
+   */
+  targetUrlIsWebPage = true
+
+  /**
    * Current settings.
    * @type {ScoopOptions}
    */
@@ -231,9 +238,9 @@ export class Scoop {
       }
     })
 
-    // Push step: Initial page load
+    // Push step: Wait for initial page load
     steps.push({
-      name: 'Initial page load',
+      name: 'Wait for initial page load',
       main: async (page) => {
         await page.goto(this.url, { waitUntil: 'load', timeout: options.loadTimeout })
       }
@@ -393,7 +400,9 @@ export class Scoop {
       name: 'Teardown',
       alwaysRun: true,
       main: async () => {
-        this.state = Scoop.states.COMPLETE
+        if (this.state === Scoop.states.CAPTURE) {
+          this.state = Scoop.states.COMPLETE
+        }
         await this.teardown()
       }
     })
@@ -430,7 +439,33 @@ export class Scoop {
     while (i++ < steps.length - 1) {
       const step = steps[i]
 
-      // Steps only run if Scoop is in CAPTURE state, unless `alwaysRun` is set.
+      //
+      // Edge cases requiring immediate interruption
+      //
+      let shouldStop = false
+
+      // Page is a web document and is still "about:blank" after step #2
+      if (this.targetUrlIsWebPage && i > 2 && page.url() === 'about:blank') {
+        this.log.error('Navigation to page failed (about:blank).')
+        shouldStop = true
+      }
+
+      // Page was closed
+      if (page.isClosed()) {
+        this.log.error('Page closed before it could be captured.')
+        shouldStop = true
+      }
+
+      if (shouldStop) {
+        this.state = Scoop.states.FAILED
+        await this.teardown()
+        break
+      }
+
+      //
+      // If capture was not interrupted, run steps:
+      // - Only if state is `CAPTURE`, unless `alwaysRun` is set.
+      //
       try {
         const shouldRun = this.state === Scoop.states.CAPTURE || step.alwaysRun
 
@@ -459,8 +494,10 @@ export class Scoop {
         } else {
           this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} (skipped)`)
         }
+      //
       // On error:
-      // only deliver full trace if error is not due to time / size limit reached.
+      // - Only deliver full trace if error is not due to time / size limit reached.
+      //
       } catch (err) {
         if (this.state === Scoop.states.PARTIAL) {
           this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} - ended due to max time or size reached.`)
@@ -557,7 +594,6 @@ export class Scoop {
   async teardown () {
     this.log.info('Closing browser and intercepter')
     await this.intercepter.teardown()
-
     await this.#browser.close()
 
     this.exchanges = this.intercepter.exchanges.concat(this.exchanges)
@@ -593,10 +629,19 @@ export class Scoop {
     //
     try {
       const before = new Date()
+
+      // Timeout = a 10th of captureTimeout if >= 1 second, 1 second otherwise.
+      const timeout = this.options.captureTimeout / 10 > 1000 ? this.options.captureTimeout / 10 : 1000
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), timeout)
+
       const headRequest = await fetch(this.url, {
         method: 'HEAD',
-        timeout: this.options.loadTimeout
+        signal: controller.signal
       })
+
+      clearTimeout(timeoutId)
+
       const after = new Date()
 
       headRequestTimeMs = after - before
@@ -615,6 +660,7 @@ export class Scoop {
       return
     }
 
+    this.targetUrlIsWebPage = false
     this.log.warn(`Requested URL is not a web page (detected: ${contentType})`)
     this.log.info('Scoop will attempt to capture this resource out-of-browser')
 
@@ -692,7 +738,7 @@ export class Scoop {
       }
     })
 
-    if (!this.pageInfo.faviconUrl) {
+    if (!this.pageInfo?.faviconUrl) {
       return
     }
 

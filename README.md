@@ -222,6 +222,7 @@ const capture = await Scoop.capture(url, options)
 - [`Scoop.toWACZ()` method](https://github.com/harvard-lil/scoop/blob/main/Scoop.js#L1138)
 - [`Scoop.toWARC()` method](https://github.com/harvard-lil/scoop/blob/main/Scoop.js#L1126)
 - [`Scoop.fromWACZ()` method (experimental)](https://github.com/harvard-lil/scoop/blob/main/Scoop.js#L1117)
+- [Possible values of the `Scoop.state` property](https://github.com/harvard-lil/scoop/blob/main/Scoop.js#L45)
 
 
 ### Example: Capture with default settings
