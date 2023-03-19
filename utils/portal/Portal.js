@@ -86,7 +86,9 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
         clientSocket.mirror.pipe(requestTransformer(request)).pipe(serverSocket)
 
         serverSocket.on('connect', async () => {
-          if (request.method === 'CONNECT') {
+          proxy.emit('connected', serverSocket, request)
+          // serverSocket may be destroyed via a 'connected' event listener
+          if (!serverSocket.destroyed && request.method === 'CONNECT') {
             // Replace old net.Socket with new tls.Socket and attach parser and event listeners
             // @see {@link https://nodejs.org/api/http.html#event-connection}
             const options = await clientOptions(request)

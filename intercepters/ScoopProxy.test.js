@@ -41,7 +41,7 @@ test('contextOptions returns proxy information in a format that can be directly 
   assert.equal(contextOptions.proxy.server, `http://${testDefaults.proxyHost}:${testDefaults.proxyPort}`)
 })
 
-test('foundInBlocklist should detect and interrupt blocklisted exchanges.', async (_t) => {
+test('findMatchingBlocklistRule should return the rule that matches the provided value.', async (_t) => {
   const capture = new Scoop(NON_BLOCKLISTED_URL, testDefaults)
   const intercepter = capture.intercepter
 
@@ -52,22 +52,12 @@ test('foundInBlocklist should detect and interrupt blocklisted exchanges.', asyn
 
   for (const scenario of scenarios) {
     const { path, remoteAddress, shouldBeInterrupted } = scenario
-    const request = { socket: new PassThrough() }
 
-    assert(!request.socket.destroyed)
     assert.equal(
-      intercepter.foundInBlocklist(path, request) || intercepter.foundInBlocklist(remoteAddress, request),
+      !!(intercepter.findMatchingBlocklistRule(path) || intercepter.findMatchingBlocklistRule(remoteAddress)),
       shouldBeInterrupted
     )
-    assert.equal(request.socket.destroyed, shouldBeInterrupted)
   }
-})
-
-test('intercept returns undefined when no matching exchange with provided request is not found due to blocklisting.', async (_t) => {
-  const capture = new Scoop(NON_BLOCKLISTED_URL, testDefaults)
-  const intercepter = capture.intercepter
-
-  assert.equal(intercepter.intercept('request', Buffer.from(''), {}), undefined)
 })
 
 test('recordExchanges flag actively controls whether records are added to exchanges list.', async (_t) => {
