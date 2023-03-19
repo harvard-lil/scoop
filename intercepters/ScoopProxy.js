@@ -24,28 +24,27 @@ export class ScoopProxy extends ScoopIntercepter {
   /**
    * Initializes the proxy server
    */
-  async setup () {
-    this.#connection = createServer({
-      requestTransformer: this.requestTransformer.bind(this),
-      responseTransformer: this.responseTransformer.bind(this),
-      serverOptions: () => {
-        return {
-          // This flag allows legacy insecure renegotiation between OpenSSL and unpatched servers
-          // @see {@link https://stackoverflow.com/questions/74324019/allow-legacy-renegotiation-for-nodejs}
-          secureOptions: crypto.constants.SSL_OP_LEGACY_SERVER_CONNECT
+  setup () {
+    return new Promise(resolve => {
+      this.#connection = createServer({
+        requestTransformer: this.requestTransformer.bind(this),
+        responseTransformer: this.responseTransformer.bind(this),
+        serverOptions: () => {
+          return {
+            // This flag allows legacy insecure renegotiation between OpenSSL and unpatched servers
+            // @see {@link https://stackoverflow.com/questions/74324019/allow-legacy-renegotiation-for-nodejs}
+            secureOptions: crypto.constants.SSL_OP_LEGACY_SERVER_CONNECT
+          }
         }
-      }
+      })
+        .on('request', this.onRequest.bind(this))
+        .on('connected', this.onConnected.bind(this))
+        .on('response', this.onResponse.bind(this))
+        .listen(this.options.proxyPort, this.options.proxyHost, () => {
+          this.capture.log.info(`TCP-Proxy-Server started ${JSON.stringify(this.#connection.address())}`)
+          resolve()
+        })
     })
-      .on('request', this.onRequest.bind(this))
-      .on('connected', this.onConnected.bind(this))
-      .on('response', this.onResponse.bind(this))
-
-    await this.#connection.listen(this.options.proxyPort, this.options.proxyHost, () => {
-      this.capture.log.info(`TCP-Proxy-Server started ${JSON.stringify(this.#connection.address())}`)
-    })
-
-    // Arbitrary 250ms wait (fix for observed start up bug)
-    await new Promise(resolve => setTimeout(resolve, 250))
   }
 
   /**
