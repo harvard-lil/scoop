@@ -47,15 +47,18 @@ function assignMirror(socket) {
  */
 const httpAgent = new http.Agent({ keepAlive: true })
 const httpsAgent = new https.Agent({ keepAlive: true })
+const CONNECT = 'CONNECT'
 const UNKNOWN_PROTOCOL = 'unknown:'
 
 function getServerDefaults (request) {
   const url = new URL(
-    request.url.startsWith('/')
-      ? `${UNKNOWN_PROTOCOL}//${request.headers.host}${request.url}`
+    request.method === CONNECT || request.url.startsWith('/')
+      ? `${UNKNOWN_PROTOCOL}//${request.headers.host || request.url}`
       : request.url
   )
-  const protocol = url.protocol === UNKNOWN_PROTOCOL ? 'https:' : 'http:'
+  const protocol = url.protocol === UNKNOWN_PROTOCOL && (request.method === CONNECT || request.socket instanceof TLSSocket)
+    ? 'https:'
+    : 'http:'
   return {
     host: url.hostname,
     servername: url.hostname,
@@ -83,12 +86,15 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
       .request(options)
       .on('socket', async serverSocket => {
         assignMirror(serverSocket)
-        clientSocket.mirror.pipe(requestTransformer(request)).pipe(serverSocket)
+
+        if (request.method !== CONNECT) {
+          clientSocket.mirror.pipe(requestTransformer(request)).pipe(serverSocket)
+        }
 
         serverSocket.on('connect', async () => {
           proxy.emit('connected', serverSocket, request)
           // serverSocket may be destroyed via a 'connected' event listener
-          if (!serverSocket.destroyed && request.method === 'CONNECT') {
+          if (request.method === CONNECT && !serverSocket.destroyed) {
             // Replace old net.Socket with new tls.Socket and attach parser and event listeners
             // @see {@link https://nodejs.org/api/http.html#event-connection}
             const options = await clientOptions(request)
@@ -152,7 +158,10 @@ export function createServer (options) {
   const proxy = http.createServer(passalongOptions)
   const handler = getHandler(proxy, clientOptions, serverOptions, requestTransformer, responseTransformer)
 
-  return proxy.on('connection', assignMirror)
-              .on('request', handler)
-              .on('connect', handler)
+  proxy
+    .on('connection', assignMirror)
+    .on('request', handler)
+    .on('connect', handler)
+
+  return proxy
 }
