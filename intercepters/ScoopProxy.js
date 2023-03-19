@@ -147,7 +147,7 @@ export class ScoopProxy extends ScoopIntercepter {
     if (!exchange) return data // Early exit if not recording exchanges or request is blocked
 
     const prop = `${type}Raw` // `responseRaw` | `requestRaw`
-    exchange[prop] = Buffer.concat([exchange[prop], data], exchange[prop].length + data.length)
+    exchange[prop] = Buffer.concat([exchange[prop], data])
 
     this.byteLength += data.byteLength
     this.checkAndEnforceSizeLimit() // From parent
