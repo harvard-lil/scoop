@@ -66,7 +66,7 @@ function getServerDefaults (request) {
 
 const CRLFx2 = '\r\n\r\n'
 
-function getHandler(proxy, clientOptions, serverOptions, requestTransformer, responseTransformer) {
+function getHandler (proxy, clientOptions, serverOptions, requestTransformer, responseTransformer) {
   return async (request, _, head) => {
     const { socket: clientSocket } = request
 
@@ -81,23 +81,23 @@ function getHandler(proxy, clientOptions, serverOptions, requestTransformer, res
 
     httpModule
       .request(options)
-      .on('socket', async (serverSocket) => {
+      .on('socket', async serverSocket => {
         assignMirror(serverSocket)
-
-        // On socket connection, forward the original client request to the server
         clientSocket.mirror.pipe(requestTransformer(request)).pipe(serverSocket)
 
-        if (request.method === 'CONNECT') {
-          // Replace old net.Socket with new tls.Socket and attach parser and event listeners
-          // @see {@link https://nodejs.org/api/http.html#event-connection}
-          const options = await clientOptions(request)
-          proxy.emit('connection', new TLSSocket(clientSocket, { ...clientDefaults, ...options, isServer: true }))
+        serverSocket.on('connect', async () => {
+          if (request.method === 'CONNECT') {
+            // Replace old net.Socket with new tls.Socket and attach parser and event listeners
+            // @see {@link https://nodejs.org/api/http.html#event-connection}
+            const options = await clientOptions(request)
+            proxy.emit('connection', new TLSSocket(clientSocket, { ...clientDefaults, ...options, isServer: true }))
 
-          // Letting client know we've made the connection @see {@link https://reqbin.com/Article/HttpConnect}
-          // TODO: CONNECT is hop-by-hop and we should handle additional hops down the line
-          clientSocket.write('HTTP/1.1 200 Connection Established' + CRLFx2)
-          serverSocket.write(head)
-        }
+            // Letting client know we've made the connection @see {@link https://reqbin.com/Article/HttpConnect}
+            // TODO: CONNECT is hop-by-hop and we should handle additional hops down the line
+            clientSocket.write('HTTP/1.1 200 Connection Established' + CRLFx2)
+            serverSocket.write(head)
+          }
+        })
       })
       .on('response', (response) => {
         // On response, forward the original server response on to the client
