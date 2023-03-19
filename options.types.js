@@ -8,7 +8,7 @@
  * @property {boolean} domSnapshot=false - Should Scoop save a snapshot of the rendered DOM? Added as `file:///dom-snapshot.html` in the exchanges list.
  * @property {boolean} captureVideoAsAttachment=true - Should Scoop try to sae the main video(s) present on this page? Added as `file://` attachments, summarized under `file:///video-extracted-summary.html`. This capture happens out of the browser.
  * @property {boolean} provenanceSummary=true - If `true`, information about the capture process (public IP address, User Agent, software version ...) will be gathered and summarized under `file:///provenance-summary.html`. WACZ exports will also hold that information at `datapackage.json` level, under `extras`.
- * @property {boolean} attachmentsBypassLimits=true - If `true`, "attachments" will not count towards the time and size constraints imposed on capture.
+ * @property {boolean} attachmentsBypassLimits=true - If `true`, "attachments" will not count towards the time and size constraints imposed on capture (captureTimeout, maxCaptureSize).
  *
  * @property {number} captureTimeout=60000 - How long should Scoop wait for all steps in the capture to complete, in ms?
  * @property {number} loadTimeout=20000 - How long should Scoop wait for the page to load, in ms?
