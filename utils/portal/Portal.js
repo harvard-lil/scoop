@@ -86,15 +86,11 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
       .request(options)
       .on('socket', async serverSocket => {
         assignMirror(serverSocket)
-
-        if (request.method !== CONNECT) {
-          clientSocket.mirror.pipe(requestTransformer(request)).pipe(serverSocket)
-        }
-
         serverSocket.on('connect', async () => {
           proxy.emit('connected', serverSocket, request)
-          // serverSocket may be destroyed via a 'connected' event listener
-          if (request.method === CONNECT && !serverSocket.destroyed) {
+          if (serverSocket.destroyed) return // serverSocket may be destroyed via a 'connected' event listener
+
+          if (request.method === CONNECT) {
             // Replace old net.Socket with new tls.Socket and attach parser and event listeners
             // @see {@link https://nodejs.org/api/http.html#event-connection}
             const options = await clientOptions(request)
@@ -104,6 +100,8 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
             // TODO: CONNECT is hop-by-hop and we should handle additional hops down the line
             clientSocket.write('HTTP/1.1 200 Connection Established' + CRLFx2)
             serverSocket.write(head)
+          } else {
+            clientSocket.mirror.pipe(requestTransformer(request)).pipe(serverSocket)
           }
         })
       })
