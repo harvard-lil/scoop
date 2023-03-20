@@ -116,6 +116,13 @@
             <td>{{ ytDlpHash }}</td>
           </tr>
           {% endif %}
+
+          {% if cripHash %}
+          <tr>
+            <td>cripPath (redacted)<br>Replaced by executable checksum</td>
+            <td>{{ cripHash }}</td>
+          </tr>
+          {% endif %}
         </table>
       </section>
 
@@ -156,6 +163,19 @@
           <li>{{ url }}</li>
           {% endfor %}
         </ul>
+
+      </section>
+      {% endif %}
+
+      {% if certificates.length %}
+      <section>
+        <h2>SSL/TLS Certificates</h2>
+
+        <p>The following certificates were pulled by <em>crip</em> from the different origins encountered during capture.</p>
+
+        {% for cert in certificates %}
+        <li><a href="{{cert.host}}.pem">{{ cert.host }}</a></li>
+        {% endfor %}
 
       </section>
       {% endif %}

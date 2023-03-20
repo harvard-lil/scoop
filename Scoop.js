@@ -149,13 +149,16 @@ export class Scoop {
    *   cpuArchitecture: ?string,
    *   blockedRequests: Array.<{url: string, ip: string, rule: string}>,
    *   noArchiveUrls: string[],
-   *   ytDlpHash: string
+   *   certificates: Array.<{host: string, pem: string}>,
+   *   ytDlpHash: string,
+   *   cripHash: string,
    *   options: ScoopOptions,
    * }}
    */
   provenanceInfo = {
     blockedRequests: [],
-    noArchiveUrls: []
+    noArchiveUrls: [],
+    certificates: []
   }
 
   /**
@@ -372,17 +375,6 @@ export class Scoop {
       })
     }
 
-    // Push step: Provenance summary
-    if (options.provenanceSummary) {
-      steps.push({
-        name: 'Provenance summary',
-        alwaysRun: options.attachmentsBypassLimits,
-        main: async (page) => {
-          await this.#captureProvenanceInfo(page)
-        }
-      })
-    }
-
     // Push step: noarchive directive detection
     // TODO: Move this logic back to ScoopProxy.intercept() when new proxy implementation is ready.
     steps.push({
@@ -394,6 +386,26 @@ export class Scoop {
         }
       }
     })
+
+    // Push step: SSL certs capture
+    steps.push({
+      name: 'Capturing certificates info',
+      alwaysRun: options.attachmentsBypassLimits,
+      main: async () => {
+        await this.#captureCertificatesInfo()
+      }
+    })
+
+    // Push step: Provenance summary
+    if (options.provenanceSummary) {
+      steps.push({
+        name: 'Provenance summary',
+        alwaysRun: options.attachmentsBypassLimits,
+        main: async (page) => {
+          await this.#captureProvenanceInfo(page)
+        }
+      })
+    }
 
     // Push step: Teardown
     steps.push({
@@ -997,6 +1009,78 @@ export class Scoop {
   }
 
   /**
+   * Runs `crip` against the different origins the capture process encountered.
+   * Captures certificates as `file:///[origin].pem`).
+   * Populates `this.provenanceInfo.certificates`.
+   *
+   * @returns {Promise<void>}
+   * @private
+   * @private
+   */
+  async #captureCertificatesInfo () {
+    const cripPath = this.options.cripPath
+
+    //
+    // Check that `crip` is available
+    //
+    try {
+      await exec(cripPath)
+    } catch (err) {
+      this.log.trace(err)
+      throw new Error('"crip" executable is not available or cannot be executed.')
+    }
+
+    //
+    // Pull certs
+    //
+    const processedHosts = new Map()
+
+    for (const exchange of this.intercepter.exchanges) {
+      const url = new URL(exchange.url)
+
+      if (url.protocol !== 'https:' || processedHosts.get(url.host) === true) {
+        continue
+      }
+
+      try {
+        const cripOptions = [
+          'print',
+          '-u', `https://${url.host}`,
+          '-f', 'pem'
+        ]
+
+        const spawnOptions = {
+          timeout: this.options.captureTimeout / 10 > 1000
+            ? this.options.captureTimeout / 10
+            : 1000,
+          maxBuffer: 1024 * 1024 * 128
+        }
+
+        const pem = await exec(cripPath, cripOptions, spawnOptions)
+
+        processedHosts.set(url.host, true)
+
+        if (!pem) {
+          throw new Error(`crip did not return a PEM for ${url.host}.`)
+        }
+
+        // Add to generated exchanges
+        const fileUrl = `file:///${url.host}.pem`
+        const httpHeaders = new Headers({ 'content-type': 'application/x-pem-file' })
+        const body = Buffer.from(pem)
+        const isEntryPoint = false
+        await this.addGeneratedExchange(fileUrl, httpHeaders, body, isEntryPoint)
+
+        // Add to `this.provenanceInfo.certificates`
+        this.provenanceInfo.certificates.push({ host: url.host, pem })
+      } catch (err) {
+        this.log.trace(err)
+        this.log.warn(`Certificates could not be extracted for ${url.host}`)
+      }
+    }
+  }
+
+  /**
    * Populates `this.provenanceInfo`, which is then used to generate a `file:///provenance-summary.html` exchange and entry point.
    * That property is also be used by `scoopToWACZ()` to populate the `extras` field of `datapackage.json`.
    *
@@ -1014,6 +1098,7 @@ export class Scoop {
     const osInfo = await getOSInfo()
     const userAgent = await page.evaluate(() => window.navigator.userAgent) // Source user agent from the browser in case it was altered during capture
     let ytDlpHash = ''
+    let cripHash = ''
 
     // Grab public IP address
     try {
@@ -1048,6 +1133,18 @@ export class Scoop {
       this.log.trace(err)
     }
 
+    // Compute crip hash
+    try {
+      cripHash = createHash('sha256')
+        .update(await readFile(this.options.cripPath))
+        .digest('hex')
+
+      cripHash = `sha256:${cripHash}`
+    } catch (err) {
+      this.log.warn('Could not compute SHA256 hash of crip executable')
+      this.log.trace(err)
+    }
+
     // Gather provenance info
     this.provenanceInfo = {
       ...this.provenanceInfo,
@@ -1060,11 +1157,13 @@ export class Scoop {
       osVersion: osInfo.version,
       cpuArchitecture: os.machine(),
       ytDlpHash,
+      cripHash,
       options: structuredClone(this.options)
     }
 
-    // ytDlpPath should be excluded from provenance summary
+    // ytDlpPath and cripPath should be excluded from provenance summary
     delete this.provenanceInfo.options.ytDlpPath
+    delete this.provenanceInfo.options.cripPath
 
     // Generate summary page
     try {
@@ -1168,7 +1267,7 @@ export class Scoop {
 
   /**
    * Returns a map of "generated" exchanges.
-   * Generated exchanges = anything generated directly by Scoop (PDF snapshot, full-page screenshot, videos ...)
+   * Generated exchanges = anything generated directly by Scoop (PDF snapshot, full-page screenshot, videos ...) as opposed to naturally intercepted.
    * @returns {Object.<string, ScoopGeneratedExchange>}
    */
   extractGeneratedExchanges () {

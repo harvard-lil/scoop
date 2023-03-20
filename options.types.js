@@ -36,5 +36,6 @@
  * @property {boolean} proxyVerbose=false - Should log entries from the proxy be printed?
  *
  * @property {string} publicIpResolverEndpoint="https://icanhazip.com" - URL to be used to retrieve the client's public IP address for `provenanceSummary`. Endpoint requirements: must simply return a IPv4 or IPv6 address as text.
- * @property {string} ytDlpPath="./executables/yt-dlp" - Path to the yt-dlp executable to be used.
+ * @property {string} ytDlpPath="./executables/yt-dlp" - Path to the yt-dlp executable to be used. (https://github.com/yt-dlp/yt-dlp)
+ * @property {string} cripPath="./executables/crip" - Path to the crip executable to be used. (https://github.com/Hakky54/certificate-ripper)
  */

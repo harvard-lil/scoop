@@ -265,6 +265,13 @@ program.addOption(
 )
 
 program.addOption(
+  new Option(
+    '--crip-path <string>',
+    'Path to the crip executable. Used for capturing SSL/TLS certificates.')
+    .default(defaults.cripPath)
+)
+
+program.addOption(
   new Option('--log-level <string>', 'Controls Scoop CLI\'s verbosity.')
     .choices(['silent', 'trace', 'debug', 'info', 'warn', 'error'])
     .default(defaults.logLevel)

@@ -71,7 +71,8 @@ export const defaults = {
   proxyVerbose: false,
 
   publicIpResolverEndpoint: 'https://icanhazip.com',
-  ytDlpPath: `${CONSTANTS.EXECUTABLES_PATH}yt-dlp`
+  ytDlpPath: `${CONSTANTS.EXECUTABLES_PATH}yt-dlp`,
+  cripPath: `${CONSTANTS.EXECUTABLES_PATH}crip`
 }
 
 /**
@@ -130,8 +131,10 @@ export function filterOptions (newOptions = {}) {
   }
 
   // Check that paths are valid
-  if (!statSync(options.ytDlpPath).isFile()) {
-    throw new Error('"ytDlpPath" must be a path to a file.')
+  for (const toCheck of ['ytDlpPath', 'cripPath']) {
+    if (!statSync(options[toCheck]).isFile()) {
+      throw new Error(`"${toCheck}" must be a path to a file.`)
+    }
   }
 
   return options
