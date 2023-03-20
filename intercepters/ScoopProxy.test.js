@@ -28,8 +28,7 @@ test('ScoopProxy starts and stops a proxy on the requested port', async (_t) => 
   assert.notEqual(await detectPort(proxyPort), proxyPort)
 
   // Stop proxy and check that port was freed
-  capture.intercepter.teardown()
-  await new Promise(resolve => setTimeout(resolve, 1000)) // Workaround until `teardown()` can be made async
+  await capture.intercepter.teardown()
   assert.equal(await detectPort(proxyPort), proxyPort)
 })
 

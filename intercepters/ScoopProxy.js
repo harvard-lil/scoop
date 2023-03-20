@@ -37,6 +37,8 @@ export class ScoopProxy extends ScoopIntercepter {
           }
         }
       })
+
+      this.#connection
         .on('request', this.onRequest.bind(this))
         .on('connected', this.onConnected.bind(this))
         .on('response', this.onResponse.bind(this))
@@ -51,10 +53,13 @@ export class ScoopProxy extends ScoopIntercepter {
    * Closes the proxy server
    * @returns {Promise<void>}
    */
-  async teardown () {
-    this.#connection.close()
-    this.#connection.unref()
-    return true
+  teardown () {
+    // server.close does not close keep-alive connections so do so here
+    this.#connection.closeAllConnections()
+    return new Promise(resolve => this.#connection.close(() => {
+      this.capture.log.info('TCP-Proxy-Server closed')
+      resolve()
+    }))
   }
 
   onRequest (request) {
