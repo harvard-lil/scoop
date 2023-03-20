@@ -86,7 +86,7 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
       .request(options)
       .on('socket', async serverSocket => {
         assignMirror(serverSocket)
-        clientSocket.on('close', () => serverSocket.destroy())
+        proxy.on('close', () => serverSocket.destroy())
 
         serverSocket.on('connect', async () => {
           proxy.emit('connected', serverSocket, request)
