@@ -32,7 +32,7 @@ const defaults = {
   serverOptions: (_request) => { return {} }
 }
 
-function assignMirror(socket) {
+function assignMirror (socket) {
   if (!socket.mirror) {
     // Increase max listeners, primarily for the client socket, as there will be a lot of concurrent requests
     // TODO: confirm that we don't have a memory leak by removing this and tracing through MaxListenersExceededWarning(s)
