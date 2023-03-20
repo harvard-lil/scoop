@@ -144,7 +144,7 @@ const getExchanges = async (zip) => {
 
   for (const props of rawProps) {
     const prev = exchanges[exchanges.length - 1]
-    if (prev?.id === props.id) {
+    if (prev && prev.id === props.id) {
       Object.assign(prev, props)
     } else {
       exchanges.push(new ScoopProxyExchange(props))
