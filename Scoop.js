@@ -414,7 +414,7 @@ export class Scoop {
 
     try {
       page = await this.setup()
-      this.log.info('Scoop was initialized with the following options:')
+      this.log.info(`Scoop ${CONSTANTS.VERSION} was initialized with the following options:`)
       this.log.info(options)
       this.log.info(`🍨 Starting capture of ${this.url}.`)
       this.state = Scoop.states.CAPTURE
