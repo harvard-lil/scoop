@@ -6,15 +6,17 @@
  * @property {boolean} screenshot=true - Should Scoop try to make a screenshot? Screenshot will be added as `file:///screenshot.png` in the exchanges list.
  * @property {boolean} pdfSnapshot=false - Should Scoop save a PDF of the rendered page? Only available in headless mode. Added as `file:///pdf-snapshot.pdf` in the exchanges list.
  * @property {boolean} domSnapshot=false - Should Scoop save a snapshot of the rendered DOM? Added as `file:///dom-snapshot.html` in the exchanges list.
- * @property {boolean} captureVideoAsAttachment=true - Should Scoop try to sae the main video(s) present on this page? Added as `file://` attachments, summarized under `file:///video-extracted-summary.html`. This capture happens out of the browser.
+ * @property {boolean} captureVideoAsAttachment=true - Should Scoop try to save the main video(s) present on this page? Added as `file://` attachments, summarized under `file:///video-extracted-summary.html`. This capture happens out of the browser.
+ * @property {boolean} captureCertificatesAsAttachment=true - Should Scoop try to capture and save the SSL/TLS certificates for the different origins encountered during capture?. This capture happens out of the browser.
  * @property {boolean} provenanceSummary=true - If `true`, information about the capture process (public IP address, User Agent, software version ...) will be gathered and summarized under `file:///provenance-summary.html`. WACZ exports will also hold that information at `datapackage.json` level, under `extras`.
- * @property {boolean} attachmentsBypassLimits=true - If `true`, "attachments" will not count towards the time and size constraints imposed on capture (captureTimeout, maxCaptureSize).
+ * @property {boolean} attachmentsBypassLimits=true - If `true`, "attachments" will not count towards the time and size constraints imposed on the capture itself (captureTimeout, maxCaptureSize).
  *
  * @property {number} captureTimeout=60000 - How long should Scoop wait for all steps in the capture to complete, in ms?
  * @property {number} loadTimeout=20000 - How long should Scoop wait for the page to load, in ms?
  * @property {number} networkIdleTimeout=20000 - How long should Scoop wait for network events to complete, in ms.
  * @property {number} behaviorsTimeout=20000 - How long should Scoop wait for media to play, secondary resources, and site specific behaviors (in total), in ms?
  * @property {number} captureVideoAsAttachmentTimeout=30000 - How long should Scoop wait for `captureVideoAsAttachment` to finish.
+ * @property {number} captureCertificatesAsAttachmentTimeout=10000 - How long should Scoop wait for `captureCertificatesAsAttachment` to finish.
  *
  * @property {number} captureWindowX=1600 - Browser window resolution in pixels: X axis.
  * @property {number} captureWindowY=900 - Browser window resolution in pixels: Y axis.

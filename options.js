@@ -11,6 +11,7 @@ export const defaults = {
   pdfSnapshot: false,
   domSnapshot: false,
   captureVideoAsAttachment: true,
+  captureCertificatesAsAttachment: true,
   provenanceSummary: true,
   attachmentsBypassLimits: true,
 
@@ -19,6 +20,7 @@ export const defaults = {
   networkIdleTimeout: 20 * 1000,
   behaviorsTimeout: 20 * 1000,
   captureVideoAsAttachmentTimeout: 30 * 1000,
+  captureCertificatesAsAttachmentTimeout: 10 * 1000,
 
   captureWindowX: 1600,
   captureWindowY: 900,

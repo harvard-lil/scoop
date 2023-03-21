@@ -387,14 +387,16 @@ export class Scoop {
       }
     })
 
-    // Push step: SSL certs capture
-    steps.push({
-      name: 'Capturing certificates info',
-      alwaysRun: options.attachmentsBypassLimits,
-      main: async () => {
-        await this.#captureCertificatesInfo()
-      }
-    })
+    // Push step: certs capture
+    if (options.captureCertificatesAsAttachment) {
+      steps.push({
+        name: 'Capturing certificates info',
+        alwaysRun: options.attachmentsBypassLimits,
+        main: async () => {
+          await this.#captureCertificatesAsAttachment()
+        }
+      })
+    }
 
     // Push step: Provenance summary
     if (options.provenanceSummary) {
@@ -1015,10 +1017,15 @@ export class Scoop {
    *
    * @returns {Promise<void>}
    * @private
-   * @private
    */
-  async #captureCertificatesInfo () {
-    const cripPath = this.options.cripPath
+  async #captureCertificatesAsAttachment () {
+    const { captureCertificatesAsAttachmentTimeout, cripPath } = this.options
+
+    //
+    // Start timeout timer
+    //
+    let timeIsOut = false
+    const timer = setTimeout(() => timeIsOut = true, captureCertificatesAsAttachmentTimeout)
 
     //
     // Check that `crip` is available
@@ -1038,6 +1045,10 @@ export class Scoop {
     for (const exchange of this.intercepter.exchanges) {
       const url = new URL(exchange.url)
 
+      if (timeIsOut) {
+        throw new Error('Capture certificates at attachment timeout reached')
+      }
+
       if (url.protocol !== 'https:' || processedHosts.get(url.host) === true) {
         continue
       }
@@ -1049,10 +1060,14 @@ export class Scoop {
           '-f', 'pem'
         ]
 
+        let timeout = captureCertificatesAsAttachmentTimeout
+
+        if (processedHosts.length > 0) { // Timeout per request decreases as we go through the list.
+          timeout = captureCertificatesAsAttachmentTimeout / processedHosts.length
+        }
+
         const spawnOptions = {
-          timeout: this.options.captureTimeout / 10 > 1000
-            ? this.options.captureTimeout / 10
-            : 1000,
+          timeout: timeout > 1000 ? timeout : 1000,
           maxBuffer: 1024 * 1024 * 128
         }
 
@@ -1078,6 +1093,8 @@ export class Scoop {
         this.log.warn(`Certificates could not be extracted for ${url.host}`)
       }
     }
+
+    clearTimeout(timer)
   }
 
   /**
