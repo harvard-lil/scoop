@@ -1,5 +1,4 @@
 import crypto from 'crypto'
-import { Blob } from 'buffer'
 
 import { WARCRecord, WARCSerializer } from 'warcio'
 

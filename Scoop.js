@@ -1025,7 +1025,7 @@ export class Scoop {
     // Start timeout timer
     //
     let timeIsOut = false
-    const timer = setTimeout(() => timeIsOut = true, captureCertificatesAsAttachmentTimeout)
+    const timer = setTimeout(() => { timeIsOut = true }, captureCertificatesAsAttachmentTimeout)
 
     //
     // Check that `crip` is available
