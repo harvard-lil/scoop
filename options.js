@@ -11,6 +11,7 @@ export const defaults = {
   pdfSnapshot: false,
   domSnapshot: false,
   captureVideoAsAttachment: true,
+  captureCertificatesAsAttachment: true,
   provenanceSummary: true,
   attachmentsBypassLimits: true,
 
@@ -19,6 +20,7 @@ export const defaults = {
   networkIdleTimeout: 20 * 1000,
   behaviorsTimeout: 20 * 1000,
   captureVideoAsAttachmentTimeout: 30 * 1000,
+  captureCertificatesAsAttachmentTimeout: 10 * 1000,
 
   captureWindowX: 1600,
   captureWindowY: 900,
@@ -71,7 +73,8 @@ export const defaults = {
   proxyVerbose: false,
 
   publicIpResolverEndpoint: 'https://icanhazip.com',
-  ytDlpPath: `${CONSTANTS.EXECUTABLES_PATH}yt-dlp`
+  ytDlpPath: `${CONSTANTS.EXECUTABLES_PATH}yt-dlp`,
+  cripPath: `${CONSTANTS.EXECUTABLES_PATH}crip`
 }
 
 /**
@@ -130,8 +133,10 @@ export function filterOptions (newOptions = {}) {
   }
 
   // Check that paths are valid
-  if (!statSync(options.ytDlpPath).isFile()) {
-    throw new Error('"ytDlpPath" must be a path to a file.')
+  for (const toCheck of ['ytDlpPath', 'cripPath']) {
+    if (!statSync(options[toCheck]).isFile()) {
+      throw new Error(`"${toCheck}" must be a path to a file.`)
+    }
   }
 
   return options

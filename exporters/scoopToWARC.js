@@ -1,5 +1,4 @@
 import crypto from 'crypto'
-import { Blob } from 'buffer'
 
 import { WARCRecord, WARCSerializer } from 'warcio'
 
@@ -21,7 +20,7 @@ if (!globalThis.crypto) {
  *
  * @param {Scoop} capture
  * @param {boolean} [gzip=false]
- * @returns {Promise<ArrayBuffer>}
+ * @returns {Promise<ArrayBuffer|Uint8Array>}
  */
 export async function scoopToWARC (capture, gzip = false) {
   let serializedInfo = null
@@ -107,7 +106,29 @@ export async function scoopToWARC (capture, gzip = false) {
   }
 
   //
-  // Combine output and return as ArrayBuffer
+  // Combine output and return as Uint8Array
   //
-  return new Blob([serializedInfo, ...serializedRecords]).arrayBuffer()
+
+  // Calculate total byte length
+  let totalByteLength = serializedInfo.length
+
+  for (const record of serializedRecords) {
+    totalByteLength += record.length
+  }
+
+  // Add entries
+  const warc = new Uint8Array(totalByteLength)
+
+  warc.set(serializedInfo, 0)
+
+  let offset = serializedInfo.length
+  for (const record of serializedRecords) {
+    warc.set(record, offset)
+    offset += record.length
+  }
+
+  return warc
+
+  // TODO: Investigate why this no longer works in latest Node 19.X.
+  // return new Blob([serializedInfo, ...serializedRecords]).arrayBuffer()
 }

@@ -79,6 +79,12 @@ program.addOption(
 )
 
 program.addOption(
+  new Option('--capture-certificates-as-attachment <bool>', 'Add capture certificate(s) as attachment(s) step to capture?')
+    .choices(['true', 'false'])
+    .default(String(defaults.captureCertificatesAsAttachment))
+)
+
+program.addOption(
   new Option('--provenance-summary <bool>', 'Add provenance summary to capture?')
     .choices(['true', 'false'])
     .default(String(defaults.captureVideoAsAttachment))
@@ -126,6 +132,13 @@ program.addOption(
     '--capture-video-as-attachment-timeout <number>',
     'Max time Scoop will wait for the video capture process to complete, in ms.')
     .default(defaults.captureVideoAsAttachmentTimeout)
+)
+
+program.addOption(
+  new Option(
+    '--capture-certificates-as-attachment-timeout <number>',
+    'Max time Scoop will wait for the certificates capture process to complete, in ms.')
+    .default(defaults.captureCertificatesAsAttachmentTimeout)
 )
 
 //
@@ -262,6 +275,13 @@ program.addOption(
     '--yt-dlp-path <string>',
     'Path to the yt-dlp executable. Used for capturing videos.')
     .default(defaults.ytDlpPath)
+)
+
+program.addOption(
+  new Option(
+    '--crip-path <string>',
+    'Path to the crip executable. Used for capturing SSL/TLS certificates.')
+    .default(defaults.cripPath)
 )
 
 program.addOption(
