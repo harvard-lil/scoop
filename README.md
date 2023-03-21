@@ -382,6 +382,18 @@ In practice, this most often means the bodies of HTTP exchanges are not included
 
 **Experimental:** WACZ files stored with the `includeRaw` option can be ingested by Scoop for analysis and processing via the `Scoop.fromWACZ()` method.
 
+### Should I run Scoop in headful mode?
+
+In certain cases, running Scoop in _"headful"_ mode might yield better results. 
+
+Passing `--headless false` to the CLI or `{ headless: false }` to the library will instruct **Scoop** to run **Chromium** in headful mode.
+
+Simulating a graphical output is necessary when running **Scoop** in headful mode on a server. The following command can be used for that purpose:
+
+```bash
+xvfb-run --auto-servernum -- scoop "https://lil.law.harvard.edu" --headless false
+```
+
 [👆 Back to the summary](#summary)
 
 ---
