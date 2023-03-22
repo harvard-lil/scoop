@@ -579,10 +579,7 @@ export class Scoop {
       height: options.captureWindowY
     })
 
-    // On capture timeout:
-    // - Disconnect browser
-    // - Instruct intercepter to stop recording exchanges
-    // - Set capture state to PARTIAL.
+    // Enforce capture timeout
     const captureTimeoutTimer = setTimeout(() => {
       this.log.info(`captureTimeout of ${options.captureTimeout}ms reached. Ending further capture.`)
       this.state = Scoop.states.PARTIAL
@@ -690,6 +687,8 @@ export class Scoop {
     try {
       const userAgent = await page.evaluate(() => window.navigator.userAgent) // Source user agent from the browser
 
+      const timeout = Math.floor((this.options.captureTimeout - headRequestTimeMs) / 1000)
+
       const curlOptions = [
         this.url,
         '--header', `"User-Agent: ${userAgent}"`,
@@ -699,10 +698,10 @@ export class Scoop {
         '--location',
         // This will be the only capture step running:
         // use all available time - time spent on first request
-        '--max-time', Math.floor((this.options.captureTimeout - headRequestTimeMs) / 1000)
+        '--max-time', timeout
       ]
 
-      await exec('curl', curlOptions)
+      await exec('curl', curlOptions, { timeout })
     } catch (err) {
       this.log.trace(err)
     }

@@ -41,7 +41,7 @@ export class ScoopProxy extends ScoopIntercepter {
 
   /**
    * Closes the proxy server
-   * @returns {Primise<void>}
+   * @returns {Promise<void>}
    */
   async teardown () {
     this.#connection.close()
