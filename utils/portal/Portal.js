@@ -26,11 +26,11 @@ const clientDefaults = {
 }
 
 const defaults = {
-  keepAlive: true,
   requestTransformer: (_request) => new PassThrough(),
   responseTransformer: (_response, _request) => new PassThrough(),
   clientOptions: (_request) => { return {} },
-  serverOptions: (_request) => { return {} }
+  serverOptions: (_request) => { return {} },
+  keepAlive: true
 }
 
 function assignMirror (socket) {
@@ -159,7 +159,7 @@ export function createServer (options) {
     .on('request', handler)
     .on('connect', handler)
     .on('close', () => {
-      // clean up any remaining destination keep-alive connections
+      // clean up any remaining serverSocket keep-alive connections
       httpAgent.destroy()
       httpsAgent.destroy()
     })
