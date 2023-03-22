@@ -61,7 +61,7 @@ test('scoopToWACZ accounts for "includeRaw" option appropriately.', async (_t) =
 
 test('scoopToWACZ accounts for "signingServer" option appropriately.', async (t) => {
   // This test only runs if credentials to a signing server are provided.
-  if (!process.env?.TEST_WACZ_SIGNING_TOKEN) {
+  if (!process.env?.TEST_WACZ_SIGNING_URL) {
     t.skip('No TEST_WACZ_SIGNING_URL env var present.')
     return
   }

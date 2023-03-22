@@ -66,7 +66,7 @@ export class ScoopIntercepter {
    * Needs to be implemented by inheriting class.
    * @param {*} _page
    */
-  setup (_page) {
+  async setup (_page) {
     throw new Error('Method must be implemented.')
   }
 

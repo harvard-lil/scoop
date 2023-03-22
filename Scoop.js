@@ -969,7 +969,6 @@ export class Scoop {
 
   /**
    * Tries to generate a PDF snapshot from Playwright and add it as a generated exchange (`file:///pdf-snapshot.pdf`).
-   * If `ghostscript` is available, will try to compress the resulting PDF.
    * Dimensions of the PDF are based on current document width and height.
    *
    * @param {Page} page - A Playwright [Page]{@link https://playwright.dev/docs/api/class-page} object
