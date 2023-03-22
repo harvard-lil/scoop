@@ -377,6 +377,7 @@ export class Scoop {
     if (options.captureVideoAsAttachment) {
       steps.push({
         name: 'Out-of-browser capture of video as attachment (if any)',
+        webPageOnly: true,
         alwaysRun: options.attachmentsBypassLimits,
         main: async () => {
           await this.#captureVideoAsAttachment()
