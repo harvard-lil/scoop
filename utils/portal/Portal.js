@@ -68,29 +68,29 @@ function getServerDefaults (request) {
 const CRLFx2 = '\r\n\r\n'
 
 function getHandler (proxy, clientOptions, serverOptions, requestTransformer, responseTransformer) {
-  return async (request, _, head) => {
-    const { socket: clientSocket } = request
+  return async (clientRequest, _, head) => {
+    const { socket: clientSocket } = clientRequest
 
     // Sockets are reused for subsequent requests, so previous pipes must be cleared.
     // Failure to do so will cause the wrong request object to be passed to the transformers
     clientSocket.mirror.unpipe()
 
-    const customOptions = await serverOptions(request)
-    const options = { ...getServerDefaults(request), ...customOptions }
+    const customOptions = await serverOptions(clientRequest)
+    const options = { ...getServerDefaults(clientRequest), ...customOptions }
 
     const httpModule = options.agent === httpsAgent ? https : http
+    const serverRequest = httpModule.request(options)
 
-    httpModule
-      .request(options)
+    serverRequest
       .on('socket', async serverSocket => serverSocket.on('connect', async () => {
         assignMirror(serverSocket)
-        proxy.emit('connected', serverSocket, request)
+        proxy.emit('connected', serverSocket, clientRequest)
         if (serverSocket.destroyed) return // serverSocket may be destroyed via a 'connected' event listener
 
-        if (request.method === CONNECT) {
+        if (clientRequest.method === CONNECT) {
           // Replace old net.Socket with new tls.Socket and attach parser and event listeners
           // @see {@link https://nodejs.org/api/http.html#event-connection}
-          const options = await clientOptions(request)
+          const options = await clientOptions(clientRequest)
           proxy.emit('connection', new TLSSocket(clientSocket, { ...clientDefaults, ...options, isServer: true }))
 
           // Letting client know we've made the connection @see {@link https://reqbin.com/Article/HttpConnect}
@@ -98,23 +98,23 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
           clientSocket.write('HTTP/1.1 200 Connection Established' + CRLFx2)
           serverSocket.write(head)
         } else {
-          clientSocket.mirror.pipe(requestTransformer(request)).pipe(serverSocket)
+          clientSocket.mirror.pipe(requestTransformer(clientRequest)).pipe(serverSocket)
         }
       }))
-      .on('response', (response) => {
-        const { socket: serverSocket } = response
+      .on('response', (serverResponse) => {
+        const { socket: serverSocket } = serverResponse
 
         // On response, forward the original server response on to the client
         // We're using on('data') at the end, instead of pipe, to avoid unnecessary listeners (ex: 'unpipe')
         // accummlating on clientSocket.
-        serverSocket.mirror.pipe(responseTransformer(response, request)).on('data', data => clientSocket.write(data))
+        serverSocket.mirror.pipe(responseTransformer(serverResponse, clientRequest)).on('data', data => clientSocket.write(data))
 
         // Emit a response event on the http.Server instance to allow a similar interface as server.on('request')
-        proxy.emit('response', response, request)
+        proxy.emit('response', serverResponse, clientRequest)
 
         // response must be fully consumed else response.socket listeners won't get all of the chunks.
         // @see {@link https://nodejs.org/api/http.html#class-httpclientrequest}
-        response.resume()
+        serverResponse.resume()
       })
       .on('error', (err) => {
         switch (err.code) {
@@ -127,7 +127,7 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
       })
     // Ensure the entire request can be consumed. This isn't documented but is here
     // on the suspicion that it functions similarly to response, as documented above.
-    request.resume()
+    clientRequest.resume()
   }
 }
 
