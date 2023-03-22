@@ -358,9 +358,10 @@ Yes, and unless specified otherwise.
 Namely:
 - If the main URL to capture is _not_ a web page _(for example: a PDF file)_, it will be captured using [curl](https://curl.se/).
 - Videos captured as attachments are captured outside of the browser using [yt-dlp](https://github.com/yt-dlp/yt-dlp).
+- ... Same goes for certificates, captured as attachments via [crip](https://github.com/Hakky54/certificate-ripper).
 - Favicons may be captured out-of-band using [curl](https://curl.se/), if not intercepted during capture.
 
-Exchanges captured in that context still go through Scoop's HTTP proxy.
+Exchanges captured in that context still go through Scoop's HTTP proxy, with the exception of _crip_.
 
 ```mermaid
 flowchart LR
