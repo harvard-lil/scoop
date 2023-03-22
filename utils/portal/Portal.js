@@ -26,6 +26,7 @@ const clientDefaults = {
 }
 
 const defaults = {
+  keepAlive: true,
   requestTransformer: (_request) => new PassThrough(),
   responseTransformer: (_response, _request) => new PassThrough(),
   clientOptions: (_request) => { return {} },
@@ -81,32 +82,30 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
 
     httpModule
       .request(options)
-      .on('socket', async serverSocket => {
+      .on('socket', async serverSocket => serverSocket.on('connect', async () => {
         assignMirror(serverSocket)
-        proxy.on('close', () => serverSocket.destroy())
+        proxy.emit('connected', serverSocket, request)
+        if (serverSocket.destroyed) return // serverSocket may be destroyed via a 'connected' event listener
 
-        serverSocket.on('connect', async () => {
-          proxy.emit('connected', serverSocket, request)
-          if (serverSocket.destroyed) return // serverSocket may be destroyed via a 'connected' event listener
+        if (request.method === CONNECT) {
+          // Replace old net.Socket with new tls.Socket and attach parser and event listeners
+          // @see {@link https://nodejs.org/api/http.html#event-connection}
+          const options = await clientOptions(request)
+          proxy.emit('connection', new TLSSocket(clientSocket, { ...clientDefaults, ...options, isServer: true }))
 
-          if (request.method === CONNECT) {
-            // Replace old net.Socket with new tls.Socket and attach parser and event listeners
-            // @see {@link https://nodejs.org/api/http.html#event-connection}
-            const options = await clientOptions(request)
-            proxy.emit('connection', new TLSSocket(clientSocket, { ...clientDefaults, ...options, isServer: true }))
-
-            // Letting client know we've made the connection @see {@link https://reqbin.com/Article/HttpConnect}
-            // TODO: CONNECT is hop-by-hop and we should handle additional hops down the line
-            clientSocket.write('HTTP/1.1 200 Connection Established' + CRLFx2)
-            serverSocket.write(head)
-          } else {
-            clientSocket.mirror.pipe(requestTransformer(request)).pipe(serverSocket)
-          }
-        })
-      })
+          // Letting client know we've made the connection @see {@link https://reqbin.com/Article/HttpConnect}
+          // TODO: CONNECT is hop-by-hop and we should handle additional hops down the line
+          clientSocket.write('HTTP/1.1 200 Connection Established' + CRLFx2)
+          serverSocket.write(head)
+        } else {
+          clientSocket.mirror.pipe(requestTransformer(request)).pipe(serverSocket)
+        }
+      }))
       .on('response', (response) => {
+        const { socket: serverSocket } = response
+
         // On response, forward the original server response on to the client
-        response.socket.mirror.pipe(responseTransformer(response, request)).on('data', data => clientSocket.write(data))
+        serverSocket.mirror.pipe(responseTransformer(response, request)).on('data', data => clientSocket.write(data))
 
         // Emit a response event on the http.Server instance to allow a similar interface as server.on('request')
         proxy.emit('response', response, request)
@@ -159,7 +158,11 @@ export function createServer (options) {
     .on('connection', assignMirror)
     .on('request', handler)
     .on('connect', handler)
-    .setMaxListeners(0)
+    .on('close', () => {
+      // clean up any remaining destination keep-alive connections
+      httpAgent.destroy()
+      httpsAgent.destroy()
+    })
 
   return proxy
 }
