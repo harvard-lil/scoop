@@ -159,6 +159,7 @@ export function createServer (options) {
     .on('connection', assignMirror)
     .on('request', handler)
     .on('connect', handler)
+    .setMaxListeners(0)
 
   return proxy
 }
