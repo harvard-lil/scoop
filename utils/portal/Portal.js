@@ -105,6 +105,8 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
         const { socket: serverSocket } = response
 
         // On response, forward the original server response on to the client
+        // We're using on('data') at the end, instead of pipe, to avoid unnecessary listeners (ex: 'unpipe')
+        // accummlating on clientSocket.
         serverSocket.mirror.pipe(responseTransformer(response, request)).on('data', data => clientSocket.write(data))
 
         // Emit a response event on the http.Server instance to allow a similar interface as server.on('request')
