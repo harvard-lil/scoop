@@ -34,9 +34,6 @@ const defaults = {
 
 function assignMirror (socket) {
   if (!socket.mirror) {
-    // Increase max listeners, primarily for the client socket, as there will be a lot of concurrent requests
-    // TODO: confirm that we don't have a memory leak by removing this and tracing through MaxListenersExceededWarning(s)
-    socket.setMaxListeners(100)
     socket.mirror = new PassThrough()
     socket.pipe(socket.mirror)
   }
@@ -109,7 +106,7 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
       })
       .on('response', (response) => {
         // On response, forward the original server response on to the client
-        response.socket.mirror.pipe(responseTransformer(response, request)).pipe(request.socket)
+        response.socket.mirror.pipe(responseTransformer(response, request)).on('data', data => clientSocket.write(data))
 
         // Emit a response event on the http.Server instance to allow a similar interface as server.on('request')
         proxy.emit('response', response, request)
