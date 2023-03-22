@@ -15,8 +15,8 @@ test('ScoopIntercepter constructor "capture" argument must be a Scoop instance.'
 test('ScoopIntercepter setup and teardown methods throw as not implemented.', async (_t) => {
   const capture = new Scoop('https://example.com')
   const intercepter = new ScoopIntercepter(capture)
-  assert.throws(() => intercepter.setup())
-  assert.throws(() => intercepter.teardown())
+  assert.rejects(intercepter.setup())
+  assert.rejects(intercepter.teardown())
 })
 
 test('checkExchangeForNoArchive returns true when noarchive directive is present in exchange.', async (_t) => {

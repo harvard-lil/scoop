@@ -224,14 +224,6 @@ export class Scoop {
     // Prepare capture steps
     //
 
-    // Push step: Setup interceptor
-    steps.push({
-      name: 'Intercepter',
-      main: async (page) => {
-        await this.intercepter.setup(page)
-      }
-    })
-
     // Push step: early detection of non-web resources
     steps.push({
       name: 'Out-of-browser detection and capture of non-web resource',
@@ -409,18 +401,6 @@ export class Scoop {
       })
     }
 
-    // Push step: Teardown
-    steps.push({
-      name: 'Teardown',
-      alwaysRun: true,
-      main: async () => {
-        if (this.state === Scoop.states.CAPTURE) {
-          this.state = Scoop.states.COMPLETE
-        }
-        await this.teardown()
-      }
-    })
-
     //
     // Initialize capture
     //
@@ -459,7 +439,7 @@ export class Scoop {
       let shouldStop = false
 
       // Page is a web document and is still "about:blank" after step #2
-      if (this.targetUrlIsWebPage && i > 2 && page.url() === 'about:blank') {
+      if (this.targetUrlIsWebPage && i > 1 && page.url() === 'about:blank') {
         this.log.error('Navigation to page failed (about:blank).')
         shouldStop = true
       }
@@ -472,7 +452,6 @@ export class Scoop {
 
       if (shouldStop) {
         this.state = Scoop.states.FAILED
-        await this.teardown()
         break
       }
 
@@ -521,6 +500,15 @@ export class Scoop {
         }
       }
     }
+
+    //
+    // Post-capture
+    //
+    if (this.state === Scoop.states.CAPTURE) {
+      this.state = Scoop.states.COMPLETE
+    }
+
+    await this.teardown()
   }
 
   /**
@@ -568,7 +556,10 @@ export class Scoop {
       throw new Error(`Scoop was unable to create a capture-specific temporary folder.\n${err}`)
     }
 
-    // Playwright init
+    // Initialize intercepter (proxy)
+    await this.intercepter.setup()
+
+    // Playwright init + pass proxy info to Chromium
     const userAgent = chromium._playwright.devices['Desktop Chrome'].userAgent + options.userAgentSuffix
     this.log.info(`User Agent used for capture: ${userAgent}`)
 
@@ -588,6 +579,7 @@ export class Scoop {
       height: options.captureWindowY
     })
 
+    // Enforce capture timeout
     const captureTimeoutTimer = setTimeout(() => {
       this.log.info(`captureTimeout of ${options.captureTimeout}ms reached. Ending further capture.`)
       this.state = Scoop.states.PARTIAL
@@ -695,6 +687,8 @@ export class Scoop {
     try {
       const userAgent = await page.evaluate(() => window.navigator.userAgent) // Source user agent from the browser
 
+      const timeout = Math.floor((this.options.captureTimeout - headRequestTimeMs) / 1000)
+
       const curlOptions = [
         this.url,
         '--header', `"User-Agent: ${userAgent}"`,
@@ -704,10 +698,10 @@ export class Scoop {
         '--location',
         // This will be the only capture step running:
         // use all available time - time spent on first request
-        '--max-time', Math.floor((this.options.captureTimeout - headRequestTimeMs) / 1000)
+        '--max-time', timeout
       ]
 
-      await exec('curl', curlOptions)
+      await exec('curl', curlOptions, { timeout })
     } catch (err) {
       this.log.trace(err)
     }
@@ -770,7 +764,7 @@ export class Scoop {
           '--max-time', 1000
         ]
 
-        await exec('curl', curlOptions)
+        await exec('curl', curlOptions, { timeout: 1000 })
       } catch (err) {
         this.log.warn(`Could not fetch favicon at url ${this.pageInfo.faviconUrl}.`)
         this.log.trace(err)
@@ -975,7 +969,6 @@ export class Scoop {
 
   /**
    * Tries to generate a PDF snapshot from Playwright and add it as a generated exchange (`file:///pdf-snapshot.pdf`).
-   * If `ghostscript` is available, will try to compress the resulting PDF.
    * Dimensions of the PDF are based on current document width and height.
    *
    * @param {Page} page - A Playwright [Page]{@link https://playwright.dev/docs/api/class-page} object
