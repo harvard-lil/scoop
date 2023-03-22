@@ -73,7 +73,7 @@ export class ScoopIntercepter {
   /**
    * Needs to be implemented by inheriting class.
    */
-  teardown () {
+  async teardown () {
     throw new Error('Method must be implemented.')
   }
 

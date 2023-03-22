@@ -30,7 +30,7 @@ export class ScoopProxyExchange extends ScoopExchange {
   }
 
   get url () {
-    if (!this._url) {
+    if (!this._url && this.request) {
       this._url = this.request.startLine.split(' ')[1]
       if (this._url[0] === '/') {
         this._url = `https://${this.request.headers.get('host')}${this._url}`

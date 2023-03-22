@@ -224,14 +224,6 @@ export class Scoop {
     // Prepare capture steps
     //
 
-    // Push step: Setup interceptor
-    steps.push({
-      name: 'Intercepter',
-      main: async (page) => {
-        await this.intercepter.setup(page)
-      }
-    })
-
     // Push step: early detection of non-web resources
     steps.push({
       name: 'Out-of-browser detection and capture of non-web resource',
@@ -409,18 +401,6 @@ export class Scoop {
       })
     }
 
-    // Push step: Teardown
-    steps.push({
-      name: 'Teardown',
-      alwaysRun: true,
-      main: async () => {
-        if (this.state === Scoop.states.CAPTURE) {
-          this.state = Scoop.states.COMPLETE
-        }
-        await this.teardown()
-      }
-    })
-
     //
     // Initialize capture
     //
@@ -459,7 +439,7 @@ export class Scoop {
       let shouldStop = false
 
       // Page is a web document and is still "about:blank" after step #2
-      if (this.targetUrlIsWebPage && i > 2 && page.url() === 'about:blank') {
+      if (this.targetUrlIsWebPage && i > 1 && page.url() === 'about:blank') {
         this.log.error('Navigation to page failed (about:blank).')
         shouldStop = true
       }
@@ -472,7 +452,6 @@ export class Scoop {
 
       if (shouldStop) {
         this.state = Scoop.states.FAILED
-        await this.teardown()
         break
       }
 
@@ -521,6 +500,15 @@ export class Scoop {
         }
       }
     }
+
+    //
+    // Post-capture
+    //
+    if (this.state === Scoop.states.CAPTURE) {
+      this.state = Scoop.states.COMPLETE
+    }
+
+    await this.teardown()
   }
 
   /**
@@ -568,7 +556,10 @@ export class Scoop {
       throw new Error(`Scoop was unable to create a capture-specific temporary folder.\n${err}`)
     }
 
-    // Playwright init
+    // Initialize intercepter (proxy)
+    await this.intercepter.setup()
+
+    // Playwright init + pass proxy info to Chromium
     const userAgent = chromium._playwright.devices['Desktop Chrome'].userAgent + options.userAgentSuffix
     this.log.info(`User Agent used for capture: ${userAgent}`)
 
@@ -588,6 +579,10 @@ export class Scoop {
       height: options.captureWindowY
     })
 
+    // On capture timeout:
+    // - Disconnect browser
+    // - Instruct intercepter to stop recording exchanges
+    // - Set capture state to PARTIAL.
     const captureTimeoutTimer = setTimeout(() => {
       this.log.info(`captureTimeout of ${options.captureTimeout}ms reached. Ending further capture.`)
       this.state = Scoop.states.PARTIAL
