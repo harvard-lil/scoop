@@ -69,8 +69,11 @@ test('scoopToWACZ accounts for "signingServer" option appropriately.', async (t)
   const capture = await testCapture()
 
   const signingServer = {
-    url: process.env.TEST_WACZ_SIGNING_URL,
-    token: process.env?.TEST_WACZ_SIGNING_TOKEN
+    url: process.env.TEST_WACZ_SIGNING_URL
+  }
+
+  if (process.env.TEST_WACZ_SIGNING_TOKEN) {
+    signingServer.token = process.env.TEST_WACZ_SIGNING_TOKEN
   }
 
   // Load "datapackage-digest.json" to check that it contains a signature.
