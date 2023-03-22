@@ -217,7 +217,16 @@ export class Scoop {
   async capture () {
     const options = this.options
 
-    /** @type {Array.<{name: String, setup: ?function, main: function, alwaysRun: ?boolean}>} */
+    /**
+     * @typedef {object} CaptureStep
+     * @property {string} name
+     * @property {?function} setup
+     * @property {?function} main
+     * @property {?boolean} alwaysRun - If true, this step will run regardless of capture-level time / size constraints.
+     * @property {?boolean} webPageOnly - If true, this step will only run if the target url is a web page. Takes precedence over `alwaysRun`.
+     */
+
+    /** @type {CaptureStep[]} */
     const steps = []
 
     //
@@ -236,6 +245,7 @@ export class Scoop {
     // Push step: Wait for initial page load
     steps.push({
       name: 'Wait for initial page load',
+      webPageOnly: true,
       main: async (page) => {
         await page.goto(this.url, { waitUntil: 'load', timeout: options.loadTimeout })
       }
@@ -245,6 +255,7 @@ export class Scoop {
     steps.push({
       name: 'Capture page info',
       alwaysRun: options.attachmentsBypassLimits,
+      webPageOnly: true,
       main: async (page) => {
         await this.#capturePageInfo(page)
       }
@@ -259,6 +270,7 @@ export class Scoop {
     ) {
       steps.push({
         name: 'Browser scripts',
+        webPageOnly: true,
         setup: async (page) => {
           // Determine path of `behaviors.js`
           let behaviorsPath = './node_modules/browsertrix-behaviors/dist/behaviors.js'
@@ -294,6 +306,7 @@ export class Scoop {
     // Push step: Wait for network idle
     steps.push({
       name: 'Wait for network idle',
+      webPageOnly: true,
       main: async (page) => {
         await page.waitForLoadState('networkidle', { timeout: options.networkIdleTimeout })
       }
@@ -303,6 +316,7 @@ export class Scoop {
     steps.push({
       name: 'Scroll-up',
       alwaysRun: options.attachmentsBypassLimits,
+      webPageOnly: true,
       main: async (page) => {
         await page.evaluate(() => window.scrollTo(0, 0))
       }
@@ -312,6 +326,7 @@ export class Scoop {
     if (options.screenshot) {
       steps.push({
         name: 'Screenshot',
+        webPageOnly: true,
         alwaysRun: options.attachmentsBypassLimits,
         main: async (page) => {
           const url = 'file:///screenshot.png'
@@ -329,6 +344,7 @@ export class Scoop {
     if (options.domSnapshot) {
       steps.push({
         name: 'DOM snapshot',
+        webPageOnly: true,
         alwaysRun: options.attachmentsBypassLimits,
         main: async (page) => {
           const url = 'file:///dom-snapshot.html'
@@ -349,6 +365,7 @@ export class Scoop {
     if (options.pdfSnapshot) {
       steps.push({
         name: 'PDF snapshot',
+        webPageOnly: true,
         alwaysRun: options.attachmentsBypassLimits,
         main: async (page) => {
           await this.#takePdfSnapshot(page)
@@ -360,6 +377,7 @@ export class Scoop {
     if (options.captureVideoAsAttachment) {
       steps.push({
         name: 'Out-of-browser capture of video as attachment (if any)',
+        webPageOnly: true,
         alwaysRun: options.attachmentsBypassLimits,
         main: async () => {
           await this.#captureVideoAsAttachment()
@@ -372,6 +390,7 @@ export class Scoop {
     steps.push({
       name: 'Detecting "noarchive" directive',
       alwaysRun: true,
+      webPageOnly: true,
       main: async () => {
         for (const exchange of this.intercepter.exchanges) {
           this.intercepter.checkExchangeForNoArchive(exchange)
@@ -456,37 +475,42 @@ export class Scoop {
       }
 
       //
-      // If capture was not interrupted, run steps:
-      // - Only if state is `CAPTURE`, unless `alwaysRun` is set.
+      // If capture was not interrupted, run steps
       //
       try {
-        const shouldRun = this.state === Scoop.states.CAPTURE || step.alwaysRun
+        // Only if state is `CAPTURE`, unless `alwaysRun` is set for step
+        let shouldRun = this.state === Scoop.states.CAPTURE || step.alwaysRun
 
-        if (shouldRun === true) {
-          this.log.info(`STEP [${i + 1}/${steps.length}]: ${step.name}`)
-
-          /** @type {?function} */
-          let stateCheckInterval = null
-
-          await Promise.race([
-            // Run current step
-            step.main(page),
-
-            // Check capture state every second - so current step can be interrupted if state changes
-            new Promise(resolve => {
-              stateCheckInterval = setInterval(() => {
-                if (this.state !== Scoop.states.CAPTURE) {
-                  resolve(true)
-                }
-              }, 1000)
-            })
-          ])
-
-          // Clear "state checker" interval in case it is still running
-          clearInterval(stateCheckInterval)
-        } else {
-          this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} (skipped)`)
+        // BUT: `webPageOnly` takes precedence - allows for skipping unnecessary steps when capturing non-web content
+        if (this.targetUrlIsWebPage === false && step.webPageOnly) {
+          shouldRun = false
         }
+
+        if (shouldRun === false) {
+          this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} (skipped)`)
+          continue
+        }
+
+        this.log.info(`STEP [${i + 1}/${steps.length}]: ${step.name}`)
+
+        /** @type {?function} */
+        let stateCheckInterval = null
+
+        await Promise.race([
+          // Run current step
+          step.main(page),
+
+          // Check capture state every second - so current step can be interrupted if state changes
+          new Promise(resolve => {
+            stateCheckInterval = setInterval(() => {
+              if (this.state !== Scoop.states.CAPTURE) {
+                resolve(true)
+              }
+            }, 1000)
+          })
+        ])
+
+        clearInterval(stateCheckInterval) // Clear "state checker" interval in case it is still running
       //
       // On error:
       // - Only deliver full trace if error is not due to time / size limit reached.
@@ -637,7 +661,12 @@ export class Scoop {
       const before = new Date()
 
       // Timeout = a 10th of captureTimeout if >= 1 second, 1 second otherwise.
-      const timeout = this.options.captureTimeout / 10 > 1000 ? this.options.captureTimeout / 10 : 1000
+      let timeout = this.options.captureTimeout / 10
+
+      if (timeout < 1000) {
+        timeout = 1000
+      }
+
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), timeout)
 
@@ -687,7 +716,11 @@ export class Scoop {
     try {
       const userAgent = await page.evaluate(() => window.navigator.userAgent) // Source user agent from the browser
 
-      const timeout = Math.floor((this.options.captureTimeout - headRequestTimeMs) / 1000)
+      let timeout = this.options.captureTimeout - headRequestTimeMs
+
+      if (timeout < 1000) {
+        timeout = 1000
+      }
 
       const curlOptions = [
         this.url,
@@ -698,7 +731,7 @@ export class Scoop {
         '--location',
         // This will be the only capture step running:
         // use all available time - time spent on first request
-        '--max-time', timeout
+        '--max-time', Math.floor(timeout / 1000)
       ]
 
       await exec('curl', curlOptions, { timeout })
@@ -755,16 +788,18 @@ export class Scoop {
       try {
         const userAgent = await page.evaluate(() => window.navigator.userAgent) // Source user agent from the browser
 
+        const timeout = 1000
+
         const curlOptions = [
           this.pageInfo.faviconUrl,
           '--header', `"User-Agent: ${userAgent}"`,
           '--output', '/dev/null',
           '--proxy', `'http://${this.options.proxyHost}:${this.options.proxyPort}'`,
           '--insecure', // TBD: SSL checks are delegated to the proxy
-          '--max-time', 1000
+          '--max-time', Math.floor(timeout / 1000)
         ]
 
-        await exec('curl', curlOptions, { timeout: 1000 })
+        await exec('curl', curlOptions, { timeout })
       } catch (err) {
         this.log.warn(`Could not fetch favicon at url ${this.pageInfo.faviconUrl}.`)
         this.log.trace(err)
@@ -1043,6 +1078,11 @@ export class Scoop {
       }
 
       if (url.protocol !== 'https:' || processedHosts.get(url.host) === true) {
+        continue
+      }
+
+      if (this.blocklist.find(searchBlocklistFor(`https://${url.host}`))) {
+        this.log.warn(`${url.host} matched against blocklist - skipped trying to pull its certificate.`)
         continue
       }
 
