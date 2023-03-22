@@ -765,7 +765,7 @@ export class Scoop {
           '--max-time', 1000
         ]
 
-        await exec('curl', curlOptions)
+        await exec('curl', curlOptions, { timeout: 1000 })
       } catch (err) {
         this.log.warn(`Could not fetch favicon at url ${this.pageInfo.faviconUrl}.`)
         this.log.trace(err)
