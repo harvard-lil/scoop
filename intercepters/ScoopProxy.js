@@ -42,6 +42,7 @@ export class ScoopProxy extends ScoopIntercepter {
         .on('request', this.onRequest.bind(this))
         .on('connected', this.onConnected.bind(this))
         .on('response', this.onResponse.bind(this))
+        .on('error', this.onError.bind(this))
         .listen(this.options.proxyPort, this.options.proxyHost, () => {
           this.capture.log.info(`TCP-Proxy-Server started ${JSON.stringify(this.#connection.address())}`)
           resolve()
@@ -55,11 +56,14 @@ export class ScoopProxy extends ScoopIntercepter {
    */
   teardown () {
     // server.close does not close keep-alive connections so do so here
-    this.#connection.closeAllConnections()
-    return new Promise(resolve => this.#connection.close(() => {
-      this.capture.log.info('TCP-Proxy-Server closed')
-      resolve()
-    }))
+    return new Promise(resolve => {
+      console.log('ScoopProxy.teardown() start')
+      this.#connection.closeAllConnections()
+      this.#connection.close(() => {
+        this.capture.log.info('TCP-Proxy-Server closed')
+        resolve()
+      })
+    })
   }
 
   onRequest (request) {
@@ -91,6 +95,26 @@ export class ScoopProxy extends ScoopIntercepter {
     if (exchange) {
       exchange.responseParsed = response
       response.on('end', () => this.checkExchangeForNoArchive(exchange))
+    }
+  }
+
+  onError (err, serverRequest, clientRequest) {
+    // errors on the client side will only have an err param, no serverRequest or clientRequest
+    // If we get one of those, throw it as though we don't have a listener on('error')
+    if (!serverRequest) throw err
+
+    const CRLFx2 = '\r\n\r\n'
+    switch (err.code) {
+      case 'ETIMEDOUT':
+        clientRequest.socket.write('HTTP/1.1 408 Request Timeout' + CRLFx2)
+        break
+      case 'ENOTFOUND':
+        clientRequest.socket.write('HTTP/1.1 404 Not Found' + CRLFx2)
+        break
+      case 'EPIPE':
+        break
+      default:
+        clientRequest.socket.write('HTTP/1.1 400 Bad Request' + CRLFx2)
     }
   }
 

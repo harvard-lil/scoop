@@ -116,14 +116,8 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
         // @see {@link https://nodejs.org/api/http.html#class-httpclientrequest}
         serverResponse.resume()
       })
-      .on('error', (err) => {
-        switch (err.code) {
-          case 'ETIMEDOUT':
-            clientSocket.write('HTTP/1.1 408 Request Timeout' + CRLFx2)
-            break
-          default:
-            clientSocket.write('HTTP/1.1 502 Bad Gateway' + CRLFx2)
-        }
+      .on('error', err => {
+        proxy.emit('error', err, serverRequest, clientRequest)
       })
     // Ensure the entire request can be consumed. This isn't documented but is here
     // on the suspicion that it functions similarly to response, as documented above.
