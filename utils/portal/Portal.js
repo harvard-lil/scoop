@@ -40,7 +40,7 @@ function assignMirror (socket) {
   } else {
     // Sockets are reused for subsequent requests, so previous pipes must be cleared.
     // Failure to do so will cause the wrong request object to be passed to the transformers
-    socket.mirror.unpipe()
+    socket.mirror.removeAllListeners('data')
   }
 }
 
@@ -148,7 +148,9 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
             serverSocket.write(head)
             releaseSocket(serverRequest)
           } else {
-            clientSocket.mirror.pipe(requestTransformer(clientRequest)).pipe(serverSocket)
+            const transformer = requestTransformer(clientRequest)
+            clientSocket.mirror.on('data', data => transformer.write(data))
+            transformer.on('data', data => serverSocket.write(data))
           }
         }
 
@@ -171,7 +173,9 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
         // On response, forward the original server response on to the client
         // We're using on('data') at the end, instead of pipe, to avoid unnecessary listeners (ex: 'unpipe')
         // accummlating on clientSocket.
-        serverSocket.mirror.pipe(responseTransformer(serverResponse, clientRequest)).on('data', data => clientSocket.write(data))
+        const transformer = responseTransformer(serverResponse, clientRequest)
+        serverSocket.mirror.on('data', data => transformer.write(data))
+        transformer.on('data', data => clientSocket.write(data))
 
         // Emit a response event on the http.Server instance to allow a similar interface as server.on('request')
         proxy.emit('response', serverResponse, clientRequest)
