@@ -101,7 +101,7 @@ export class ScoopProxy extends ScoopIntercepter {
   onError (err, serverRequest, clientRequest) {
     // errors on the client side will only have an err param, no serverRequest or clientRequest
     // If we get one of those, throw it as though we don't have a listener on('error')
-    if (!serverRequest) throw err
+    if (!clientRequest) throw err
 
     const CRLFx2 = '\r\n\r\n'
     switch (err.code) {
