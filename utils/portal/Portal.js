@@ -149,7 +149,7 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
             serverSocket.write(head)
             releaseSocket(serverRequest)
           } else {
-            clientSocket.mirror.pipe(requestTransformer(clientRequest)).pipe(serverSocket, { end: false })
+            clientSocket.mirror.pipe(requestTransformer(clientRequest)).on('data', data => serverSocket.write(data))
           }
         }
 
