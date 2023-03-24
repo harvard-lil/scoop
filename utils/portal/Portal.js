@@ -33,7 +33,7 @@ const defaults = {
   keepAlive: true
 }
 
-function assignMirror (socket) {
+function initializeMirror (socket) {
   if (!socket.mirror) {
     socket.mirror = new PassThrough()
     socket.pipe(socket.mirror)
@@ -127,13 +127,13 @@ async function getServerRequest (clientRequest, serverOptions) {
 function getHandler (proxy, clientOptions, serverOptions, requestTransformer, responseTransformer) {
   return async (clientRequest, _, head) => {
     const { socket: clientSocket } = clientRequest
+    initializeMirror(clientSocket)
 
-    clientSocket.mirror.unpipe()
     const serverRequest = await getServerRequest(clientRequest, serverOptions)
 
     serverRequest
       .on('socket', async serverSocket => {
-        assignMirror(serverSocket)
+        initializeMirror(serverSocket)
 
         const onConnect = async () => {
           proxy.emit('connected', serverSocket, clientRequest)
@@ -222,7 +222,7 @@ export function createServer (options) {
   const handler = getHandler(proxy, clientOptions, serverOptions, requestTransformer, responseTransformer)
 
   proxy
-    .on('connection', assignMirror)
+    .on('connection', initializeMirror)
     .on('connect', handler)
     .on('request', handler)
     .on('close', closeHandler)
