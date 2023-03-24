@@ -37,6 +37,10 @@ function assignMirror (socket) {
   if (!socket.mirror) {
     socket.mirror = new PassThrough()
     socket.pipe(socket.mirror)
+  } else {
+    // Sockets are reused for subsequent requests, so previous pipes must be cleared.
+    // Failure to do so will cause the wrong request object to be passed to the transformers
+    socket.mirror.unpipe()
   }
 }
 
@@ -123,10 +127,6 @@ async function getServerRequest (clientRequest, serverOptions) {
 function getHandler (proxy, clientOptions, serverOptions, requestTransformer, responseTransformer) {
   return async (clientRequest, _, head) => {
     const { socket: clientSocket } = clientRequest
-
-    // Sockets are reused for subsequent requests, so previous pipes must be cleared.
-    // Failure to do so will cause the wrong request object to be passed to the transformers
-    clientSocket.mirror.unpipe()
 
     const serverRequest = await getServerRequest(clientRequest, serverOptions)
 
