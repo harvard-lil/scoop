@@ -112,6 +112,14 @@ function releaseSocket (req) {
   }
 }
 
+async function getServerRequest (clientRequest, serverOptions) {
+    const customOptions = await serverOptions(clientRequest)
+    const options = { ...getServerDefaults(clientRequest), ...customOptions }
+
+    const httpModule = options.agent === httpsAgent ? https : http
+    return httpModule.request(options)
+}
+
 function getHandler (proxy, clientOptions, serverOptions, requestTransformer, responseTransformer) {
   return async (clientRequest, _, head) => {
     const { socket: clientSocket } = clientRequest
@@ -120,33 +128,33 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
     // Failure to do so will cause the wrong request object to be passed to the transformers
     clientSocket.mirror.unpipe()
 
-    const customOptions = await serverOptions(clientRequest)
-    const options = { ...getServerDefaults(clientRequest), ...customOptions }
-
-    const httpModule = options.agent === httpsAgent ? https : http
-    const serverRequest = httpModule.request(options)
+    const serverRequest = await getServerRequest(clientRequest, serverOptions)
 
     serverRequest
-      .on('socket', async serverSocket => serverSocket.on('connect', async () => {
+      .on('socket', async serverSocket => {
         assignMirror(serverSocket)
-        proxy.emit('connected', serverSocket, clientRequest)
-        if (serverSocket.destroyed) return // serverSocket may be destroyed via a 'connected' event listener
 
-        if (clientRequest.method === CONNECT) {
-          // Replace old net.Socket with new tls.Socket and attach parser and event listeners
-          // @see {@link https://nodejs.org/api/http.html#event-connection}
-          const options = await clientOptions(clientRequest)
-          proxy.emit('connection', new TLSSocket(clientSocket, { ...clientDefaults, ...options, isServer: true }))
+        const onConnect = async () => {
+          proxy.emit('connected', serverSocket, clientRequest)
+          if (serverSocket.destroyed) return // serverSocket may be destroyed via a 'connected' event listener
+          if (clientRequest.method === CONNECT) {
+            // Replace old net.Socket with new tls.Socket and attach parser and event listeners
+            // @see {@link https://nodejs.org/api/http.html#event-connection}
+            const options = await clientOptions(clientRequest)
+            proxy.emit('connection', new TLSSocket(clientSocket, { ...clientDefaults, ...options, isServer: true }))
 
-          // Letting client know we've made the connection @see {@link https://reqbin.com/Article/HttpConnect}
-          // TODO: CONNECT is hop-by-hop and we should handle additional hops down the line
-          clientSocket.write(['HTTP/1.1 200 Connection Established', CRLF].join(CRLF))
-          serverSocket.write(head)
-          releaseSocket(serverRequest)
-        } else {
-          clientSocket.mirror.pipe(requestTransformer(clientRequest)).pipe(serverSocket)
+            // Let the client know we've made the connection @see {@link https://reqbin.com/Article/HttpConnect}
+            clientSocket.write(['HTTP/1.1 200 Connection Established', CRLF].join(CRLF))
+            serverSocket.write(head)
+            releaseSocket(serverRequest)
+          } else {
+            clientSocket.mirror.pipe(requestTransformer(clientRequest)).pipe(serverSocket)
+          }
         }
-      }))
+
+        if (serverRequest.reusedSocket) await onConnect()
+        else serverSocket.on('connect', onConnect)
+      })
       .on('response', (serverResponse) => {
         const { socket: serverSocket } = serverResponse
 
@@ -181,6 +189,12 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
   }
 }
 
+function closeHandler () {
+  // clean up any remaining serverSocket keep-alive connections
+  httpAgent.destroy()
+  httpsAgent.destroy()
+}
+
 /**
  * Creates a new proxy using the provided options.
  * Returns an instance of http.Server which can be started
@@ -208,13 +222,9 @@ export function createServer (options) {
 
   proxy
     .on('connection', assignMirror)
-    .on('request', handler)
     .on('connect', handler)
-    .on('close', () => {
-      // clean up any remaining serverSocket keep-alive connections
-      httpAgent.destroy()
-      httpsAgent.destroy()
-    })
+    .on('request', handler)
+    .on('close', closeHandler)
 
   return proxy
 }
