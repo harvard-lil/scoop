@@ -31,6 +31,7 @@ export class ScoopProxy extends ScoopIntercepter {
         responseTransformer: this.responseTransformer.bind(this),
         serverOptions: () => {
           return {
+            rejectUnauthorized: false,
             // This flag allows legacy insecure renegotiation between OpenSSL and unpatched servers
             // @see {@link https://stackoverflow.com/questions/74324019/allow-legacy-renegotiation-for-nodejs}
             secureOptions: crypto.constants.SSL_OP_LEGACY_SERVER_CONNECT
