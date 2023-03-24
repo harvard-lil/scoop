@@ -41,6 +41,7 @@ function initializeMirror (socket) {
     // Sockets are reused for subsequent requests, so previous pipes must be cleared.
     // Failure to do so will cause the wrong request object to be passed to the transformers
     socket.mirror.unpipe()
+    socket.mirror.transformer?.unpipe()
   }
 }
 
@@ -132,6 +133,7 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
     const serverRequest = await getServerRequest(clientRequest, serverOptions)
 
     serverRequest
+      .on('error', err => proxy.emit('error', err, serverRequest, clientRequest))
       .on('socket', async serverSocket => {
         initializeMirror(serverSocket)
 
@@ -149,7 +151,8 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
             serverSocket.write(head)
             releaseSocket(serverRequest)
           } else {
-            clientSocket.mirror.pipe(requestTransformer(clientRequest)).on('data', data => serverSocket.write(data))
+            clientSocket.mirror.transformer = requestTransformer(clientRequest)
+            clientSocket.mirror.pipe(clientSocket.mirror.transformer).pipe(serverSocket, { end: false })
           }
         }
 
@@ -171,7 +174,7 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
 
         // On response, forward the original server response on to the client
         // We're using on('data') at the end, instead of pipe, to avoid unnecessary listeners (ex: 'unpipe')
-        // accummlating on clientSocket.
+        // accummlating on clientSocket.. TODO: reevaluate whether pipe can be used
         serverSocket.mirror.pipe(responseTransformer(serverResponse, clientRequest)).on('data', data => clientSocket.write(data))
 
         // Emit a response event on the http.Server instance to allow a similar interface as server.on('request')
@@ -180,9 +183,6 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
         // response must be fully consumed else response.socket listeners won't get all of the chunks.
         // @see {@link https://nodejs.org/api/http.html#class-httpclientrequest}
         serverResponse.resume()
-      })
-      .on('error', err => {
-        proxy.emit('error', err, serverRequest, clientRequest)
       })
     // Ensure the entire request can be consumed. This isn't documented but is here
     // on the suspicion that it functions similarly to response, as documented above.
