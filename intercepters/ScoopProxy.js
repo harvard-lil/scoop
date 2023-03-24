@@ -57,7 +57,6 @@ export class ScoopProxy extends ScoopIntercepter {
   teardown () {
     // server.close does not close keep-alive connections so do so here
     return new Promise(resolve => {
-      console.log('ScoopProxy.teardown() start')
       this.#connection.closeAllConnections()
       this.#connection.close(() => {
         this.capture.log.info('TCP-Proxy-Server closed')
