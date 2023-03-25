@@ -152,7 +152,8 @@ export class ScoopProxyExchange extends ScoopExchange {
 
   /** @type {?ScoopExchange~Message} */
   get response () {
-    if (!this._response && this.responseRaw && this.responseParsed) {
+    // TODO: figure out why this.responseRaw may sometimes be an empty buffer of length 0
+    if (!this._response && this.responseRaw?.length) {
       this.response = {
         startLine: `HTTP/${this.responseParsed.httpVersion} ${this.responseParsed.statusCode} ${this.responseParsed.statusMessage}`,
         headers: new Headers(this.responseParsed.headers),

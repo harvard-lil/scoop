@@ -40,10 +40,15 @@ const clientDefaults = {
     '-----END CERTIFICATE-----'
 }
 
-function initializeMirror (socket) {
+function prepSocket (socket, proxy) {
   if (!socket.mirror) {
     socket.mirror = new PassThrough()
     socket.pipe(socket.mirror)
+    socket.on('error', err => {
+      if (socket.listenerCount('error') === 1) {
+        proxy.emit('error', err, socket)
+      }
+    })
   } else {
     // Sockets are reused for subsequent requests, so previous pipes must be cleared.
     // Failure to do so will cause the wrong request object to be passed to the transformers
@@ -125,14 +130,14 @@ async function getServerRequest (clientRequest, serverOptions) {
 function getHandler (proxy, clientOptions, serverOptions, requestTransformer, responseTransformer) {
   return async (clientRequest, _, head) => {
     const { socket: clientSocket } = clientRequest
-    initializeMirror(clientSocket)
+    prepSocket(clientSocket, proxy)
 
     const serverRequest = await getServerRequest(clientRequest, serverOptions)
 
     serverRequest
       .on('error', err => proxy.emit('error', err, serverRequest, clientRequest))
       .on('socket', async serverSocket => {
-        initializeMirror(serverSocket)
+        prepSocket(serverSocket, proxy)
 
         const onConnect = async () => {
           proxy.emit('connected', serverSocket, clientRequest)
@@ -187,6 +192,10 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
   }
 }
 
+function getConnectionHandler (proxy) {
+  return (socket) => prepSocket(socket, proxy)
+}
+
 /**
  * Removes any remaining sockets still open due to keep-alive
  */
@@ -221,7 +230,7 @@ export function createServer (options) {
   const handler = getHandler(proxy, clientOptions, serverOptions, requestTransformer, responseTransformer)
 
   proxy
-    .on('connection', initializeMirror)
+    .on('connection', getConnectionHandler(proxy))
     .on('connect', handler)
     .on('request', handler)
     .on('close', closeHandler)
