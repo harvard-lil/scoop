@@ -152,7 +152,7 @@ export class ScoopProxyExchange extends ScoopExchange {
 
   /** @type {?ScoopExchange~Message} */
   get response () {
-    if (!this._response && this.responseRaw) {
+    if (!this._response && this.responseRaw && this.responseParsed) {
       this.response = {
         startLine: `HTTP/${this.responseParsed.httpVersion} ${this.responseParsed.statusCode} ${this.responseParsed.statusMessage}`,
         headers: new Headers(this.responseParsed.headers),
