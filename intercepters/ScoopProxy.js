@@ -149,8 +149,6 @@ export class ScoopProxy extends ScoopIntercepter {
   }
 
   /**
-   * tk
-   *
    * @param {IncomingMessage} request
    * @param {string} match
    * @param {object} rule
