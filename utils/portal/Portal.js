@@ -4,6 +4,21 @@ import { TLSSocket } from 'tls'
 import { URL } from 'url'
 import { PassThrough } from 'node:stream'
 
+const CONNECT = 'CONNECT'
+const UNKNOWN_PROTOCOL = 'unknown:'
+const CRLF = '\r\n'
+
+const httpAgent = new http.Agent({ keepAlive: true })
+const httpsAgent = new https.Agent({ keepAlive: true })
+
+const proxyDefaults = {
+  requestTransformer: (_request) => new PassThrough(),
+  responseTransformer: (_response, _request) => new PassThrough(),
+  clientOptions: (_request) => { return {} },
+  serverOptions: (_request) => { return {} },
+  keepAlive: true
+}
+
 const clientDefaults = {
   rejectUnauthorized: false,
   requestCert: false,
@@ -25,14 +40,6 @@ const clientDefaults = {
     '-----END CERTIFICATE-----'
 }
 
-const defaults = {
-  requestTransformer: (_request) => new PassThrough(),
-  responseTransformer: (_response, _request) => new PassThrough(),
-  clientOptions: (_request) => { return {} },
-  serverOptions: (_request) => { return {} },
-  keepAlive: true
-}
-
 function initializeMirror (socket) {
   if (!socket.mirror) {
     socket.mirror = new PassThrough()
@@ -44,14 +51,6 @@ function initializeMirror (socket) {
     socket.mirror.transformer?.unpipe()
   }
 }
-
-/**
- * Use http agents to keep sockets alive for greater efficiency
- */
-const httpAgent = new http.Agent({ keepAlive: true })
-const httpsAgent = new https.Agent({ keepAlive: true })
-const CONNECT = 'CONNECT'
-const UNKNOWN_PROTOCOL = 'unknown:'
 
 function getServerDefaults (request) {
   const url = new URL(
@@ -69,8 +68,6 @@ function getServerDefaults (request) {
     agent: protocol === 'https:' ? httpsAgent : httpAgent
   }
 }
-
-const CRLF = '\r\n'
 
 function releaseSocket (req) {
   const { socket } = req
@@ -190,8 +187,11 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
   }
 }
 
+
+/**
+ * Removes any remaining sockets still open due to keep-alive
+ */
 function closeHandler () {
-  // clean up any remaining serverSocket keep-alive connections
   httpAgent.destroy()
   httpsAgent.destroy()
 }
@@ -216,7 +216,7 @@ export function createServer (options) {
     clientOptions,
     serverOptions,
     ...passalongOptions
-  } = { ...defaults, ...options }
+  } = { ...proxyDefaults, ...options }
 
   const proxy = http.createServer(passalongOptions)
   const handler = getHandler(proxy, clientOptions, serverOptions, requestTransformer, responseTransformer)
