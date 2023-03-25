@@ -9,6 +9,7 @@
   },
   "files": [
     "*.js",
+    "*/*/*.js",
     "!__*.js",
     "!example.js",
     "!*.test.js",
