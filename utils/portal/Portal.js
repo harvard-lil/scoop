@@ -172,10 +172,10 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
          */
         serverResponse.on('end', () => serverResponse.req.emit('finish'))
 
-        // On response, forward the original server response on to the client
-        // We're using on('data') at the end, instead of pipe, to avoid unnecessary listeners (ex: 'unpipe')
-        // accummlating on clientSocket.. TODO: reevaluate whether pipe can be used
-        serverSocket.mirror.pipe(responseTransformer(serverResponse, clientRequest)).on('data', data => clientSocket.write(data))
+        // On response, forward the original server response on to the client.
+        // TODO: figure out why clientSocket doesn't play well with backpressure hence the need for on('data') instead of pipe
+        serverSocket.mirror.transformer = responseTransformer(serverResponse, clientRequest)
+        serverSocket.mirror.pipe(serverSocket.mirror.transformer).on('data', data => clientSocket.write(data))
 
         // Emit a response event on the http.Server instance to allow a similar interface as server.on('request')
         proxy.emit('response', serverResponse, clientRequest)
