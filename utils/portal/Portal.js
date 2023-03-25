@@ -115,11 +115,11 @@ function releaseSocket (req) {
 }
 
 async function getServerRequest (clientRequest, serverOptions) {
-    const customOptions = await serverOptions(clientRequest)
-    const options = { ...getServerDefaults(clientRequest), ...customOptions }
+  const customOptions = await serverOptions(clientRequest)
+  const options = { ...getServerDefaults(clientRequest), ...customOptions }
 
-    const httpModule = options.agent === httpsAgent ? https : http
-    return httpModule.request(options)
+  const httpModule = options.agent === httpsAgent ? https : http
+  return httpModule.request(options)
 }
 
 function getHandler (proxy, clientOptions, serverOptions, requestTransformer, responseTransformer) {
@@ -186,7 +186,6 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
     clientRequest.resume()
   }
 }
-
 
 /**
  * Removes any remaining sockets still open due to keep-alive
