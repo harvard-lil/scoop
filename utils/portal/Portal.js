@@ -45,6 +45,10 @@ function prepSocket (socket, proxy) {
   if (!socket.mirror) {
     socket.mirror = new PassThrough()
     socket.pipe(socket.mirror)
+    // This is necessary either when the socket has gone back into the agent pool
+    // or in these cases; unclear which
+    // @see {@link https://github.com/nodejs/node/blob/38b6ecc12e9d3458205da8c4c698cf127590c8b6/lib/_http_client.js#L721-L722}
+    // @see {@link https://github.com/nodejs/node/blob/6311de332223e855e7f1ce03b7c920f51f308e95/lib/_http_client.js#L861-L862}
     socket.on('error', err => {
       if (socket.listenerCount('error') === 1) {
         proxy.emit('error', err, socket)
