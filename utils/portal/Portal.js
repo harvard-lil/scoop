@@ -100,7 +100,6 @@ function releaseSocket (req) {
    */
   req.on('upgrade', () => {})
 
-
   /**
    * emit a fake switching response to trigger the
    * release of the socket and parser from the request
