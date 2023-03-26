@@ -6,6 +6,7 @@ import { PassThrough } from 'node:stream'
 
 const CONNECT = 'CONNECT'
 const UNKNOWN_PROTOCOL = 'unknown:'
+const RELEASE_SOCKET = 'release-socket'
 const CRLF = '\r\n'
 
 const httpAgent = new http.Agent({ keepAlive: true })
@@ -54,6 +55,16 @@ function prepSocket (socket, proxy) {
     // Failure to do so will cause the wrong request object to be passed to the transformers
     socket.mirror.unpipe()
     socket.mirror.transformer?.unpipe()
+
+    /**
+     * Ensure the socket remains flowing.
+     * The 'upgrade' event will remove http.Server's event listeners and, in the process,
+     * assume that there are no other listeners and set socket.readableFlowing === null even
+     * though the pipe to mirror is still attached
+     * @see {@link https://nodejs.org/api/stream.html#three-states}
+     * @see {@link https://nodejs.org/api/http.html#event-upgrade_1}
+     */
+    socket.resume()
   }
 }
 
@@ -76,6 +87,7 @@ function getServerDefaults (request) {
 
 function releaseSocket (req) {
   const { socket } = req
+  prepSocket(socket) // prevents us from piping our fake response back to the proxy
 
   /**
    * A listener must be present or the socket will be closed
@@ -83,6 +95,7 @@ function releaseSocket (req) {
    * @see {@link https://github.com/nodejs/node/blob/c5881458106487f80d31513096b4d0baa88828b8/lib/_http_client.js#L564}
    */
   req.on('upgrade', () => {})
+
 
   /**
    * emit a fake switching response to trigger the
@@ -92,7 +105,7 @@ function releaseSocket (req) {
    */
   socket.emit('data', Buffer.from([
     'HTTP/1.1 101 Switching Protocols',
-    'Upgrade: shim',
+    'Upgrade: ' + RELEASE_SOCKET,
     'Connection: Upgrade',
     CRLF
   ].join(CRLF)))
@@ -127,7 +140,42 @@ async function getServerRequest (clientRequest, serverOptions) {
   return httpModule.request(options)
 }
 
-function getHandler (proxy, clientOptions, serverOptions, requestTransformer, responseTransformer) {
+function getResponseHandler (event, proxy, clientRequest, responseTransformer) {
+  return async (serverResponse, _, head) => {
+    // Early exit if this is a fabricated response to get Node to release the socket
+    if (serverResponse.headers.upgrade === RELEASE_SOCKET) return
+
+    const { socket: serverSocket } = serverResponse
+    prepSocket(serverSocket, proxy)
+
+    // Emit a response event on the http.Server instance to allow a similar interface as server.on('request')
+    proxy.emit(event, serverResponse, clientRequest)
+
+    /**
+     * req.emit('finish') be called to release the socket back into the agent pool.
+     * Needed since we never call `req.end()` and instead just pipe data through the socket.
+     * Node's `res.on('end')` handler will set `req._ended = true` which the
+     * `req.on('finish')` handler uses to determine whether to send the socket back to the pool.
+     * @see {@link https://github.com/nodejs/node/blob/c5881458106487f80d31513096b4d0baa88828b8/lib/_http_client.js#L748}
+     * @see {@link https://github.com/nodejs/node/blob/c5881458106487f80d31513096b4d0baa88828b8/lib/_http_client.js#L786}
+     *
+     * NOTE: req will be undefined for 'upgrade' requests which is fine
+     * since the socket shouldn't be returned to the pool in that event, anyway
+     */
+    serverResponse.on('end', () => serverResponse.req?.emit('finish'))
+
+    // On response, forward the original server response on to the client.
+    // TODO: figure out why clientSocket doesn't play well with backpressure hence the need for on('data') instead of pipe
+    serverSocket.mirror.transformer = responseTransformer(serverResponse, clientRequest)
+    serverSocket.mirror.pipe(serverSocket.mirror.transformer).on('data', data => clientRequest.socket.write(data))
+
+    // response must be fully consumed else response.socket listeners won't get all of the chunks.
+    // @see {@link https://nodejs.org/api/http.html#class-httpclientrequest}
+    serverResponse.resume()
+  }
+}
+
+function getRequestHandler (proxy, clientOptions, serverOptions, requestTransformer, responseTransformer) {
   return async (clientRequest, _, head) => {
     const { socket: clientSocket } = clientRequest
     prepSocket(clientSocket, proxy)
@@ -161,31 +209,8 @@ function getHandler (proxy, clientOptions, serverOptions, requestTransformer, re
         if (serverRequest.reusedSocket) await onConnect()
         else serverSocket.on('connect', onConnect)
       })
-      .on('response', (serverResponse) => {
-        const { socket: serverSocket } = serverResponse
-
-        /**
-         * Must be called to release the socket back into the agent pool.
-         * Needed since we never call `req.end()` and instead just pipe data through the socket.
-         * Node's `res.on('end')` handler will set `req._ended = true` which the
-         * `req.on('finish')` handler uses to determine whether to send the socket back to the pool.
-         * @see {@link https://github.com/nodejs/node/blob/c5881458106487f80d31513096b4d0baa88828b8/lib/_http_client.js#L748}
-         * @see {@link https://github.com/nodejs/node/blob/c5881458106487f80d31513096b4d0baa88828b8/lib/_http_client.js#L786}
-         */
-        serverResponse.on('end', () => serverResponse.req.emit('finish'))
-
-        // On response, forward the original server response on to the client.
-        // TODO: figure out why clientSocket doesn't play well with backpressure hence the need for on('data') instead of pipe
-        serverSocket.mirror.transformer = responseTransformer(serverResponse, clientRequest)
-        serverSocket.mirror.pipe(serverSocket.mirror.transformer).on('data', data => clientSocket.write(data))
-
-        // Emit a response event on the http.Server instance to allow a similar interface as server.on('request')
-        proxy.emit('response', serverResponse, clientRequest)
-
-        // response must be fully consumed else response.socket listeners won't get all of the chunks.
-        // @see {@link https://nodejs.org/api/http.html#class-httpclientrequest}
-        serverResponse.resume()
-      })
+      .on('upgrade', getResponseHandler('upgrade-client', proxy, clientRequest, responseTransformer))
+      .on('response', getResponseHandler('response', proxy, clientRequest, responseTransformer))
     // Ensure the entire request can be consumed. This isn't documented but is here
     // on the suspicion that it functions similarly to response, as documented above.
     clientRequest.resume()
@@ -227,12 +252,13 @@ export function createServer (options) {
   } = { ...proxyDefaults, ...options }
 
   const proxy = http.createServer(passalongOptions)
-  const handler = getHandler(proxy, clientOptions, serverOptions, requestTransformer, responseTransformer)
+  const requestHandler = getRequestHandler(proxy, clientOptions, serverOptions, requestTransformer, responseTransformer)
 
   proxy
     .on('connection', getConnectionHandler(proxy))
-    .on('connect', handler)
-    .on('request', handler)
+    .on('connect', requestHandler)
+    .on('upgrade', requestHandler)
+    .on('request', requestHandler)
     .on('close', closeHandler)
 
   return proxy
