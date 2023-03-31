@@ -1,10 +1,10 @@
 import * as crypto from 'node:crypto'
 import { Transform } from 'node:stream'
+import { createServer } from '@harvard-lil/portal'
 
 import { ScoopIntercepter } from './ScoopIntercepter.js'
 import { ScoopProxyExchange } from '../exchanges/index.js'
 import { searchBlocklistFor } from '../utils/blocklist.js'
-import { createServer } from '../utils/portal/Portal.js'
 
 import http from 'http' // eslint-disable-line
 import net from 'net' // eslint-disable-line
