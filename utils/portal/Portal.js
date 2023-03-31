@@ -262,12 +262,12 @@ export function createServer (options) {
 
   proxy
     .on('connection',       connectionHandler)
+    .on('close',            closeHandler)
     .on('connect',          requestHandler)
     .on('upgrade',          requestHandler)
     .on('checkContinue',    requestHandler)
     .on('checkExpectation', requestHandler)
     .on('request',          requestHandler)
-    .on('close',            closeHandler)
 
   return proxy
 }
