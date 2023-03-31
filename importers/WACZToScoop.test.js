@@ -13,9 +13,8 @@ import { testDefaults } from '../options.js'
 
 test('WACZToScoop\'s roundtrip should produce identical Scoop object.', async (_t) => {
   const fpath = `${TMP_PATH}${uuidv4()}.wacz`
-  const capture = new Scoop('https://example.com', testDefaults)
 
-  await capture.capture()
+  const capture = await Scoop.capture('https://example.com', testDefaults)
   const wacz = await capture.toWACZ(true)
 
   let reconstructedCapture

@@ -1,13 +1,8 @@
 /// <reference path="./ScoopExchange.types.js" />
 
-import {
-  getStartLine,
-  getBody,
-  flatArrayToHeadersObject
-} from '../utils/http.js'
+import { getBody } from '../utils/http.js'
 
 import { ScoopExchange } from './ScoopExchange.js'
-import { ScoopHTTPParser } from '../parsers/index.js'
 
 /**
  * @class ScoopProxyExchange
@@ -22,19 +17,19 @@ export class ScoopProxyExchange extends ScoopExchange {
   constructor (props = {}) {
     super(props)
 
+    const setters = Object.getOwnPropertyNames(this.constructor.prototype)
     for (const [key, value] of Object.entries(props)) {
-      if (key in this) {
+      if (key in this || setters.includes(key)) {
         this[key] = value
       }
     }
   }
 
   get url () {
-    if (!this._url && this.request) {
-      this._url = this.request.startLine.split(' ')[1]
-      if (this._url[0] === '/') {
-        this._url = `https://${this.request.headers.get('host')}${this._url}`
-      }
+    if (!this._url && this.requestParsed) {
+      this.url = this.requestParsed.url.startsWith('/')
+        ? `https://${this.requestParsed.headers.host}${this.requestParsed.url}`
+        : this.requestParsed.url
     }
 
     return this._url
@@ -50,7 +45,7 @@ export class ScoopProxyExchange extends ScoopExchange {
    * @type {?Buffer}
    * @private
    */
-  _requestRaw
+  _requestRaw = Buffer.from([])
 
   /** @type {?Buffer} */
   get requestRaw () {
@@ -66,7 +61,7 @@ export class ScoopProxyExchange extends ScoopExchange {
    * @type {?Buffer}
    * @private
    */
-  _responseRaw
+  _responseRaw = Buffer.from([])
 
   /** @type {?Buffer} */
   get responseRaw () {
@@ -78,17 +73,68 @@ export class ScoopProxyExchange extends ScoopExchange {
     this._responseRaw = val
   }
 
+  /**
+   * Stores the parsed body on the incoming message for easy access
+   *
+   * @param {IncomingMessage} message
+   * @private
+   */
+  _cacheBody (message) {
+    message.on('data', (data) => {
+      message.body = message.body
+        ? Buffer.concat([message.body, data])
+        : data
+    })
+  }
+
+  /**
+   * @type {?IncomingMessage}
+   * @private
+   */
+  _requestParsed
+
+  /** @type {?IncomingMessage} */
+  get requestParsed () {
+    return this._requestParsed
+  }
+
+  set requestParsed (val) {
+    this._request = null
+    this._cacheBody(val)
+    this._requestParsed = val
+  }
+
+  /**
+   * @type {?IncomingMessage}
+   * @private
+   */
+  _responseParsed
+
+  /** @type {?IncomingMessage} */
+  get responseParsed () {
+    return this._responseParsed
+  }
+
+  set responseParsed (val) {
+    this._response = null
+    this._cacheBody(val)
+    this._responseParsed = val
+  }
+
+  /**
+   * @type {?object}
+   * @private
+   */
+  _request
+
   /** @type {?ScoopExchange~Message} */
   get request () {
-    if (!this._request && this.requestRaw) {
-      const parsed = ScoopHTTPParser.parseRequest(this.requestRaw)
-      const body = getBody(this.requestRaw)
-      this._request = {
-        startLine: getStartLine(this.requestRaw).toString(),
-        headers: flatArrayToHeadersObject(parsed.headers),
-        body,
-        // use the existing raw buffer if they're identical to perhaps free up memory
-        bodyCombined: Buffer.compare(body, parsed.body) === 0 ? body : parsed.body
+    if (!this._request && this.requestParsed) {
+      this.request = {
+        startLine: `${this.requestParsed.method} ${this.requestParsed.url} HTTP/${this.requestParsed.httpVersion}`,
+        headers: new Headers(this.requestParsed.headers),
+        body: getBody(this.requestRaw),
+        bodyCombined: this.requestParsed.body
       }
     }
     return this._request
@@ -98,17 +144,21 @@ export class ScoopProxyExchange extends ScoopExchange {
     this._request = val
   }
 
+  /**
+   * @type {?object}
+   * @private
+   */
+  _response
+
   /** @type {?ScoopExchange~Message} */
   get response () {
-    if (!this._response && this.responseRaw) {
-      const parsed = ScoopHTTPParser.parseResponse(this.responseRaw)
-      const body = getBody(this.responseRaw)
-      this._response = {
-        startLine: getStartLine(this.responseRaw).toString(),
-        headers: flatArrayToHeadersObject(parsed.headers),
-        body,
-        // use the existing raw buffer if they're identical to perhaps free up memory
-        bodyCombined: Buffer.compare(body, parsed.body) === 0 ? body : parsed.body
+    // TODO: figure out why this.responseRaw may sometimes be an empty buffer of length 0
+    if (!this._response && this.responseRaw?.length) {
+      this.response = {
+        startLine: `HTTP/${this.responseParsed.httpVersion} ${this.responseParsed.statusCode} ${this.responseParsed.statusMessage}`,
+        headers: new Headers(this.responseParsed.headers),
+        body: getBody(this.responseRaw),
+        bodyCombined: this.responseParsed.body
       }
     }
     return this._response

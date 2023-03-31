@@ -147,7 +147,7 @@ export class Scoop {
    *   osName: ?string,
    *   osVersion: ?string,
    *   cpuArchitecture: ?string,
-   *   blockedRequests: Array.<{url: string, ip: string, rule: string}>,
+   *   blockedRequests: Array.<{match: string, rule: string}>,
    *   noArchiveUrls: string[],
    *   certificates: Array.<{host: string, pem: string}>,
    *   ytDlpHash: string,

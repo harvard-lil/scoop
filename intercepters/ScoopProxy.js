@@ -1,9 +1,13 @@
-import ProxyServer from 'transparent-proxy'
-import Session from 'transparent-proxy/core/Session.js'
+import * as crypto from 'node:crypto'
+import { Transform } from 'node:stream'
+import { createServer } from '@harvard-lil/portal'
 
 import { ScoopIntercepter } from './ScoopIntercepter.js'
 import { ScoopProxyExchange } from '../exchanges/index.js'
 import { searchBlocklistFor } from '../utils/blocklist.js'
+
+import http from 'http' // eslint-disable-line
+import net from 'net' // eslint-disable-line
 
 /**
  * @class ScoopProxy
@@ -14,7 +18,7 @@ import { searchBlocklistFor } from '../utils/blocklist.js'
  * Coalesces exchanges as ScoopProxyExchange entries.
  */
 export class ScoopProxy extends ScoopIntercepter {
-  /** @type {ProxyServer} */
+  /** @type {http.Server} */
   #connection
 
   /** @type {ScoopProxyExchange[]} */
@@ -23,30 +27,166 @@ export class ScoopProxy extends ScoopIntercepter {
   /**
    * Initializes the proxy server
    */
-  async setup () {
-    this.#connection = new ProxyServer({
-      intercept: true,
-      verbose: this.options.proxyVerbose,
-      injectData: this.interceptRequest,
-      injectResponse: this.interceptResponse
-    })
+  setup () {
+    return new Promise(resolve => {
+      this.#connection = createServer({
+        requestTransformer: this.requestTransformer.bind(this),
+        responseTransformer: this.responseTransformer.bind(this),
+        serverOptions: () => {
+          return {
+            rejectUnauthorized: false,
+            // This flag allows legacy insecure renegotiation between OpenSSL and unpatched servers
+            // @see {@link https://stackoverflow.com/questions/74324019/allow-legacy-renegotiation-for-nodejs}
+            secureOptions: crypto.constants.SSL_OP_LEGACY_SERVER_CONNECT
+          }
+        }
+      })
 
-    await this.#connection.listen(this.options.proxyPort, this.options.proxyHost, () => {
-      this.capture.log.info(`TCP-Proxy-Server started ${JSON.stringify(this.#connection.address())}`)
+      this.#connection
+        .on('request', this.onRequest.bind(this))
+        .on('connected', this.onConnected.bind(this))
+        .on('response', this.onResponse.bind(this))
+        .on('error', this.onError.bind(this))
+        .listen(this.options.proxyPort, this.options.proxyHost, () => {
+          this.capture.log.info(`TCP-Proxy-Server started ${JSON.stringify(this.#connection.address())}`)
+          resolve()
+        })
     })
-
-    // Arbitrary 250ms wait (fix for observed start up bug)
-    await new Promise(resolve => setTimeout(resolve, 250))
   }
 
   /**
-   * Closes the proxy server
+   * @param {http.ClientRequest} request
+   * @returns {Transform}
+   */
+  requestTransformer (request) {
+    return new Transform({
+      transform: (chunk, _encoding, callback) => {
+        callback(null, this.intercept('request', chunk, request))
+      }
+    })
+  }
+
+  /**
+   * @param {http.ServerResponse} _response
+   * @param {http.ClientRequest} request
+   * @returns {Transform}
+   */
+  responseTransformer (_response, request) {
+    return new Transform({
+      transform: (chunk, _encoding, callback) => {
+        callback(null, this.intercept('response', chunk, request))
+      }
+    })
+  }
+
+  /**
+   * Attempts to close the proxy server. Skips after X seconds if unable to do so.
    * @returns {Promise<void>}
    */
-  async teardown () {
-    this.#connection.close()
-    this.#connection.unref()
-    return true
+  teardown () {
+    let closeTimeout = null
+
+    return Promise.race([
+      new Promise(resolve => {
+        // server.close does not close keep-alive connections so do so here
+        this.#connection.closeAllConnections()
+        this.#connection.close(() => {
+          this.capture.log.info('TCP-Proxy-Server closed')
+          clearTimeout(closeTimeout)
+          resolve()
+        })
+      }),
+
+      new Promise(resolve => {
+        closeTimeout = setTimeout(() => {
+          this.capture.log.warn('TCP-Proxy-Server did not close properly.')
+          resolve()
+        }, 5000)
+      })
+    ])
+  }
+
+  /**
+   * On request:
+   * - Add to exchanges list (if currently recording exchanges)
+   * - Check request against blocklist, block if necessary
+   *
+   * @param {http.ClientRequest} request
+   */
+  onRequest (request) {
+    if (this.recordExchanges) {
+      this.exchanges.push(new ScoopProxyExchange({ requestParsed: request }))
+    }
+
+    const url = request.url.startsWith('/')
+      ? `https://${request.headers.host}${request.url}`
+      : request.url
+
+    const rule = this.findMatchingBlocklistRule(url)
+
+    if (rule) {
+      this.blockRequest(request, url, rule)
+    }
+  }
+
+  /**
+   * On connected:
+   * - Check against blocklist, block if necessary
+   *
+   * @param {net.Socket} serverSocket
+   * @param {http.ClientRequest} request
+   */
+  onConnected (serverSocket, request) {
+    const ip = serverSocket.remoteAddress
+    const rule = this.findMatchingBlocklistRule(ip)
+    if (rule) {
+      serverSocket.destroy()
+      this.blockRequest(request, ip, rule)
+    }
+  }
+
+  /**
+   * On response:
+   * - Check for "noarchive" directive
+   * @param {http.ServerResponse} response
+   * @param {http.ClientRequest} request
+   */
+  onResponse (response, request) {
+    // there will not be an exchange with this request if we're, for instance, not recording
+    const exchange = this.exchanges.find(ex => ex.requestParsed === request)
+
+    if (exchange) {
+      exchange.responseParsed = response
+      response.on('end', () => this.checkExchangeForNoArchive(exchange))
+    }
+  }
+
+  /**
+   * Custom error handling.
+   * Currently handled: ETIMEDOUT, ENOTFOUND, EPIPE.
+   * @param {object} err
+   * @param {http.ServerResponse} _serverRequest
+   * @param {http.ClientRequest} clientRequest
+   * @returns {void}
+   */
+  onError (err, _serverRequest, clientRequest) {
+    // Quietly suppress socket disconnection errors
+    // when we have no way to send notice back to the client
+    if (!clientRequest) return
+
+    const CRLFx2 = '\r\n\r\n'
+    switch (err.code) {
+      case 'ETIMEDOUT':
+        clientRequest.socket.write('HTTP/1.1 408 Request Timeout' + CRLFx2)
+        break
+      case 'ENOTFOUND':
+        clientRequest.socket.write('HTTP/1.1 404 Not Found' + CRLFx2)
+        break
+      case 'EPIPE':
+        break
+      default:
+        clientRequest.socket.write('HTTP/1.1 400 Bad Request' + CRLFx2)
+    }
   }
 
   /**
@@ -65,122 +205,52 @@ export class ScoopProxy extends ScoopIntercepter {
   }
 
   /**
-   * Returns an exchange based on the exchange connectionId and type.
-   * If the type is a request and there's already been a response on that same session,
-   * create a new exchange. Otherwise append to continue the exchange.
-   *
-   * @param {string} connectionId
-   * @param {string} [type='request'] - Can be "request" or "response"
-   */
-  getOrInitExchange (connectionId, type = 'request') {
-    if (!connectionId) {
-      throw new Error('"connectionId" must be provided.')
-    }
-
-    if (['response', 'request'].includes(type) === false) {
-      throw new Error('"type" must be "request" or "response".')
-    }
-
-    return (
-      this.exchanges.findLast(ex => ex.connectionId === connectionId && (type === 'response' || !ex.responseRaw)) ||
-        this.exchanges[this.exchanges.push(new ScoopProxyExchange({ connectionId })) - 1]
-    )
-  }
-
-  /**
    * Checks an outgoing request against the blocklist. Interrupts the request it needed.
    * Keeps trace of blocked requests in `Scoop.provenanceInfo`.
    *
-   * @param {object} session - ProxyServer session.
-   * @returns {boolean} - `true` if request was interrupted
+   * @param {string} toMatch
+   * @returns {boolean} - `true` if a match was found in the blocklist
    */
-  checkRequestAgainstBlocklist (session) {
-    if (session instanceof Session === false) {
-      throw new Error('"session" must be a valid "ProxyServer" session.')
-    }
-
-    const ip = session._dst.remoteAddress
-
-    // https doesn't have the protocol or host in the path so add it here
-    let url = ''
-
-    try {
-      url = (session.request.path[0] === '/')
-        ? `https://${session.request.headers.host}${session.request.path}`
-        : session.request.path
-    } catch (err) {
-      this.capture.log.trace(err)
-      this.capture.log.warn('A session could not be intercepted for comparison against the blocklist (parsing error). Skipping.')
-      return false
-    }
-
+  findMatchingBlocklistRule (toMatch) {
     // Search for a blocklist match:
     // Use the index to pull the original un-parsed rule from options so that the printing matches user expectations
-    const ruleIndex = this.capture.blocklist.findIndex(searchBlocklistFor(url, ip))
-
-    if (ruleIndex === -1) {
-      return false
-    }
-
-    const rule = this.capture.options.blocklist[ruleIndex]
-    this.capture.log.warn(`Blocking ${url} resolved to IP ${ip} matching rule ${rule}`)
-    this.capture.provenanceInfo.blockedRequests.push({ url, ip, rule })
-
-    // TODO: confirm in transparent-proxy that this doesn't kill subsequent
-    // requests that were earmarked for this session
-    session.destroy()
-
-    return true
+    return this.capture.options.blocklist[
+      this.capture.blocklist.findIndex(searchBlocklistFor(toMatch))
+    ]
   }
 
   /**
-   * @param {Buffer} data
-   * @param {Session} session
-   * @returns {?Buffer}
+   * "Blocks" a request by writing HTTP 403 to request socket.
+   * @param {http.ClientRequest} request
+   * @param {string} match
+   * @param {object} rule
    */
-  interceptRequest = (data, session) => {
-    this.checkRequestAgainstBlocklist(session) // May interrupt request
-
-    if (!session._src.destroyed && !session._dst.destroyed) {
-      return this.intercept('request', data, session)
-    }
-  }
-
-  /**
-   * @param {Buffer} data
-   * @param {Session} session
-   * @returns {Buffer}
-   */
-  interceptResponse = (data, session) => {
-    return this.intercept('response', data, session)
+  blockRequest (request, match, rule) {
+    request.socket.write(
+      'HTTP/1.1 403 Forbidden\r\n\r\n' +
+      `During capture, request for ${match} matched blocklist rule ${rule} and was blocked.`
+    )
+    this.capture.log.warn(`Blocking ${match} matching rule ${rule}`)
+    this.capture.provenanceInfo.blockedRequests.push({ match, rule })
   }
 
   /**
    * Collates network data (both requests and responses) from the proxy.
    * Post-capture checks and capture size enforcement happens here.
+   * Acts as a transformer in the proxy pipeline and therefor must return
+   * the data to be passed forward.
    *
    * @param {string} type
    * @param {Buffer} data
-   * @param {Session} session
+   * @param {ScoopProxyExchange} exchange
    * @returns {Buffer}
    */
-  intercept (type, data, session) {
-    // Early exit with unmodified data if not recording exchanges
-    if (!this.recordExchanges) {
-      return data
-    }
+  intercept (type, data, request) {
+    const exchange = this.exchanges.find(ex => ex.requestParsed === request)
+    if (!exchange) return data // Early exit if not recording exchanges
 
-    const ex = this.getOrInitExchange(session._id, type)
     const prop = `${type}Raw` // `responseRaw` | `requestRaw`
-    ex[prop] = ex[prop] ? Buffer.concat([ex[prop], data], ex[prop].length + data.length) : data
-
-    // NOTE: Temporarily moved as a capture step until this proxy is replaced.
-    // The main issue was that we could not easily identify "when" to run this step, resulting in multiple, unnecessary calls.
-    /*
-    if (type === 'response') {
-      this.checkExchangeForNoArchive(ex)
-    }
-    */
+    exchange[prop] = Buffer.concat([exchange[prop], data])
 
     this.byteLength += data.byteLength
     this.checkAndEnforceSizeLimit() // From parent

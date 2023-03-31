@@ -9,11 +9,9 @@ import {
 
 import {
   getHead,
-  getStartLine,
   getBody,
   bodyStartIndex,
-  bodyToString,
-  flatArrayToHeadersObject
+  bodyToString
 } from './http.js'
 
 const CRLF = '\r\n'
@@ -42,12 +40,6 @@ test('getHead returns the start line, headers, and trailing newline as a buffer'
   assert.equal(getHead(misconfiguredResponse).toString(), msgParts.slice(0, -1).join(LF) + LF)
 })
 
-test('getStartLine returns the start line as a buffer', async (_t) => {
-  assert.equal(getStartLine(properlyConfiguredResponse).constructor, Buffer)
-  assert.equal(getStartLine(properlyConfiguredResponse).toString(), msgParts[0])
-  assert.equal(getStartLine(misconfiguredResponse).toString(), msgParts[0])
-})
-
 test('getBody returns the body as a buffer', async (_t) => {
   assert.equal(getBody(properlyConfiguredResponse).constructor, Buffer)
   assert.equal(getBody(properlyConfiguredResponse).toString(), bodyFixture)
@@ -72,27 +64,4 @@ test('bodyToString should handle gzip encoded bodies.', async (_t) => {
 test('bodyToString should handle brotli encoded bodies.', async (_t) => {
   const body = await bodyToString(brotliCompressSync(bodyFixture), 'br')
   assert.equal(body, bodyFixture)
-})
-
-test('flatArrayToHeadersObject should throw if given anything other than an array with key value pairs.', async (_t) => {
-  for (const headers of [null, true, false, 12, 'FOO', {}, () => {}, ['foo']]) {
-    assert.throws(() => flatArrayToHeadersObject(headers))
-  }
-})
-
-test('flatArrayToHeadersObject should return a Headers object for a given linear representation of headers.', async (_t) => {
-  const input = [
-    'age', '76448',
-    'content-encoding', 'gzip',
-    'content-encoding', 'br', // Checking dedupe
-    'content-type', 'text/html; charset=utf-8'
-  ]
-
-  const expectedOutput = new Headers({
-    age: '76448',
-    'content-encoding': 'gzip, br',
-    'content-type': 'text/html; charset=utf-8'
-  })
-
-  assert.deepEqual(flatArrayToHeadersObject(input), expectedOutput)
 })
