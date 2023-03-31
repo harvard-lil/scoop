@@ -75,11 +75,13 @@ Playback software such as [replayweb.page](https://replayweb.page/) can be used 
 
 ## Getting started
 
-### Dependencies 
+### Dependencies and requirements
 **Scoop** requires [Node.js 18+](https://nodejs.org/en/). 
 
 Other _recommended_ system-level dependencies: 
 [curl](https://curl.se/), [python3](https://www.python.org/) (for `--capture-video-as-attachment` option).
+
+While the amount of resources **Scoop** needs is entirely dependent on what is being captured, a minimum of **4GB of RAM** seems to be indicated for complex captures.
 
 ### Compatibility
 This program has been written for UNIX-like systems and is expected to work on **Linux, Mac OS, and Windows Subsystem for Linux**.

@@ -45,10 +45,10 @@
   },
   "homepage": "https://github.com/harvard-lil/scoop#readme",
   "dependencies": {
-    "@harvard-lil/js-wacz": "^0.0.8",
+    "@harvard-lil/js-wacz": "^0.0.9",
     "@harvard-lil/portal": "^0.0.1",
     "@laverdet/beaugunderson-ip-address": "^8.1.0",
-    "browsertrix-behaviors": "^0.4.2",
+    "browsertrix-behaviors": "^0.5.0-beta.0",
     "chalk": "^5.2.0",
     "commander": "^10.0.0",
     "get-os-info": "^1.0.2",
@@ -59,7 +59,7 @@
     "nunjucks": "^3.2.3",
     "playwright": "^1.31.2",
     "uuid": "^9.0.0",
-    "warcio": "^2.0.1"
+    "warcio": "^2.1.0"
   },
   "devDependencies": {
     "@godaddy/dmd": "^1.0.4",
