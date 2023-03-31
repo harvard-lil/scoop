@@ -190,7 +190,7 @@ function getRequestHandler (proxy, clientOptions, serverOptions, requestTransfor
       .on('socket', async serverSocket => {
         prepSocket(serverSocket, proxy)
 
-        const onConnect = async () => {
+        const onSocketConnect = async () => {
           proxy.emit('connected', serverSocket, clientRequest)
           if (serverSocket.destroyed) return // serverSocket may be destroyed via a 'connected' event listener
           if (clientRequest.method === CONNECT) {
@@ -209,10 +209,11 @@ function getRequestHandler (proxy, clientOptions, serverOptions, requestTransfor
           }
         }
 
-        if (serverRequest.reusedSocket) await onConnect()
-        else serverSocket.on('connect', onConnect)
+        if (serverRequest.reusedSocket) await onSocketConnect()
+        else serverSocket.on('connect', onSocketConnect)
       })
       .on('upgrade',     getResponseHandler('upgrade-client', proxy, clientRequest, responseTransformer))
+      .on('connect',     getResponseHandler('connect',        proxy, clientRequest, responseTransformer))
       .on('continue',    getResponseHandler('continue',       proxy, clientRequest, responseTransformer))
       .on('information', getResponseHandler('information',    proxy, clientRequest, responseTransformer))
       .on('response',    getResponseHandler('response',       proxy, clientRequest, responseTransformer))
