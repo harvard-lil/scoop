@@ -1,6 +1,7 @@
 import path from 'path'
 import { URL } from 'url'
-import { Readable } from 'stream'
+import { createServer, request } from 'http'
+import { Readable, PassThrough } from 'node:stream'
 
 import { WARCParser } from 'warcio'
 import StreamZip from 'node-stream-zip'
@@ -8,6 +9,20 @@ import StreamZip from 'node-stream-zip'
 import { Scoop } from '../Scoop.js'
 import { ScoopProxyExchange, ScoopGeneratedExchange } from '../exchanges/index.js'
 import { EXCHANGE_ID_HEADER_LABEL, EXCHANGE_DESCRIPTION_HEADER_LABEL } from '../constants.js'
+
+const parsers = {
+  request: (data) => new Promise(resolve =>
+    createServer()
+      .on('request', resolve)
+      .on('connection', stream => stream.write(data))
+      .emit('connection', new PassThrough())
+  ),
+  response: (data) => new Promise(resolve =>
+    request({ createConnection: () => new PassThrough() })
+      .on('socket', stream => stream.write(data))
+      .on('response', resolve)
+  )
+}
 
 /**
  * (Experimental) Reconstructs a Scoop capture from a WACZ containing raw http traffic data.
@@ -113,10 +128,13 @@ const getExchanges = async (zip) => {
           buffers.push(warcEntriesByDigest[warcPayloadDigest])
         }
 
+        const combined = Buffer.concat(buffers)
+
         return {
           id,
           date: new Date(date),
-          [`${type}Raw`]: Buffer.concat(buffers)
+          [`${type}Raw`]: combined,
+          [`${type}Parsed`]: await parsers[type](combined)
         }
       })
   )

@@ -134,16 +134,14 @@
         <table>
           <thead>
             <tr>
-              <th>URL</th>
-              <th>IP</th>
+              <th>Match</th>
               <th>Blocklist Rule</th>
             </tr>
           </thead>
           <tbody>
             {% for block in blockedRequests %}
             <tr>
-              <td>{{ block.url }}</td>
-              <td>{{ block.ip }}</td>
+              <td>{{ block.match }}</td>
               <td>{{ block.rule }}</td>
             </tr>
             {% endfor %}
