@@ -212,11 +212,11 @@ function getRequestHandler (proxy, clientOptions, serverOptions, requestTransfor
         if (serverRequest.reusedSocket) await onSocketConnect()
         else serverSocket.on('connect', onSocketConnect)
       })
-      .on('upgrade',     getResponseHandler('upgrade-client', proxy, clientRequest, responseTransformer))
-      .on('connect',     getResponseHandler('connect',        proxy, clientRequest, responseTransformer))
-      .on('continue',    getResponseHandler('continue',       proxy, clientRequest, responseTransformer))
-      .on('information', getResponseHandler('information',    proxy, clientRequest, responseTransformer))
-      .on('response',    getResponseHandler('response',       proxy, clientRequest, responseTransformer))
+      .on('upgrade', getResponseHandler('upgrade-client', proxy, clientRequest, responseTransformer))
+      .on('connect', getResponseHandler('connect', proxy, clientRequest, responseTransformer))
+      .on('continue', getResponseHandler('continue', proxy, clientRequest, responseTransformer))
+      .on('information', getResponseHandler('information', proxy, clientRequest, responseTransformer))
+      .on('response', getResponseHandler('response', proxy, clientRequest, responseTransformer))
     // Ensure the entire request can be consumed. This isn't documented but is here
     // on the suspicion that it functions similarly to response, as documented above.
     clientRequest.resume()
@@ -262,13 +262,13 @@ export function createServer (options) {
   const requestHandler = getRequestHandler(proxy, clientOptions, serverOptions, requestTransformer, responseTransformer)
 
   proxy
-    .on('connection',       connectionHandler)
-    .on('close',            closeHandler)
-    .on('connect',          requestHandler)
-    .on('upgrade',          requestHandler)
-    .on('checkContinue',    requestHandler)
+    .on('connection', connectionHandler)
+    .on('close', closeHandler)
+    .on('connect', requestHandler)
+    .on('upgrade', requestHandler)
+    .on('checkContinue', requestHandler)
     .on('checkExpectation', requestHandler)
-    .on('request',          requestHandler)
+    .on('request', requestHandler)
 
   return proxy
 }
