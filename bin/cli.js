@@ -233,7 +233,7 @@ program.addOption(
 program.addOption(
   new Option(
     '--blocklist <string>',
-    'If set, replaces Scoop\'s default list of url patterns and IP ranges Scoop should not capture. Coma-separated. Example: "/https?:\/\/localhost/,0.0.0.0/8,10.0.0.0".') // eslint-disable-line
+    'If set, replaces Scoop\'s default list of url patterns and IP ranges Scoop should not capture. Comma-separated. Example: "/https?:\/\/localhost/,0.0.0.0/8,10.0.0.0".') // eslint-disable-line
   // .default(defaults.blocklist.join(','))
 )
 
