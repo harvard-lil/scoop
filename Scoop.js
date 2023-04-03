@@ -1366,4 +1366,39 @@ export class Scoop {
   async toWACZ (includeRaw = true, signingServer) {
     return await exporters.scoopToWACZ(this, includeRaw, signingServer)
   }
+
+  /**
+   * @typedef {Object} ScoopCaptureSummary
+   * @property {int} state
+   * @property {object} states - Possible values of Scoop.state
+   * @property {string} targetUrl
+   * @property {boolean} targetUrlIsWebPage
+   * @property {ScoopOptions} options
+   * @property {string} startedAt - ISO-formated date
+   * @property {string[]} blockedRequests
+   * @property {string[]} noArchiveUrls
+   * @property {string[]} exchangeUrls
+   * @property {?string} captureIp
+   * @property {?string} userAgent
+   */
+
+  /**
+   * Generates and returns a summary of the current capture object, regardless of its state.
+   * @returns {ScoopCaptureSummary}
+   */
+  async summary () {
+    return {
+      state: this.state,
+      states: Scoop.states,
+      targetUrl: this.url,
+      targetUrlIsWebPage: this.targetUrlIsWebPage,
+      options: this.options,
+      startedAt: this.startedAt,
+      blockedRequests: [],
+      noArchiveUrls: [],
+      captureIp: this.provenanceInfo?.captureIp,
+      userAgent: this.provenanceInfo?.userAgent,
+      exchangeUrls: this.exchanges.map(exchange => exchange.url)
+    }
+  }
 }
