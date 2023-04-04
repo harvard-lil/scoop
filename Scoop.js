@@ -1384,7 +1384,7 @@ export class Scoop {
 
   /**
    * Generates and returns a summary of the current capture object, regardless of its state.
-   * @returns {ScoopCaptureSummary}
+   * @returns {Promise<ScoopCaptureSummary>}
    */
   async summary () {
     return {
