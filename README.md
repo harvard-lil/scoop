@@ -169,6 +169,7 @@ Options:
   -v, --version                                          Display Scoop and Scoop CLI version.
   -o, --output <string>                                  Output path. (default: "./archive.wacz")
   -f, --format <string>                                  Output format. (choices: "warc", "warc-gzipped", "wacz", "wacz-with-raw", default: "wacz")
+  --json-summary-output <string>                         If set, allows for saving a capture summary as JSON. Must be a path to .json file.
   --signing-url <string>                                 Authsign-compatible endpoint for signing WACZ file.
   --signing-token <string>                               Authentication token to --signing-url, if needed.
   --screenshot <bool>                                    Add screenshot step to capture? (choices: "true", "false", default: "true")
@@ -177,8 +178,7 @@ Options:
   --capture-video-as-attachment <bool>                   Add capture video(s) as attachment(s) step to capture? (choices: "true", "false", default: "true")
   --capture-certificates-as-attachment <bool>            Add capture certificate(s) as attachment(s) step to capture? (choices: "true", "false", default: "true")
   --provenance-summary <bool>                            Add provenance summary to capture? (choices: "true", "false", default: "true")
-  --attachments-bypass-limits <bool>                     If active, attachments will not count towards time and size constraints imposed on capture (--capture-timeout, --max--capture-size).
-                                                         (choices: "true", "false", default: "true")
+  --attachments-bypass-limits <bool>                     If active, attachments will not count towards time and size constraints imposed on capture (--capture-timeout, --max--capture-size). (choices: "true", "false", default: "true")
   --capture-timeout <number>                             Maximum time allocated to capture process before hard cut-off, in ms. (default: 60000)
   --load-timeout <number>                                Max time Scoop will wait for the page to load, in ms. (default: 20000)
   --network-idle-timeout <number>                        Max time Scoop will wait for the in-browser networking tasks to complete, in ms. (default: 20000)
@@ -194,8 +194,7 @@ Options:
   --run-site-specific-behaviors <bool>                   Should Scoop run site-specific capture behaviors? (via: browsertrix-behaviors) (choices: "true", "false", default: "true")
   --headless <bool>                                      Should Chrome run in headless mode? (choices: "true", "false", default: "true")
   --user-agent-suffix <string>                           If provided, will be appended to Chrome's user agent. (default: "")
-  --blocklist <string>                                   If set, replaces Scoop's default list of url patterns and IP ranges Scoop should not capture. Coma-separated. Example:
-                                                         "/https?://localhost/,0.0.0.0/8,10.0.0.0".
+  --blocklist <string>                                   If set, replaces Scoop's default list of url patterns and IP ranges Scoop should not capture. Comma-separated. Example: "/https?://localhost/,0.0.0.0/8,10.0.0.0".
   --intercepter <string>                                 ScoopIntercepter class to be used to intercept network exchanges. (default: "ScoopProxy")
   --proxy-host <string>                                  Hostname to be used by Scoop's HTTP proxy. (default: "localhost")
   --proxy-port <string>                                  Port to be used by Scoop's HTTP proxy. (default: 9000)

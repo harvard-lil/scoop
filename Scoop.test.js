@@ -88,6 +88,15 @@ await test('Scoop - capture of a web page.', async (t) => {
     assert(attachment.response.body.includes('<!DOCTYPE html>'))
   })
 
+  await t.test('Scoop.summary() returns a valid object', async (_t) => {
+    const capture = await Scoop.capture(`${URL}/test.html`, options)
+    const summary = await capture.summary()
+    assert(summary)
+    assert.equal(summary.targetUrl, capture.url)
+    assert.equal(summary.state, Scoop.states.COMPLETE)
+    assert.equal(summary.exchangeUrls.length, capture.exchanges.length)
+  })
+
   /*
    * TEARDOWN
    */

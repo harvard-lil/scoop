@@ -40,6 +40,12 @@ program.addOption(
     .default('wacz')
 )
 
+program.addOption(
+  new Option(
+    '--json-summary-output <string>',
+    'If set, allows for saving a capture summary as JSON. Must be a path to .json file. ')
+)
+
 //
 // Signing
 //
@@ -227,7 +233,7 @@ program.addOption(
 program.addOption(
   new Option(
     '--blocklist <string>',
-    'If set, replaces Scoop\'s default list of url patterns and IP ranges Scoop should not capture. Coma-separated. Example: "/https?:\/\/localhost/,0.0.0.0/8,10.0.0.0".') // eslint-disable-line
+    'If set, replaces Scoop\'s default list of url patterns and IP ranges Scoop should not capture. Comma-separated. Example: "/https?:\/\/localhost/,0.0.0.0/8,10.0.0.0".') // eslint-disable-line
   // .default(defaults.blocklist.join(','))
 )
 
@@ -347,6 +353,17 @@ program.action(async (name, options, command) => {
     process.exit(1)
   }
 
+  // `options.jsonSummaryOutput`: if set, must be an accessible `.json`
+  if (options.jsonSummaryOutput) {
+    try {
+      assert(options.jsonSummaryOutput.endsWith('.json'), true)
+      await fs.access(path.dirname(options.jsonSummaryOutput))
+    } catch (err) {
+      console.error('JSON summary path must end with .json and lead to a directory that exists.')
+      process.exit(1)
+    }
+  }
+
   // Convert 'true' / 'false' strings to booleans.
   for (const [key, value] of Object.entries(options)) {
     if (value === 'true') {
@@ -418,6 +435,21 @@ program.action(async (name, options, command) => {
     capture.log.trace(err)
     capture.log.error(`Something went wrong while saving ${options.output} to disk. Use --log-level trace for details.`)
     process.exit(1)
+  }
+
+  //
+  // JSON summary (?)
+  //
+  if (options.jsonSummaryOutput) {
+    try {
+      const summary = JSON.stringify(await capture.summary(), null, 2)
+      await fs.writeFile(options.jsonSummaryOutput, summary)
+      capture.log.info(`${options.jsonSummaryOutput} saved to disk.`)
+    } catch (err) {
+      capture.log.trace(err)
+      capture.log.error(`Something went wrong while saving ${options.jsonSummaryOutput} to disk. Use --log-level trace for details.`)
+      process.exit(1)
+    }
   }
 
   process.exit(0)
