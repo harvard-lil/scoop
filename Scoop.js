@@ -385,19 +385,6 @@ export class Scoop {
       })
     }
 
-    // Push step: noarchive directive detection
-    // TODO: Move this logic back to ScoopProxy.intercept() when new proxy implementation is ready.
-    steps.push({
-      name: 'Detecting "noarchive" directive',
-      alwaysRun: true,
-      webPageOnly: true,
-      main: async () => {
-        for (const exchange of this.intercepter.exchanges) {
-          this.intercepter.checkExchangeForNoArchive(exchange)
-        }
-      }
-    })
-
     // Push step: certs capture
     if (options.captureCertificatesAsAttachment) {
       steps.push({
