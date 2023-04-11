@@ -140,13 +140,6 @@ program.addOption(
     .default(defaults.captureVideoAsAttachmentTimeout)
 )
 
-program.addOption(
-  new Option(
-    '--capture-certificates-as-attachment-timeout <number>',
-    'Max time Scoop will wait for the certificates capture process to complete, in ms.')
-    .default(defaults.captureCertificatesAsAttachmentTimeout)
-)
-
 //
 // Dimensions
 //
@@ -281,13 +274,6 @@ program.addOption(
     '--yt-dlp-path <string>',
     'Path to the yt-dlp executable. Used for capturing videos.')
     .default(defaults.ytDlpPath)
-)
-
-program.addOption(
-  new Option(
-    '--crip-path <string>',
-    'Path to the crip executable. Used for capturing SSL/TLS certificates.')
-    .default(defaults.cripPath)
 )
 
 program.addOption(

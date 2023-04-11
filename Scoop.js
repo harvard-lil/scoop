@@ -149,16 +149,17 @@ export class Scoop {
    *   cpuArchitecture: ?string,
    *   blockedRequests: Array.<{match: string, rule: string}>,
    *   noArchiveUrls: string[],
-   *   certificates: Array.<{host: string, pem: string}>,
+   *   certificates: Object.<string, string>,
    *   ytDlpHash: string,
    *   cripHash: string,
    *   options: ScoopOptions,
    * }}
+   *
    */
   provenanceInfo = {
     blockedRequests: [],
     noArchiveUrls: [],
-    certificates: []
+    certificates: {} /// Key: host, Value: PEM string
   }
 
   /**
@@ -381,30 +382,6 @@ export class Scoop {
         alwaysRun: options.attachmentsBypassLimits,
         main: async () => {
           await this.#captureVideoAsAttachment()
-        }
-      })
-    }
-
-    // Push step: noarchive directive detection
-    // TODO: Move this logic back to ScoopProxy.intercept() when new proxy implementation is ready.
-    steps.push({
-      name: 'Detecting "noarchive" directive',
-      alwaysRun: true,
-      webPageOnly: true,
-      main: async () => {
-        for (const exchange of this.intercepter.exchanges) {
-          this.intercepter.checkExchangeForNoArchive(exchange)
-        }
-      }
-    })
-
-    // Push step: certs capture
-    if (options.captureCertificatesAsAttachment) {
-      steps.push({
-        name: 'Capturing certificates info',
-        alwaysRun: options.attachmentsBypassLimits,
-        main: async () => {
-          await this.#captureCertificatesAsAttachment()
         }
       })
     }
@@ -1039,98 +1016,6 @@ export class Scoop {
   }
 
   /**
-   * Runs `crip` against the different origins the capture process encountered.
-   * Captures certificates as `file:///[origin].pem`).
-   * Populates `this.provenanceInfo.certificates`.
-   *
-   * @returns {Promise<void>}
-   * @private
-   */
-  async #captureCertificatesAsAttachment () {
-    const { captureCertificatesAsAttachmentTimeout, cripPath } = this.options
-
-    //
-    // Start timeout timer
-    //
-    let timeIsOut = false
-    const timer = setTimeout(() => { timeIsOut = true }, captureCertificatesAsAttachmentTimeout)
-
-    //
-    // Check that `crip` is available
-    //
-    try {
-      await exec(cripPath)
-    } catch (err) {
-      this.log.trace(err)
-      throw new Error('"crip" executable is not available or cannot be executed.')
-    }
-
-    //
-    // Pull certs
-    //
-    const processedHosts = new Map()
-
-    for (const exchange of this.intercepter.exchanges) {
-      const url = new URL(exchange.url)
-
-      if (timeIsOut) {
-        throw new Error('Capture certificates at attachment timeout reached')
-      }
-
-      if (url.protocol !== 'https:' || processedHosts.get(url.host) === true) {
-        continue
-      }
-
-      if (this.blocklist.find(searchBlocklistFor(`https://${url.host}`))) {
-        this.log.warn(`${url.host} matched against blocklist - skipped trying to pull its certificate.`)
-        continue
-      }
-
-      try {
-        const cripOptions = [
-          'print',
-          '-u', `https://${url.host}`,
-          '-f', 'pem'
-        ]
-
-        let timeout = captureCertificatesAsAttachmentTimeout
-
-        if (processedHosts.length > 0) { // Timeout per request decreases as we go through the list.
-          timeout = captureCertificatesAsAttachmentTimeout / processedHosts.length
-        }
-
-        const spawnOptions = {
-          timeout: timeout > 1000 ? timeout : 1000,
-          maxBuffer: 1024 * 1024 * 128
-        }
-
-        const pem = await exec(cripPath, cripOptions, spawnOptions)
-
-        processedHosts.set(url.host, true)
-
-        if (!pem) {
-          throw new Error(`crip did not return a PEM for ${url.host}.`)
-        }
-
-        // Add to generated exchanges
-        const fileUrl = `file:///${url.host}.pem`
-        const httpHeaders = new Headers({ 'content-type': 'application/x-pem-file' })
-        const body = Buffer.from(pem)
-        const isEntryPoint = false
-        await this.addGeneratedExchange(fileUrl, httpHeaders, body, isEntryPoint)
-
-        // Add to `this.provenanceInfo.certificates`
-        this.provenanceInfo.certificates.push({ host: url.host, pem })
-      } catch (err) {
-        this.log.trace(err)
-        this.log.warn(`Certificates could not be extracted for ${url.host}`)
-      }
-    }
-
-    clearTimeout(timer)
-  }
-
-  /**
    * Populates `this.provenanceInfo`, which is then used to generate a `file:///provenance-summary.html` exchange and entry point.
    * That property is also be used by `scoopToWACZ()` to populate the `extras` field of `datapackage.json`.
    *
@@ -1148,7 +1033,6 @@ export class Scoop {
     const osInfo = await getOSInfo()
     const userAgent = await page.evaluate(() => window.navigator.userAgent) // Source user agent from the browser in case it was altered during capture
     let ytDlpHash = ''
-    let cripHash = ''
 
     // Grab public IP address
     try {
@@ -1183,18 +1067,6 @@ export class Scoop {
       this.log.trace(err)
     }
 
-    // Compute crip hash
-    try {
-      cripHash = createHash('sha256')
-        .update(await readFile(this.options.cripPath))
-        .digest('hex')
-
-      cripHash = `sha256:${cripHash}`
-    } catch (err) {
-      this.log.warn('Could not compute SHA256 hash of crip executable')
-      this.log.trace(err)
-    }
-
     // Gather provenance info
     this.provenanceInfo = {
       ...this.provenanceInfo,
@@ -1207,7 +1079,6 @@ export class Scoop {
       osVersion: osInfo.version,
       cpuArchitecture: os.machine(),
       ytDlpHash,
-      cripHash,
       options: structuredClone(this.options)
     }
 
@@ -1233,6 +1104,38 @@ export class Scoop {
     } catch (err) {
       throw new Error(`Error while creating exchange for file:///provenance-summary.html. ${err}`)
     }
+  }
+
+  /**
+   * Adds an SSL certificate to the capture as:
+   * - An entry in `provenanceInfo.certificates`
+   * - A generated exchange (file:///{host}.pem)
+   * @param {string} host
+   * @param {string} pem
+   * @returns {Promise<void>}
+   */
+  async addCertificate (host, pem) {
+    host = `${host}`
+    pem = `${pem}`
+
+    if (host.length < 3 || !host.includes('.')) {
+      throw new Error('"host" must be a valid network host.')
+    }
+
+    if (!pem.startsWith('-----BEGIN CERTIFICATE-----') ||
+        !pem.endsWith('-----END CERTIFICATE-----\n')) {
+      throw new Error('"pem" must be a valid certificate.')
+    }
+
+    // Save as generated exchange
+    const fileUrl = `file:///${host}.pem`
+    const httpHeaders = new Headers({ 'content-type': 'application/x-pem-file' })
+    const body = Buffer.from(pem)
+    const isEntryPoint = false
+    await this.addGeneratedExchange(fileUrl, httpHeaders, body, isEntryPoint)
+
+    // Save in provenance info (if successful)
+    this.provenanceInfo.certificates[host] = pem
   }
 
   /**
