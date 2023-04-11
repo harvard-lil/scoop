@@ -148,6 +148,7 @@ export class ScoopProxy extends ScoopIntercepter {
 
   /**
    * On response:
+   * - Copy parsed response
    * - Capture cert if relevant option is on, cert is available, and not already captured for this host
    * - Check for "noarchive" directive
    *
@@ -158,58 +159,58 @@ export class ScoopProxy extends ScoopIntercepter {
     // There will not be an exchange with this request if we're, for instance, not recording
     const exchange = this.exchanges.find(ex => ex.requestParsed === request)
 
-    // Copy response, check for no-archive directive
-    if (exchange) {
-      exchange.responseParsed = response
-      response.on('end', () => this.checkExchangeForNoArchive(exchange))
+    if (!exchange) {
+      return
     }
+
+    exchange.responseParsed = response
+
+    response.on('end', () => this.checkExchangeForNoArchive(exchange))
 
     // Capture SSL cert
-    if (exchange && response.socket) {
-      const { provenanceInfo, options } = this.capture
-      const host = new URL(exchange.url).host
+    const { provenanceInfo, options } = this.capture
+    const host = new URL(exchange.url).host
 
-      if (!response.socket.getPeerCertificate ||
-          !options.captureCertificatesAsAttachment ||
-          provenanceInfo.certificates[host]) {
-        return
-      }
-
-      let cert = response.socket.getPeerCertificate(true)
-      let pem = ''
-      let lastRawCert = null
-
-      // Go through the certificate chain using its recursive `issuerCertificate` property to assemble the .pem file.
-      while (cert && cert?.raw && cert.raw.length > 0) {
-        // In some cases, "issuerCertificate" recurses infinitely.
-        // This breaker accounts for that edge case.
-        if (lastRawCert === cert.raw) {
-          break
-        }
-
-        const certAsBase64 = cert.raw.toString('base64')
-
-        pem += '-----BEGIN CERTIFICATE-----\n'
-        for (let i = 0; i < certAsBase64.length; i += 64) {
-          pem += certAsBase64.slice(i, i + 64)
-          pem += '\n'
-        }
-        pem += '-----END CERTIFICATE-----\n'
-
-        lastRawCert = cert.raw
-        cert = cert?.issuerCertificate
-      }
-
-      if (!pem) {
-        return
-      }
-
-      this.capture.addCertificate(host, pem)
-        .catch(err => {
-          this.capture.log.trace(err)
-          this.capture.log.warn(`An error occurred while capturing certificate for "${host}".`)
-        })
+    if (!response.socket.getPeerCertificate ||
+        !options.captureCertificatesAsAttachment ||
+        provenanceInfo.certificates[host]) {
+      return
     }
+
+    let cert = response.socket.getPeerCertificate(true)
+    let pem = ''
+    let lastRawCert = null
+
+    // Go through the certificate chain using its recursive `issuerCertificate` property to assemble the .pem file.
+    while (cert && cert?.raw && cert.raw.length > 0) {
+      // In some cases, "issuerCertificate" recurses infinitely.
+      // This breaker accounts for that edge case.
+      if (lastRawCert === cert.raw) {
+        break
+      }
+
+      const certAsBase64 = cert.raw.toString('base64')
+
+      pem += '-----BEGIN CERTIFICATE-----\n'
+      for (let i = 0; i < certAsBase64.length; i += 64) {
+        pem += certAsBase64.slice(i, i + 64)
+        pem += '\n'
+      }
+      pem += '-----END CERTIFICATE-----\n'
+
+      lastRawCert = cert.raw
+      cert = cert?.issuerCertificate
+    }
+
+    if (!pem) {
+      return
+    }
+
+    this.capture.addCertificate(host, pem)
+      .catch(err => {
+        this.capture.log.trace(err)
+        this.capture.log.warn(`An error occurred while capturing certificate for "${host}".`)
+      })
   }
 
   /**
