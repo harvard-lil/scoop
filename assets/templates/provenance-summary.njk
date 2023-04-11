@@ -165,14 +165,14 @@
       </section>
       {% endif %}
 
-      {% if certificates.length %}
+      {% if certificates|length %}
       <section>
         <h2>SSL/TLS Certificates</h2>
 
-        <p>The following certificates were pulled by <em>crip</em> from the different origins encountered during capture.</p>
+        <p>The following certificates were pulled by from the different origins encountered during capture.</p>
 
-        {% for cert in certificates %}
-        <li><a href="{{cert.host}}.pem">{{ cert.host }}</a></li>
+        {% for host, pem in certificates %}
+        <li><a href="{{host}}.pem">{{ host }}</a></li>
         {% endfor %}
 
       </section>

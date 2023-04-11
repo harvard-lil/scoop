@@ -7,10 +7,10 @@ import express from 'express'
 import { FIXTURES_PATH } from './constants.js'
 import { isPNG, getDimensions } from './utils/png.js'
 import { isPDF, getPageCount } from './utils/pdf.js'
-import { defaults } from './options.js'
+import { defaults, testDefaults } from './options.js'
 import { Scoop } from './Scoop.js'
 
-await test('Scoop - capture of a web page.', async (t) => {
+await test('Scoop - capture of a (local) web page.', async (t) => {
   const app = express()
   const PORT = 3000
   const URL = `http://localhost:${PORT}`
@@ -103,7 +103,16 @@ await test('Scoop - capture of a web page.', async (t) => {
   server.close()
 })
 
-await test('Scoop - capture of a non-web resource.', async (t) => {
+// Accounts for tests that can't be run locally
+await test('Scoop - capture of a (remote) web page.', async (t) => {
+  await t.test('Scoop captures SSL certificates', async (_t) => {
+    const capture = await Scoop.capture('https://example.com', testDefaults)
+    assert(capture.provenanceInfo.certificates['example.com'])
+    assert(capture.extractGeneratedExchanges()['example.com.pem'])
+  })
+})
+
+await test('Scoop - capture of a (local) non-web resource.', async (t) => {
   const app = express()
   const PORT = 3000
   const URL = `http://localhost:${PORT}`

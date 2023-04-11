@@ -184,7 +184,6 @@ Options:
   --network-idle-timeout <number>                        Max time Scoop will wait for the in-browser networking tasks to complete, in ms. (default: 20000)
   --behaviors-timeout <number>                           Max time Scoop will wait for the browser behaviors to complete, in ms. (default: 20000)
   --capture-video-as-attachment-timeout <number>         Max time Scoop will wait for the video capture process to complete, in ms. (default: 30000)
-  --capture-certificates-as-attachment-timeout <number>  Max time Scoop will wait for the certificates capture process to complete, in ms. (default: 10000)
   --capture-window-x <number>                            Width of the browser window Scoop will open to capture, in pixels. (default: 1600)
   --capture-window-y <number>                            Height of the browser window Scoop will open to capture, in pixels. (default: 900)
   --max-capture-size <number>                            Size limit for the capture's exchanges list, in bytes. (default: 209715200)
@@ -201,7 +200,6 @@ Options:
   --proxy-verbose <bool>                                 Should Scoop's HTTP proxy output logs to the console? (choices: "true", "false", default: "false")
   --public-ip-resolver-endpoint <string>                 API endpoint to be used to resolve the client's IP address. Used in the context of the provenance summary. (default: "https://icanhazip.com")
   --yt-dlp-path <string>                                 Path to the yt-dlp executable. Used for capturing videos. (default: "[library]/executables/yt-dlp")
-  --crip-path <string>                                   Path to the crip executable. Used for capturing SSL/TLS certificates. (default: "[library]/executables/crip")
   --log-level <string>                                   Controls Scoop CLI's verbosity. (choices: "silent", "trace", "debug", "info", "warn", "error", default: "info")
   -h, --help                                             Show options list.
 ```
@@ -362,7 +360,7 @@ Namely:
 - Same goes for certificates, captured as attachments via [crip](https://github.com/Hakky54/certificate-ripper).
 - Favicons may be captured out-of-band using [curl](https://curl.se/), if not intercepted during capture.
 
-Exchanges captured in that context still go through Scoop's HTTP proxy, with the exception of _crip_.
+Exchanges captured in that context still go through Scoop's HTTP proxy.
 
 ```mermaid
 flowchart LR
