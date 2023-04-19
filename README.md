@@ -34,7 +34,7 @@ const wacz = await capture.toWACZ()
 
 ## About
 
-**Scoop** is a high fidelity, browser-based, web archiving capture engine from the [Harvard Library Innovation Lab](https://lil.law.harvard.edu). 
+**Scoop** is a high fidelity, browser-based, web archiving capture engine for witnessing the web from the [Harvard Library Innovation Lab](https://lil.law.harvard.edu). 
 
 Fine-tune this custom web capture software to create robust single-page captures of the internet with accurate and complete **provenance information**. 
 
@@ -43,12 +43,18 @@ With extensive options for asset formats and inclusions, Scoop will create **.wa
 Scoop also comes with built-in support for the [WACZ Signing and Verification specification](https://specs.webrecorder.net/wacz-auth/0.1.0/), 
 allowing users to cryptographically sign their captures. 
 
+**More info:**
+- ["Witnessing the web is hard: Why and how we built the Scoop web archiving capture engine 🍨"](https://lil.law.harvard.edu/blog/2023/04/13/scoop-witnessing-the-web/)<br>
+April 13 2023 - _lil.law.harvard.edu_
+- ["New Release: High Fidelity Capture Engine for Witnessing the Web 🍨"](https://blogs.harvard.edu/perma/2023/03/28/867/)<br>
+March 28 2023 - _blogs.harvard.edu/perma_
+
 [👆 Back to the summary](#summary)
 
 ---
 
 ## Main Features
-- High-fidelity, browser-based capture of singular web pages with no alterations
+- High-fidelity, browser-based capture of singular web pages with [no alterations](https://lil.law.harvard.edu/blog/2023/04/13/scoop-witnessing-the-web/#no-alteration-principle)
 - Highly configurable
 - Optional attachments: 
   - Provenance summary
@@ -56,6 +62,7 @@ allowing users to cryptographically sign their captures.
   - Extracted videos with associated subtitles and metadata
   - PDF snapshot
   - DOM snapshot
+  - SSL certificates
 - Support for `.warc.`, `.warc.gz` and `.wacz` output formats
   - Support for the [WACZ Signing and Verification specification](https://specs.webrecorder.net/wacz-auth/0.1.0/)
   - Optional preservation of _"raw"_ exchanges in WACZ files for later analysis or reprocessing _("wacz with raw exchanges"_)
