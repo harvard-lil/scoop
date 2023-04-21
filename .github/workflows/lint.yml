@@ -15,8 +15,8 @@ jobs:
       matrix:
         node: [ 18, 20 ]
 
-    name: Linting on Node.js ${{ matrix.node }}
-    
+    name: Node.js ${{ matrix.node }}
+
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2

@@ -18,7 +18,7 @@ jobs:
       matrix:
         node: [ 18, 20 ]
 
-    name: Tests run with Node.js ${{ matrix.node }}
+    name: Node.js ${{ matrix.node }}
 
     steps:
     - uses: actions/checkout@v2
