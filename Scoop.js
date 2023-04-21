@@ -766,11 +766,22 @@ export class Scoop {
       }
     })
 
+    //
+    // Favicon processing
+    //
+
+    // Not needed if:
+    // - No favicon URL found
+    // - Favicon url is not an http(s) URL
     if (!this.pageInfo?.faviconUrl) {
       return
     }
 
-    // If `headless`: request the favicon using curl.
+    if (!this.pageInfo.faviconUrl.startsWith('http')) {
+      return
+    }
+
+    // If `headless`: request the favicon using curl so it's added to the exchanges list.
     if (this.options.headless) {
       try {
         const userAgent = await page.evaluate(() => window.navigator.userAgent) // Source user agent from the browser

@@ -387,7 +387,11 @@ program.action(async (name, options, command) => {
     url = command.processedArgs[0]
     capture = await Scoop.capture(url, options)
   } catch (err) {
-    process.exit(1) // Logs handled by Scoop
+    // Logs are handled by Scoop directly, unless `Scoop.capture` fails during initialization
+    if (!capture) {
+      console.error(err.message)
+    }
+    process.exit(1)
   }
 
   //
