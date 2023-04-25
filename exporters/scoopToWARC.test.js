@@ -61,7 +61,7 @@ test('scoopToWARC generates a valid WARC file.', async (_t) => {
   assert.equal(expectedResponses, actualResponses)
 })
 
-test('scoopToWARC\'s gzip option is property taken into account.', async (_t) => {
+test('scoopToWARC\'s gzip option is properly taken into account.', async (_t) => {
   const capture = await Scoop.fromWACZ(`${FIXTURES_PATH}example.com.wacz`)
 
   const raw = await scoopToWARC(capture, false)
