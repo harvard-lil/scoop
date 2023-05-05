@@ -1235,7 +1235,6 @@ export class Scoop {
 
   /**
    * Generates a ScoopGeneratedExchange for generated content and adds it to `exchanges`.
-   * Unless `force` argument is passed, generated exchanges count towards time / size limits.
    *
    * @param {string} url
    * @param {Headers} headers
