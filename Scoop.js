@@ -1367,7 +1367,7 @@ export class Scoop {
   /**
    * @typedef {Object} ScoopCaptureSummary
    * @property {int} state
-   * @property {string[]} states - Indexed Scoop.states values.
+   * @property {string[]} states - Zero-indexed Scoop.states values.
    * @property {string} targetUrl
    * @property {boolean} targetUrlIsWebPage
    * @property {ScoopOptions} options
