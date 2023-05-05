@@ -1367,7 +1367,7 @@ export class Scoop {
   /**
    * @typedef {Object} ScoopCaptureSummary
    * @property {int} state
-   * @property {object} states - Possible values of Scoop.state
+   * @property {string[]} states - Zero-indexed Scoop.states values.
    * @property {string} targetUrl
    * @property {boolean} targetUrlIsWebPage
    * @property {ScoopOptions} options
@@ -1396,7 +1396,7 @@ export class Scoop {
   async summary () {
     const summary = {
       state: this.state,
-      states: Scoop.states,
+      states: Object.keys(Scoop.states), // So summary.states[summary.state] = 'NAME-OF-STATE'
       targetUrl: this.url,
       targetUrlIsWebPage: this.targetUrlIsWebPage,
       options: this.options,
