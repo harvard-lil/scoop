@@ -46,6 +46,12 @@ program.addOption(
     'If set, allows for saving a capture summary as JSON. Must be a path to .json file. ')
 )
 
+program.addOption(
+  new Option(
+    '--export-attachments-output <string>',
+    'If set, allows for exporting attachments (screenshot, certs, ...). Must be a path to an existing directory.')
+)
+
 //
 // Signing
 //
@@ -353,13 +359,26 @@ program.action(async (name, options, command) => {
     process.exit(1)
   }
 
-  // `options.jsonSummaryOutput`: if set, must be an accessible `.json`
+  // `options.jsonSummaryOutput`: if set, must be an accessible `.json`.
   if (options.jsonSummaryOutput) {
     try {
       assert(options.jsonSummaryOutput.endsWith('.json'), true)
       await fs.access(path.dirname(options.jsonSummaryOutput))
     } catch (err) {
       console.error('JSON summary path must end with .json and lead to a directory that exists.')
+      process.exit(1)
+    }
+  }
+
+  // `options.exportAttachmentsOutput`: if set, must be an existing directory.
+  if (options.exportAttachmentsOutput) {
+    try {
+      const stats = await fs.lstat(options.exportAttachmentsOutput)
+      assert(stats.isDirectory(), true)
+      await fs.access(options.exportAttachmentsOutput)
+    } catch (err) {
+      console.log(err)
+      console.error('Export attachment output option must be a path to an existing directory.')
       process.exit(1)
     }
   }
@@ -442,16 +461,39 @@ program.action(async (name, options, command) => {
   }
 
   //
-  // JSON summary (?)
+  // JSON summary (optional)
   //
   if (options.jsonSummaryOutput) {
+    const jsonSummaryOutput = options.jsonSummaryOutput
+
     try {
       const summary = JSON.stringify(await capture.summary(), null, 2)
-      await fs.writeFile(options.jsonSummaryOutput, summary)
-      capture.log.info(`${options.jsonSummaryOutput} saved to disk.`)
+      await fs.writeFile(jsonSummaryOutput, summary)
+      capture.log.info(`${jsonSummaryOutput} saved to disk.`)
     } catch (err) {
       capture.log.trace(err)
-      capture.log.error(`Something went wrong while saving ${options.jsonSummaryOutput} to disk. Use --log-level trace for details.`)
+      capture.log.error(`Something went wrong while saving ${jsonSummaryOutput} to disk. Use --log-level trace for details.`)
+      process.exit(1)
+    }
+  }
+
+  //
+  // Export attachments (optional)
+  //
+  if (options.exportAttachmentsOutput) {
+    const exportAttachmentsOutput = options.exportAttachmentsOutput
+
+    try {
+      const exchanges = await capture.extractGeneratedExchanges()
+
+      for (const [filename, exchange] of Object.entries(exchanges)) {
+        const filepath = path.join(exportAttachmentsOutput, path.sep, filename)
+        await fs.writeFile(filepath, exchange.response.body)
+        capture.log.info(`${exchange.url} attachment was exported to ${exportAttachmentsOutput}`)
+      }
+    } catch (err) {
+      capture.log.trace(err)
+      capture.log.error(`Something went wrong while exporting attachments to ${exportAttachmentsOutput}. Use --log-level trace for details.`)
       process.exit(1)
     }
   }

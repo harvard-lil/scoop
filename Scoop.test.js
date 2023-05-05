@@ -89,12 +89,13 @@ await test('Scoop - capture of a web page.', async (t) => {
   })
 
   await t.test('Scoop.summary() returns a valid object', async (_t) => {
-    const capture = await Scoop.capture(`${URL}/test.html`, options)
+    const capture = await Scoop.capture(`${URL}/test.html`, { ...options, provenanceSummary: true })
     const summary = await capture.summary()
     assert(summary)
     assert.equal(summary.targetUrl, capture.url)
     assert.equal(summary.state, Scoop.states.COMPLETE)
     assert.equal(summary.exchangeUrls.length, capture.exchanges.length)
+    assert.equal(summary.attachments.provenanceSummary, 'provenance-summary.html')
   })
 
   /*

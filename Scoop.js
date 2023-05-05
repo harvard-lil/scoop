@@ -1235,7 +1235,6 @@ export class Scoop {
 
   /**
    * Generates a ScoopGeneratedExchange for generated content and adds it to `exchanges`.
-   * Unless `force` argument is passed, generated exchanges count towards time / size limits.
    *
    * @param {string} url
    * @param {Headers} headers
@@ -1375,9 +1374,19 @@ export class Scoop {
    * @property {string} startedAt - ISO-formated date
    * @property {string[]} blockedRequests
    * @property {string[]} noArchiveUrls
-   * @property {string[]} exchangeUrls
    * @property {?string} captureIp
    * @property {?string} userAgent
+   * @property {string[]} exchangeUrls
+   * @property {object} attachments
+   * @property {?string} attachments.provenanceSummary - Filename
+   * @property {?string} attachments.screenshot - Filename
+   * @property {?string} attachments.pdfSnapshot - Filename
+   * @property {?string} attachments.domSnapshot - Filename
+   * @property {?string} attachments.videoExtractedSummary - Filename
+   * @property {?string} attachments.videoExtractedMetadata - Filename
+   * @property {?string[]} attachments.videoExtracted - Filenames
+   * @property {?string[]} attachments.videoExtractedSubtitles - Filenames
+   * @property {?string[]} attachments.certificates - Filenames
    */
 
   /**
@@ -1385,7 +1394,7 @@ export class Scoop {
    * @returns {Promise<ScoopCaptureSummary>}
    */
   async summary () {
-    return {
+    const summary = {
       state: this.state,
       states: Scoop.states,
       targetUrl: this.url,
@@ -1396,7 +1405,58 @@ export class Scoop {
       noArchiveUrls: [],
       captureIp: this.provenanceInfo?.captureIp,
       userAgent: this.provenanceInfo?.userAgent,
-      exchangeUrls: this.exchanges.map(exchange => exchange.url)
+      exchangeUrls: this.exchanges.map(exchange => exchange.url),
+      attachments: {}
     }
+
+    //
+    // Summarize attachments
+    //
+    const generatedExchanges = this.extractGeneratedExchanges()
+
+    // 1-to-1 matches:
+    // - Add filename to "attachments" as key if present in generated exchanges list
+    // - Example: attachments.provenanceSummary = "provenance-summary.html"
+    for (const [key, filename] of Object.entries({
+      provenanceSummary: 'provenance-summary.html',
+      screenshot: 'screenshot.png',
+      pdfSnapshot: 'pdf-snapshot.pdf',
+      domSnapshot: 'dom-snapshot.html',
+      videoExtractedSummary: 'video-extracted-summary.html',
+      videoExtractedMetadata: 'video-extracted-metadata.json'
+    })) {
+      if (generatedExchanges[filename]) {
+        summary.attachments[key] = filename
+      }
+    }
+
+    // 1-to-many matches:
+    // - Videos are added to attachments.videoExtracted[]
+    // - Video subtitles are added to attachments.videoSubtitles[]
+    // - SSL certs are added to attachments.certificates[]
+    for (const filename of Object.keys(generatedExchanges)) {
+      if (filename.endsWith('.mp4')) {
+        if (!summary.attachments?.videos) {
+          summary.attachments.videoExtracted = []
+        }
+        summary.attachments.videoExtracted.push(filename)
+      }
+
+      if (filename.endsWith('.vtt')) {
+        if (!summary.attachments?.videoSubtitles) {
+          summary.attachments.videoExtractedSubtitles = []
+        }
+        summary.attachments.videoExtractedSubtitles.push(filename)
+      }
+
+      if (filename.endsWith('.pem')) {
+        if (!summary.attachments?.certificates) {
+          summary.attachments.certificates = []
+        }
+        summary.attachments.certificates.push(filename)
+      }
+    }
+
+    return summary
   }
 }

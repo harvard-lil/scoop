@@ -177,6 +177,7 @@ Options:
   -o, --output <string>                                  Output path. (default: "./archive.wacz")
   -f, --format <string>                                  Output format. (choices: "warc", "warc-gzipped", "wacz", "wacz-with-raw", default: "wacz")
   --json-summary-output <string>                         If set, allows for saving a capture summary as JSON. Must be a path to .json file.
+  --export-attachments-output <string>                   If set, allows for exporting attachments (screenshot, certs, ...). Must be a path to an existing directory.
   --signing-url <string>                                 Authsign-compatible endpoint for signing WACZ file.
   --signing-token <string>                               Authentication token to --signing-url, if needed.
   --screenshot <bool>                                    Add screenshot step to capture? (choices: "true", "false", default: "true")
