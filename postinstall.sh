@@ -11,7 +11,11 @@ chmod a+x ./executables/yt-dlp;
 if [ "$(uname)" == "Darwin" ]; then
     curl -L https://github.com/Hakky54/certificate-ripper/releases/download/2.1.0/crip-macos-amd64.tar.gz > ./executables/crip.tar.gz;
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
-    curl -L https://github.com/Hakky54/certificate-ripper/releases/download/2.1.0/crip-linux-amd64.tar.gz > ./executables/crip.tar.gz;
+    if [ "$(uname -m)" == "aarch64" ]; then
+        curl -L https://github.com/Hakky54/certificate-ripper/releases/download/2.1.0/crip-linux-aarch64.tar.gz > ./executables/crip.tar.gz;
+    else
+        curl -L https://github.com/Hakky54/certificate-ripper/releases/download/2.1.0/crip-linux-amd64.tar.gz > ./executables/crip.tar.gz;
+    fi
 fi
 
 cd ./executables;
