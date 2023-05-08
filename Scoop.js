@@ -78,6 +78,13 @@ export class Scoop {
   targetUrlIsWebPage = true
 
   /**
+   * Content-type of the target url.
+   * Assumed `text/html` unless detected otherwise.
+   * @type {string}
+   */
+  targetUrlContentType = 'text/html; charset=utf-8'
+
+  /**
    * Current settings.
    * @type {ScoopOptions}
    */
@@ -624,6 +631,8 @@ export class Scoop {
    * - Captures it via a curl behind our proxy
    * - Sets capture state to `PARTIAL`
    *
+   * Populates `this.targetUrlIsWebPage` and `this.targetUrlContentType`.
+   *
    * @param {Page} page - A Playwright [Page]{@link https://playwright.dev/docs/api/class-page} object
    * @returns {Promise<void>}
    * @private
@@ -676,7 +685,13 @@ export class Scoop {
       return
     }
 
-    // If text/html, continue capture as normal
+    // Capture content-type
+    if (contentType) {
+      this.targetUrlContentType = contentType
+    }
+
+    // If text/html, bail from non-web content capture process.
+    // Scoop.capture will go based on the value of `this.targeredUrlIsWebPage`.
     if (contentType?.startsWith('text/html')) {
       this.log.info('Requested URL is a web page')
       return
@@ -1370,6 +1385,7 @@ export class Scoop {
    * @property {string[]} states - Zero-indexed Scoop.states values.
    * @property {string} targetUrl
    * @property {boolean} targetUrlIsWebPage
+   * @property {string} targetUrlContentType
    * @property {ScoopOptions} options
    * @property {string} startedAt - ISO-formated date
    * @property {string[]} blockedRequests
@@ -1399,6 +1415,7 @@ export class Scoop {
       states: Object.keys(Scoop.states), // So summary.states[summary.state] = 'NAME-OF-STATE'
       targetUrl: this.url,
       targetUrlIsWebPage: this.targetUrlIsWebPage,
+      targetUrlContentType: this.targetUrlContentType,
       options: this.options,
       startedAt: this.startedAt,
       blockedRequests: [],
