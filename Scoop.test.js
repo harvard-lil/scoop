@@ -93,6 +93,7 @@ await test('Scoop - capture of a web page.', async (t) => {
     const summary = await capture.summary()
     assert(summary)
     assert.equal(summary.targetUrl, capture.url)
+    assert.equal(summary.targetUrlContentType, 'text/html; charset=UTF-8')
     assert.equal(summary.state, Scoop.states.COMPLETE)
     assert.equal(summary.exchangeUrls.length, capture.exchanges.length)
     assert.equal(summary.attachments.provenanceSummary, 'provenance-summary.html')
@@ -139,6 +140,16 @@ await test('Scoop - capture of a non-web resource.', async (t) => {
     assert.equal(html, undefined) // Scoop's intercepter shouldn't have had time to boot up
     // assert.notEqual(html.response.body.byteLength, testPdfFixture.byteLength)
     // assert.notEqual(html.response.body, testPdfFixture)
+  })
+
+  await t.test('Scoop.summary() returns a valid object', async (_t) => {
+    const capture = await Scoop.capture(`${URL}/test.pdf`, options)
+    const summary = await capture.summary()
+    assert(summary)
+    assert.equal(summary.targetUrl, capture.url)
+    assert.equal(summary.targetUrlContentType, 'application/pdf')
+    assert.equal(summary.state, Scoop.states.PARTIAL)
+    assert.equal(summary.exchangeUrls.length, capture.exchanges.length)
   })
 
   /*
