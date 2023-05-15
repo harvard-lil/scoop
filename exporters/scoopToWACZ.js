@@ -107,12 +107,14 @@ export async function scoopToWACZ (capture, includeRaw = false, signingServer) {
       description: capture.pageInfo?.description
         ? capture.pageInfo.description
         : `Captured by Scoop on ${capture.startedAt.toISOString()}`,
-      // Optional: signing url / token, provenance info
+      // Optional: signing url / token, capture state, provenance info
       signingUrl: signingServer?.url,
       signingToken: signingServer?.token,
-      datapackageExtras: capture.options.provenanceSummary
-        ? { provenanceInfo: capture.provenanceInfo }
-        : null
+      datapackageExtras: {
+        state: capture.state,
+        states: Object.keys(Scoop.states),
+        provenanceInfo: capture.options.provenanceSummary ? capture.provenanceInfo : null
+      }
     })
   } catch (err) {
     capture.log.trace(err)
