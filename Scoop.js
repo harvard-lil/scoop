@@ -1387,13 +1387,8 @@ export class Scoop {
    * @property {boolean} targetUrlIsWebPage
    * @property {string} targetUrlContentType
    * @property {ScoopOptions} options
-   * @property {string} startedAt - ISO-formated date
-   * @property {string[]} blockedRequests
-   * @property {string[]} noArchiveUrls
-   * @property {?string} captureIp
-   * @property {?string} userAgent
-   * @property {string[]} exchangeUrls
-   * @property {object} attachments
+   * @property {string} startedAt - ISO-formatted date
+   * @property {object} attachments - Summary of generated exchange filenames.
    * @property {?string} attachments.provenanceSummary - Filename
    * @property {?string} attachments.screenshot - Filename
    * @property {?string} attachments.pdfSnapshot - Filename
@@ -1403,10 +1398,11 @@ export class Scoop {
    * @property {?string[]} attachments.videoExtracted - Filenames
    * @property {?string[]} attachments.videoExtractedSubtitles - Filenames
    * @property {?string[]} attachments.certificates - Filenames
+   * @property {?object} provenanceInfo - See {@link Scoop.provenanceInfo}. Only populated if the "provenanceSummary" option was turned on.
    */
 
   /**
-   * Generates and returns a summary of the current capture object, regardless of its state.
+   * Generates and returns a summary of the current capture, regardless of its state.
    * @returns {Promise<ScoopCaptureSummary>}
    */
   async summary () {
@@ -1416,14 +1412,17 @@ export class Scoop {
       targetUrl: this.url,
       targetUrlIsWebPage: this.targetUrlIsWebPage,
       targetUrlContentType: this.targetUrlContentType,
-      options: this.options,
       startedAt: this.startedAt,
-      blockedRequests: [],
-      noArchiveUrls: [],
-      captureIp: this.provenanceInfo?.captureIp,
-      userAgent: this.provenanceInfo?.userAgent,
+      options: this.options,
       exchangeUrls: this.exchanges.map(exchange => exchange.url),
-      attachments: {}
+      attachments: {},
+      provenanceInfo: this.options.provenanceSummary ? this.provenanceInfo : {}
+      // NOTE:
+      // `provenanceInfo` also contains an `options` object,
+      // but some of its properties have been edited because it is meant to be embedded in a WACZ.
+      // (For example: Paths replaced with hashes)
+      // For that reason, it is worth keeping both `options` objects,
+      // because `provenanceInfo.options` is both different and contextual.
     }
 
     //
