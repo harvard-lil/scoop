@@ -394,9 +394,15 @@ program.action(async (name, options, command) => {
     }
   }
 
-  // Split blocklist
-  if (options.blocklist) {
-    options.blocklist = options.blocklist.replaceAll(' ', '').split(',')
+  // Process blocklist if provided
+  if (typeof options.blocklist === 'string') {
+    // Empty string should result in empty blocklist
+    if (options.blocklist.trim() === '') {
+      options.blocklist = []
+    // Otherwise: we expect a coma-separated list of values
+    } else {
+      options.blocklist = options.blocklist.replaceAll(' ', '').split(',')
+    }
   }
 
   //
