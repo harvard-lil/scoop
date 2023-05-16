@@ -1419,8 +1419,8 @@ export class Scoop {
       provenanceInfo: this.options.provenanceSummary ? this.provenanceInfo : {}
       // NOTE:
       // `provenanceInfo` also contains an `options` object,
-      // but some of its properties have been edited because it is meant to be embedded in the WACZ.
-      // (example: Paths replaced with hashes)
+      // but some of its properties have been edited because it is meant to be embedded in a WACZ.
+      // (For example: Paths replaced with hashes)
       // For that reason, it is worth keeping both `options` objects,
       // because `provenanceInfo.options` is both different and contextual.
     }
