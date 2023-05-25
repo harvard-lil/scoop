@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "signer"
+version = "0.1.1"
+description = ""
+authors = ["Library Innovation Lab <lil@law.harvard.edu>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+flask = "^2.3.2"
+wacz-signing = "^0.2.7"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
