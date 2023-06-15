@@ -1,4 +1,3 @@
-
 /**
  * PDF magic number.
  * @type {Buffer}
