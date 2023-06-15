@@ -68,12 +68,8 @@
     "detect-port": "^1.5.1",
     "docdash": "^2.0.1",
     "dotenv": "^16.0.3",
-    "eslint": "^8.31.0",
-    "eslint-config-standard": "^17.0.0",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-n": "^15.6.0",
-    "eslint-plugin-promise": "^6.1.1",
     "express": "^4.18.2",
-    "standard": "*"
+    "semver": "^7.5.1",
+    "standard": "^17.1.0"
   }
 }
