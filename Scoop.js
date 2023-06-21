@@ -691,7 +691,7 @@ export class Scoop {
     }
 
     // If text/html or no content-type, bail from non-web content capture process.
-    // Scoop.capture will go based on the value of `this.targeredUrlIsWebPage`.
+    // Scoop.capture will go based on the value of `this.targetUrlIsWebPage`.
     if (!contentType) {
       this.log.info('Requested URL is assumed to be a web page (no content-type found)')
       return
