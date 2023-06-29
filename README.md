@@ -123,7 +123,7 @@ sudo npx playwright install-deps
 ```bash
 # In a new folder
 npm init
-npm install @havard-lil/scoop
+npm install @harvard-lil/scoop
 npx scoop "https://example.com"
 ```
 </details>
