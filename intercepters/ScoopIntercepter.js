@@ -12,7 +12,6 @@ import { ScoopProxyExchange } from '../exchanges/ScoopProxyExchange.js'
  * @classdesc
  * Abstract class for intercepter implementations to capture HTTP traffic.
  *
- * @param {Scoop} capture - a Scoop capture
  */
 export class ScoopIntercepter {
   /**
