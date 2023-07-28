@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "signer"
-version = "0.1.3"
+version = "0.1.4"
 description = ""
 authors = ["Library Innovation Lab <lil@law.harvard.edu>"]
 readme = "README.md"
