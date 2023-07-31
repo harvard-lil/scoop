@@ -63,7 +63,7 @@
   },
   "devDependencies": {
     "@godaddy/dmd": "^1.0.4",
-    "@types/node": "^18.11.0",
+    "@types/node": "^20.4.5",
     "adm-zip": "^0.5.10",
     "detect-port": "^1.5.1",
     "docdash": "^2.0.1",
