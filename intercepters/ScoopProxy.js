@@ -147,7 +147,7 @@ export class ScoopProxy extends ScoopIntercepter {
 
   /**
    * On response:
-   * - Check for "noarchive" directive
+   * - Parse response
    * @param {http.ServerResponse} response
    * @param {http.ClientRequest} request
    */
@@ -157,7 +157,6 @@ export class ScoopProxy extends ScoopIntercepter {
 
     if (exchange) {
       exchange.responseParsed = response
-      response.on('end', () => this.checkExchangeForNoArchive(exchange))
     }
   }
 
