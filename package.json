@@ -54,10 +54,9 @@
     "get-os-info": "^1.0.2",
     "loglevel": "^1.8.1",
     "loglevel-plugin-prefix": "^0.8.4",
-    "node-html-parser": "^6.1.4",
     "node-stream-zip": "^1.15.0",
     "nunjucks": "^3.2.3",
-    "playwright": "^1.36.2",
+    "playwright": "^1.37.0",
     "uuid": "^9.0.0",
     "warcio": "^2.1.0"
   },

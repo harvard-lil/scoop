@@ -1,9 +1,4 @@
-import { strict as assert } from 'node:assert'
-import { parse as parseHTML } from 'node-html-parser'
-
 import { Scoop } from '../Scoop.js'
-import { bodyToString } from '../utils/http.js'
-import { ScoopProxyExchange } from '../exchanges/ScoopProxyExchange.js'
 
 /**
  * @class ScoopIntercepter
@@ -82,56 +77,6 @@ export class ScoopIntercepter {
    */
   get contextOptions () {
     return {}
-  }
-
-  /**
-   * Tries to find the "noarchive" directive in a given exchange.
-   * If found, keeps trace of match in `Scoop.provenanceInfo`.
-   *
-   * @param {ScoopExchange} exchange
-   * @returns {boolean} - `true` if request contained "noarchive"
-   */
-  async checkExchangeForNoArchive (exchange) {
-    // Exit early if exchange is not a ScoopProxyExchange
-    if (exchange instanceof ScoopProxyExchange === false) {
-      return false
-    }
-
-    // Exit early if this isn't an HTML document
-    if (!exchange?.response?.bodyCombined ||
-        !exchange?.response?.headers?.get('content-type')?.toLowerCase().startsWith('text/html')) {
-      return false
-    }
-
-    // Handle deflate / gzip / brotly compression
-    const contentEncoding = exchange.response.headers.get('content-encoding')
-
-    let responseBody = null
-    try {
-      responseBody = await bodyToString(exchange.response.bodyCombined, contentEncoding)
-    } catch (err) {
-      this.capture.log.info(`Error while decompressing ${contentEncoding} body. Assuming "noarchive" directive is absent.`)
-      this.capture.log.trace(err)
-      return false
-    }
-
-    // Skip if "noarchive" cannot be found in the document
-    if (!responseBody.match(/noarchive/i)) {
-      return false
-    }
-
-    // Parse DOM and look for full "noarchive" meta.
-    try {
-      const dom = parseHTML(responseBody)
-      assert(dom.querySelector('[content*=\'noarchive\']'))
-    } catch {
-      return false
-    }
-
-    // If we reached this point: this exchange is "noarchive".
-    this.capture.log.warn(`${exchange.url} was tagged with the "noarchive" directive.`)
-    this.capture.provenanceInfo.noArchiveUrls.push(exchange.url)
-    return true
   }
 
   /**

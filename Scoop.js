@@ -155,7 +155,6 @@ export class Scoop {
    *   osVersion: ?string,
    *   cpuArchitecture: ?string,
    *   blockedRequests: Array.<{match: string, rule: string}>,
-   *   noArchiveUrls: string[],
    *   certificates: Array.<{host: string, pem: string}>,
    *   ytDlpHash: string,
    *   cripHash: string,
@@ -164,7 +163,6 @@ export class Scoop {
    */
   provenanceInfo = {
     blockedRequests: [],
-    noArchiveUrls: [],
     certificates: []
   }
 
