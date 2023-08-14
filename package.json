@@ -57,7 +57,7 @@
     "node-html-parser": "^6.1.4",
     "node-stream-zip": "^1.15.0",
     "nunjucks": "^3.2.3",
-    "playwright": "^1.36.2",
+    "playwright": "^1.37.0",
     "uuid": "^9.0.0",
     "warcio": "^2.1.0"
   },
