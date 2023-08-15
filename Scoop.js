@@ -1430,7 +1430,9 @@ export class Scoop {
     }
 
     // Remove favicon from pageInfo
-    delete summary.pageInfo.favicon
+    if (summary.pageInfo && 'favicon' in summary.pageInfo) {
+      delete summary.pageInfo.favicon
+    }
 
     //
     // Summarize attachments
