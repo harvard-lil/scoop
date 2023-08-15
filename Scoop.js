@@ -1419,7 +1419,8 @@ export class Scoop {
       options: this.options,
       exchangeUrls: this.exchanges.map(exchange => exchange.url),
       attachments: {},
-      provenanceInfo: this.options.provenanceSummary ? this.provenanceInfo : {}
+      provenanceInfo: this.options.provenanceSummary ? this.provenanceInfo : {},
+      pageInfo: this.pageInfo
       // NOTE:
       // `provenanceInfo` also contains an `options` object,
       // but some of its properties have been edited because it is meant to be embedded in a WACZ.
@@ -1427,6 +1428,9 @@ export class Scoop {
       // For that reason, it is worth keeping both `options` objects,
       // because `provenanceInfo.options` is both different and contextual.
     }
+
+    // Remove favicon from pageInfo
+    delete summary.pageInfo.favicon
 
     //
     // Summarize attachments
