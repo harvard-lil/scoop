@@ -57,7 +57,7 @@
     "loglevel-plugin-prefix": "^0.8.4",
     "node-stream-zip": "^1.15.0",
     "nunjucks": "^3.2.3",
-    "playwright": "^1.37.0",
+    "playwright": "^1.38.0",
     "uuid": "^9.0.0",
     "warcio": "^2.1.0"
   },
