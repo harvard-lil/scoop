@@ -103,9 +103,6 @@ npm install -g @harvard-lil/scoop
 
 # As a library
 npm install @harvard-lil/scoop --save
-
-# In both cases, you may need to install Playwright's dependencies: 
-sudo npx playwright install-deps chromium
 ```
 
 <details>
