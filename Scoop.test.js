@@ -93,6 +93,7 @@ await test('Scoop - capture of a web page.', async (t) => {
     const summary = await capture.summary()
     assert(summary)
     assert.equal(summary.targetUrl, capture.url)
+    assert.equal(summary.targetUrlResolved, capture.targetUrlResolved)
     assert.equal(summary.targetUrlContentType, 'text/html; charset=UTF-8')
     assert.equal(summary.state, Scoop.states.COMPLETE)
     assert.equal(summary.exchangeUrls.length, capture.exchanges.length)
