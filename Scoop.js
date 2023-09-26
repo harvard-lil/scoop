@@ -71,6 +71,13 @@ export class Scoop {
   url = ''
 
   /**
+   * URL to capture, resolved to account for redirects.
+   * Populated during non-web content detection step.
+   * @type {string}
+   */
+  targetUrlResolved = ''
+
+  /**
    * Is the target url a web page?
    * Assumed `true` until detected otherwise.
    * @type {boolean}
@@ -186,6 +193,7 @@ export class Scoop {
     this.options = filterOptions(options)
     this.blocklist = this.options.blocklist.map(castBlocklistMatcher)
     this.url = this.filterUrl(url)
+    this.targetUrlResolved = this.url
 
     // Logging setup (level, output formatting)
     logPrefix.reg(this.log)
@@ -675,6 +683,7 @@ export class Scoop {
 
       headRequestTimeMs = after - before
 
+      this.targetUrlResolved = headRequest.url
       contentType = headRequest.headers.get('Content-Type')
       contentLength = headRequest.headers.get('Content-Length')
     } catch (err) {
@@ -1413,6 +1422,7 @@ export class Scoop {
       state: this.state,
       states: Object.keys(Scoop.states), // So summary.states[summary.state] = 'NAME-OF-STATE'
       targetUrl: this.url,
+      targetUrlResolved: this.targetUrlResolved,
       targetUrlIsWebPage: this.targetUrlIsWebPage,
       targetUrlContentType: this.targetUrlContentType,
       startedAt: this.startedAt,
