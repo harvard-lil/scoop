@@ -1,6 +1,6 @@
 {
   "name": "@harvard-lil/scoop",
-  "version": "0.5.6",
+  "version": "0.5.7",
   "description": "🍨 High-fidelity, browser-based, single-page web archiving library and CLI.",
   "main": "Scoop.js",
   "type": "module",
