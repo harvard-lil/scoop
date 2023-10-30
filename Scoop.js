@@ -1215,7 +1215,7 @@ export class Scoop {
         .update(await readFile(this.options.ytDlpPath))
         .digest('hex')
 
-      cripHash = `sha256:${cripHash}`
+      ytDlpHash = `sha256:${ytDlpHash}`
     } catch (err) {
       this.log.warn('Could not compute SHA256 hash of yt-dlp executable')
       this.log.trace(err)
