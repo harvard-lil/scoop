@@ -274,9 +274,9 @@ urllib3==2.0.7 ; python_version >= "3.9" and python_version < "4.0" \
 wacz-signing==0.2.9 ; python_version >= "3.9" and python_version < "4.0" \
     --hash=sha256:9a5666ed5b349ce832a7819d4dee39353bb1166d2df26216ee5d62183296ed4e \
     --hash=sha256:b3b2cf58c88ca20ee8a40c9e4d8beca3d5b14182cafa18ffcccd014213998572
-werkzeug==2.3.4 ; python_version >= "3.9" and python_version < "4.0" \
-    --hash=sha256:1d5a58e0377d1fe39d061a5de4469e414e78ccb1e1e59c0f5ad6fa1c36c52b76 \
-    --hash=sha256:48e5e61472fee0ddee27ebad085614ebedb7af41e88f687aaf881afb723a162f
+werkzeug==3.0.1 ; python_version >= "3.9" and python_version < "4.0" \
+    --hash=sha256:507e811ecea72b18a404947aded4b3390e1db8f826b494d76550ef45bb3b1dcc \
+    --hash=sha256:90a285dc0e42ad56b34e696398b8122ee4c681833fb35b8334a095d82c56da10
 zipp==3.15.0 ; python_version >= "3.9" and python_version < "3.10" \
     --hash=sha256:112929ad649da941c23de50f356a2b5570c954b65150642bccdd66bf194d224b \
     --hash=sha256:48904fc76a60e542af151aded95726c1a5c34ed43ab4134b597665c86d7ad556
