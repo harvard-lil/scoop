@@ -81,7 +81,7 @@ export class ScoopProxy extends ScoopIntercepter {
 
   /**
    * Attempts to close the proxy server. Skips after X seconds if unable to do so.
-   * @returns {Promise<void>}
+   * @returns {Promise<boolean>}
    */
   teardown () {
     let closeTimeout = null
@@ -91,16 +91,16 @@ export class ScoopProxy extends ScoopIntercepter {
         // server.close does not close keep-alive connections so do so here
         this.#connection.closeAllConnections()
         this.#connection.close(() => {
-          this.capture.log.info('TCP-Proxy-Server closed')
           clearTimeout(closeTimeout)
-          resolve()
+          this.capture.log.info('TCP-Proxy-Server closed')
+          resolve(true)
         })
       }),
 
       new Promise(resolve => {
         closeTimeout = setTimeout(() => {
-          this.capture.log.warn('TCP-Proxy-Server did not close properly.')
-          resolve()
+          this.capture.log.warn('TCP-Proxy-Server did not close properly')
+          resolve(false)
         }, 5000)
       })
     ])

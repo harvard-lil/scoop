@@ -250,6 +250,7 @@ export class Scoop {
     steps.push({
       name: 'Out-of-browser detection and capture of non-web resource',
       alwaysRun: true,
+      webPageOnly: false,
       main: async (page) => {
         await this.#detectAndCaptureNonWebContent(page)
       }
@@ -258,6 +259,7 @@ export class Scoop {
     // Push step: Wait for initial page load
     steps.push({
       name: 'Wait for initial page load',
+      alwaysRun: false,
       webPageOnly: true,
       main: async (page) => {
         await page.goto(this.url, { waitUntil: 'load', timeout: options.loadTimeout })
@@ -283,6 +285,7 @@ export class Scoop {
     ) {
       steps.push({
         name: 'Browser scripts',
+        alwaysRun: false,
         webPageOnly: true,
         setup: async (page) => {
           // Determine path of `behaviors.js`
@@ -319,6 +322,7 @@ export class Scoop {
     // Push step: Wait for network idle
     steps.push({
       name: 'Wait for network idle',
+      alwaysRun: false,
       webPageOnly: true,
       main: async (page) => {
         await page.waitForLoadState('networkidle', { timeout: options.networkIdleTimeout })
@@ -331,7 +335,10 @@ export class Scoop {
       alwaysRun: options.attachmentsBypassLimits,
       webPageOnly: true,
       main: async (page) => {
-        await page.evaluate(() => window.scrollTo(0, 0))
+        await Promise.race([
+          page.evaluate(() => window.scrollTo(0, 0)),
+          new Promise(resolve => setTimeout(resolve, 2500)) // Only wait for up to 2.5s for scroll up to happen
+        ])
       }
     })
 
@@ -339,12 +346,12 @@ export class Scoop {
     if (options.screenshot) {
       steps.push({
         name: 'Screenshot',
-        webPageOnly: true,
         alwaysRun: options.attachmentsBypassLimits,
+        webPageOnly: true,
         main: async (page) => {
           const url = 'file:///screenshot.png'
           const httpHeaders = new Headers({ 'content-type': 'image/png' })
-          const body = await page.screenshot({ fullPage: true })
+          const body = await page.screenshot({ fullPage: true, timeout: 5000 })
           const isEntryPoint = true
           const description = `Capture Time Screenshot of ${this.url}`
 
@@ -357,8 +364,8 @@ export class Scoop {
     if (options.domSnapshot) {
       steps.push({
         name: 'DOM snapshot',
-        webPageOnly: true,
         alwaysRun: options.attachmentsBypassLimits,
+        webPageOnly: true,
         main: async (page) => {
           const url = 'file:///dom-snapshot.html'
           const httpHeaders = new Headers({
@@ -378,8 +385,8 @@ export class Scoop {
     if (options.pdfSnapshot) {
       steps.push({
         name: 'PDF snapshot',
-        webPageOnly: true,
         alwaysRun: options.attachmentsBypassLimits,
+        webPageOnly: true,
         main: async (page) => {
           await this.#takePdfSnapshot(page)
         }
@@ -390,8 +397,8 @@ export class Scoop {
     if (options.captureVideoAsAttachment) {
       steps.push({
         name: 'Out-of-browser capture of video as attachment (if any)',
-        webPageOnly: true,
         alwaysRun: options.attachmentsBypassLimits,
+        webPageOnly: true,
         main: async () => {
           await this.#captureVideoAsAttachment()
         }
@@ -403,6 +410,7 @@ export class Scoop {
       steps.push({
         name: 'Capturing certificates info',
         alwaysRun: options.attachmentsBypassLimits,
+        webPageOnly: false,
         main: async () => {
           await this.#captureCertificatesAsAttachment()
         }
@@ -414,6 +422,7 @@ export class Scoop {
       steps.push({
         name: 'Provenance summary',
         alwaysRun: options.attachmentsBypassLimits,
+        webPageOnly: false,
         main: async (page) => {
           await this.#captureProvenanceInfo(page)
         }
@@ -432,7 +441,7 @@ export class Scoop {
       this.log.info(`🍨 Starting capture of ${this.url}.`)
       this.state = Scoop.states.CAPTURE
     } catch (err) {
-      this.log.error('An error ocurred during capture setup.')
+      this.log.error('An error occurred during capture setup.')
       this.log.trace(err)
       this.state = Scoop.states.FAILED
       return // exit early if the browser and proxy couldn't be launched
@@ -464,7 +473,7 @@ export class Scoop {
       }
 
       // Page was closed
-      if (page.isClosed()) {
+      if (this.targetUrlIsWebPage && page.isClosed()) {
         this.log.error('Page closed before it could be captured.')
         shouldStop = true
       }
@@ -479,7 +488,7 @@ export class Scoop {
       //
       try {
         // Only if state is `CAPTURE`, unless `alwaysRun` is set for step
-        let shouldRun = this.state === Scoop.states.CAPTURE || step.alwaysRun
+        let shouldRun = this.state === Scoop.states.CAPTURE || step.alwaysRun === true
 
         // BUT: `webPageOnly` takes precedence - allows for skipping unnecessary steps when capturing non-web content
         if (this.targetUrlIsWebPage === false && step.webPageOnly) {
@@ -503,7 +512,7 @@ export class Scoop {
           // Check capture state every second - so current step can be interrupted if state changes
           new Promise(resolve => {
             stateCheckInterval = setInterval(() => {
-              if (this.state !== Scoop.states.CAPTURE) {
+              if (this.state !== Scoop.states.CAPTURE && step.alwaysRun !== true) {
                 resolve(true)
               }
             }, 1000)
@@ -585,6 +594,7 @@ export class Scoop {
 
     // Playwright init + pass proxy info to Chromium
     const userAgent = chromium._playwright.devices['Desktop Chrome'].userAgent + options.userAgentSuffix
+    this.provenanceInfo.userAgent = userAgent
     this.log.info(`User Agent used for capture: ${userAgent}`)
 
     this.#browser = await chromium.launch({
@@ -618,7 +628,7 @@ export class Scoop {
   }
 
   /**
-   * Tears down Playwright, intercepter resources, and capture-specific temporary folder.
+   * Tears down Playwright, intercepter, and capture-specific temporary folder.
    * @returns {Promise<void>}
    */
   async teardown () {
@@ -728,7 +738,7 @@ export class Scoop {
     // Capture using curl behind proxy
     //
     try {
-      const userAgent = await page.evaluate(() => window.navigator.userAgent) // Source user agent from the browser
+      const userAgent = this.provenanceInfo.userAgent
 
       let timeout = this.options.captureTimeout - headRequestTimeMs
 
@@ -811,7 +821,7 @@ export class Scoop {
     // If `headless`: request the favicon using curl so it's added to the exchanges list.
     if (this.options.headless) {
       try {
-        const userAgent = await page.evaluate(() => window.navigator.userAgent) // Source user agent from the browser
+        const userAgent = this.provenanceInfo.userAgent
 
         const timeout = 1000
 
@@ -833,7 +843,7 @@ export class Scoop {
 
     // Look for favicon in exchanges
     for (const exchange of this.intercepter.exchanges) {
-      if (exchange?.url && exchange.url === this.pageInfo.faviconUrl) {
+      if (exchange?.url && exchange.url === this.pageInfo.faviconUrl && exchange?.response?.body) {
         this.pageInfo.favicon = exchange.response.body
       }
     }
@@ -1171,14 +1181,17 @@ export class Scoop {
   async #captureProvenanceInfo (page) {
     let captureIp = 'UNKNOWN'
     const osInfo = await getOSInfo()
-    const userAgent = await page.evaluate(() => window.navigator.userAgent) // Source user agent from the browser in case it was altered during capture
     let ytDlpHash = ''
     let cripHash = ''
 
-    // Grab public IP address
+    // Grab public IP address - uses CURL
     try {
-      const response = await fetch(this.options.publicIpResolverEndpoint)
-      const ip = (await response.text()).trim()
+      const response = await exec('curl', [
+        this.options.publicIpResolverEndpoint,
+        '--max-time', '3'
+      ])
+
+      const ip = response.trim()
 
       try {
         new Address4(ip) // eslint-disable-line
@@ -1202,7 +1215,7 @@ export class Scoop {
         .update(await readFile(this.options.ytDlpPath))
         .digest('hex')
 
-      ytDlpHash = `sha256:${ytDlpHash}`
+      cripHash = `sha256:${cripHash}`
     } catch (err) {
       this.log.warn('Could not compute SHA256 hash of yt-dlp executable')
       this.log.trace(err)
@@ -1224,7 +1237,6 @@ export class Scoop {
     this.provenanceInfo = {
       ...this.provenanceInfo,
       captureIp,
-      userAgent,
       software: CONSTANTS.SOFTWARE,
       version: CONSTANTS.VERSION,
       osType: os.type(),
