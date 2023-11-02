@@ -26,9 +26,12 @@ export class ScoopProxy extends ScoopIntercepter {
 
   /**
    * Initializes the proxy server
+   * @returns {Promise<void>}
    */
   setup () {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
+      let connected = false
+
       this.#connection = createServer({
         requestTransformer: this.requestTransformer.bind(this),
         responseTransformer: this.responseTransformer.bind(this),
@@ -46,9 +49,17 @@ export class ScoopProxy extends ScoopIntercepter {
         .on('request', this.onRequest.bind(this))
         .on('connected', this.onConnected.bind(this))
         .on('response', this.onResponse.bind(this))
-        .on('error', this.onError.bind(this))
+        .on('error', (err, serverRequest, clientRequest) => {
+          // Special handling of EACCES on init
+          if (!connected && err && err?.code === 'EACCES') {
+            reject(new Error('TCP-Proxy-Server was unable to access port'))
+          }
+
+          this.onError(err, serverRequest, clientRequest)
+        })
         .listen(this.options.proxyPort, this.options.proxyHost, () => {
           this.capture.log.info(`TCP-Proxy-Server started ${JSON.stringify(this.#connection.address())}`)
+          connected = true
           resolve()
         })
     })

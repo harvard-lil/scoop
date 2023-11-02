@@ -411,6 +411,11 @@ program.action(async (name, options, command) => {
   try {
     url = command.processedArgs[0]
     capture = await Scoop.capture(url, options)
+
+    // A failed capture should make the CLI bail
+    if (!capture || capture?.state === Scoop.states.FAILED) {
+      throw new Error()
+    }
   } catch (err) {
     // Logs are handled by Scoop directly, unless `Scoop.capture` fails during initialization
     if (!capture) {
