@@ -50,8 +50,8 @@ export class ScoopProxy extends ScoopIntercepter {
         .on('connected', this.onConnected.bind(this))
         .on('response', this.onResponse.bind(this))
         .on('error', (err, serverRequest, clientRequest) => {
-          // Special handling of EACCES on init
-          if (!connected && err && err?.code === 'EACCES') {
+          // Special handling of EACCES/EADDRINUSE on init
+          if (!connected && err && ['EACCES', 'EADDRINUSE'].includes(err?.code)) {
             reject(new Error('TCP-Proxy-Server was unable to access port'))
           }
 
