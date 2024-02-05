@@ -23,7 +23,7 @@ test('formatErrorMessage should truncate length', async (_t) => {
 })
 
 test('formatErrorMessage should strip block formatting', async (_t) => {
-  const actualErrorMessage = await readFile(`${FIXTURES_PATH}error.txt`)
+  const actualErrorMessage = await readFile(`${FIXTURES_PATH}playwright-exception.txt`)
   try {
     throw new Error(actualErrorMessage)
   } catch (err) {
