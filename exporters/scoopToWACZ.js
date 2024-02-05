@@ -8,6 +8,7 @@ import { WARCParser } from 'warcio'
 import { Scoop } from '../Scoop.js'
 import * as CONSTANTS from '../constants.js'
 import { getHead } from '../utils/http.js'
+import { formatErrorMessage } from '../utils/formatErrorMessage.js'
 import { ScoopGeneratedExchange } from '../exchanges/ScoopGeneratedExchange.js'
 import { ScoopExchange } from '../exchanges/ScoopExchange.js' // eslint-disable-line
 
@@ -86,7 +87,7 @@ export async function scoopToWACZ (capture, includeRaw = false, signingServer) {
   } catch (err) {
     capture.log.trace(err)
     await clearOutputDir()
-    throw new Error('An error occurred while creating underlying WARC file.')
+    throw new Error(`An error occurred while creating underlying WARC file (${formatErrorMessage(err)}).`)
   }
 
   //
@@ -119,7 +120,7 @@ export async function scoopToWACZ (capture, includeRaw = false, signingServer) {
   } catch (err) {
     capture.log.trace(err)
     await clearOutputDir()
-    throw new Error('An error occurred while initializing WACZ output.')
+    throw new Error(`An error occurred while initializing WACZ output (${formatErrorMessage(err)}).`)
   }
 
   //
@@ -150,7 +151,7 @@ export async function scoopToWACZ (capture, includeRaw = false, signingServer) {
   } catch (err) {
     capture.log.trace(err)
     await clearOutputDir()
-    throw new Error('An error occurred while adding pages to WACZ output.')
+    throw new Error(`An error occurred while adding pages to WACZ output (${formatErrorMessage(err)}).`)
   }
 
   //
@@ -192,7 +193,7 @@ export async function scoopToWACZ (capture, includeRaw = false, signingServer) {
     } catch (err) {
       capture.log.trace(err)
       await clearOutputDir()
-      throw new Error('An error occurred while adding raw exchanges to WACZ output.')
+      throw new Error(`An error occurred while adding raw exchanges to WACZ output (${formatErrorMessage(err)}).`)
     }
   }
 
@@ -205,7 +206,7 @@ export async function scoopToWACZ (capture, includeRaw = false, signingServer) {
   } catch (err) {
     capture.log.trace(err)
     await clearOutputDir()
-    throw new Error('An error occurred while processing WACZ file.')
+    throw new Error(`An error occurred while processing WACZ file (${formatErrorMessage(err)}).`)
   }
 
   await clearOutputDir()

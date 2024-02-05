@@ -22,6 +22,7 @@ import * as intercepters from './intercepters/index.js'
 import * as exporters from './exporters/index.js'
 import * as importers from './importers/index.js'
 import { filterOptions, defaults } from './options.js'
+import { formatErrorMessage } from './utils/formatErrorMessage.js'
 
 nunjucks.configure(CONSTANTS.TEMPLATES_PATH)
 
@@ -441,7 +442,7 @@ export class Scoop {
       this.log.info(`🍨 Starting capture of ${this.url}.`)
       this.state = Scoop.states.CAPTURE
     } catch (err) {
-      this.log.error('An error occurred during capture setup.')
+      this.log.error(`An error occurred during capture setup (${formatErrorMessage(err)}).`)
       this.log.trace(err)
       this.state = Scoop.states.FAILED
       return // exit early if the browser and proxy couldn't be launched
@@ -569,7 +570,7 @@ export class Scoop {
         await access(CONSTANTS.TMP_PATH, fsConstants.W_OK)
         tmpDirExists = true
       } catch (err) {
-        this.log.warn(`Error while creating base temporary folder ${CONSTANTS.TMP_PATH}.`)
+        this.log.warn(`Error while creating base temporary folder ${CONSTANTS.TMP_PATH} ((${formatErrorMessage(err)})).`)
         this.log.trace(err)
       }
     }

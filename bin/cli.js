@@ -8,6 +8,7 @@ import { Command, Option } from 'commander'
 
 import { Scoop } from '../Scoop.js'
 import { PACKAGE_INFO } from '../constants.js'
+import { formatErrorMessage } from '../utils/formatErrorMessage.js'
 
 /** @type {Command} */
 const program = new Command()
@@ -455,7 +456,7 @@ program.action(async (name, options, command) => {
     }
   } catch (err) {
     capture.log.trace(err)
-    capture.log.error(`Something went wrong while preparing ${options.output}. Use --log-level trace for details.`)
+    capture.log.error(`Something went wrong while preparing ${options.output} (${formatErrorMessage(err)}). Use --log-level trace for details.`)
     process.exit(1)
   }
 
@@ -467,7 +468,7 @@ program.action(async (name, options, command) => {
     capture.log.info(`${options.output} saved to disk.`)
   } catch (err) {
     capture.log.trace(err)
-    capture.log.error(`Something went wrong while saving ${options.output} to disk. Use --log-level trace for details.`)
+    capture.log.error(`Something went wrong while saving ${options.output} to disk (${formatErrorMessage(err)}). Use --log-level trace for details.`)
     process.exit(1)
   }
 
@@ -483,7 +484,7 @@ program.action(async (name, options, command) => {
       capture.log.info(`${jsonSummaryOutput} saved to disk.`)
     } catch (err) {
       capture.log.trace(err)
-      capture.log.error(`Something went wrong while saving ${jsonSummaryOutput} to disk. Use --log-level trace for details.`)
+      capture.log.error(`Something went wrong while saving ${jsonSummaryOutput} to disk (${formatErrorMessage(err)}). Use --log-level trace for details.`)
       process.exit(1)
     }
   }
@@ -504,7 +505,7 @@ program.action(async (name, options, command) => {
       }
     } catch (err) {
       capture.log.trace(err)
-      capture.log.error(`Something went wrong while exporting attachments to ${exportAttachmentsOutput}. Use --log-level trace for details.`)
+      capture.log.error(`Something went wrong while exporting attachments to ${exportAttachmentsOutput} (${formatErrorMessage(err)}). Use --log-level trace for details.`)
       process.exit(1)
     }
   }
