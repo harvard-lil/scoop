@@ -5,7 +5,7 @@ import { formatErrorMessage } from './formatErrorMessage.js'
 
 test('formatErrorMessage should strip colors', async (_t) => {
   try {
-    throw '\u001B[0m\u001B[4m\u001B[42m\u001B[31mfoo\u001B[39m\u001B[49m\u001B[24mfoo\u001B[0m'
+    throw new Error('\u001B[0m\u001B[4m\u001B[42m\u001B[31mfoo\u001B[39m\u001B[49m\u001B[24mfoo\u001B[0m')
   } catch (err) {
     assert(formatErrorMessage(err) === 'foofoo')
   }
@@ -13,7 +13,7 @@ test('formatErrorMessage should strip colors', async (_t) => {
 
 test('formatErrorMessage should truncate length', async (_t) => {
   try {
-    throw 'a'.repeat(200)
+    throw new Error('a'.repeat(200))
   } catch (err) {
     assert(formatErrorMessage(err) === 'a'.repeat(100) + '...')
   }
@@ -37,7 +37,7 @@ test('formatErrorMessage should strip block formatting', async (_t) => {
     ============================================================).
   `
   try {
-    throw actualErrorMessage
+    throw new Error(actualErrorMessage)
   } catch (err) {
     assert(formatErrorMessage(err) === 'browserType.launch: Looks like you launched a headed browser without having a XServer running. Set e...')
   }
@@ -45,7 +45,7 @@ test('formatErrorMessage should strip block formatting', async (_t) => {
 
 test('formatErrorMessage handles arbitrary object', async (_t) => {
   try {
-    throw NaN
+    throw new Error(NaN)
   } catch (err) {
     formatErrorMessage(err)
   }
@@ -53,7 +53,7 @@ test('formatErrorMessage handles arbitrary object', async (_t) => {
 
 test('formatErrorMessage handles string', async (_t) => {
   try {
-    throw 'hi'
+    throw 'hi'  //eslint-disable-line
   } catch (err) {
     assert(formatErrorMessage(err) === 'hi')
   }

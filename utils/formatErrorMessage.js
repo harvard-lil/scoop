@@ -19,7 +19,7 @@ export function formatErrorMessage (err, asciiOnly = true) {
 
   // strip ansi
   // https://stackoverflow.com/a/29497680
-  const ansiRegex = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g
+  const ansiRegex = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g  //eslint-disable-line
   message = message.replace(ansiRegex, '')
 
   // reduce to ascii
