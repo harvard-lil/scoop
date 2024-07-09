@@ -607,7 +607,7 @@ export class Scoop {
       userAgent,
       // NOTE:
       // This is a temporary workaround.
-      // Most browsers' now accepts zstd, but most of the web archiving stack (indexing, playback ...) is not ready to handle it yet.
+      // Most browsers' now accept zstd, but part of the web archiving stack (indexing, playback ...) is not fully ready to handle it yet.
       // This line wants to be removed once the ecosystem is ready for zstd.
       // More on zstd: https://datatracker.ietf.org/doc/html/rfc8878
       // TODO: Remove whenever possible.
