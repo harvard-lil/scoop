@@ -604,7 +604,16 @@ export class Scoop {
 
     const context = await this.#browser.newContext({
       ...this.intercepter.contextOptions,
-      userAgent
+      userAgent,
+      // NOTE:
+      // This is a temporary workaround.
+      // Most browsers now accept zstd, but part of the web archiving stack (indexing, playback ...) is not fully ready to handle it yet.
+      // This line wants to be removed once the ecosystem is ready for zstd.
+      // More on zstd: https://datatracker.ietf.org/doc/html/rfc8878
+      // TODO: Remove whenever possible.
+      extraHTTPHeaders: {
+        'Accept-Encoding': 'gzip, compress, deflate, br'
+      }
     })
 
     const page = await context.newPage()
