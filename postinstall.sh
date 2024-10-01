@@ -3,8 +3,8 @@
 #-------------------------------------------------------------------------------
 mkdir ./executables/;
 
-# Pull yt-dlp (v2024.08.06)
-curl -L https://github.com/yt-dlp/yt-dlp/releases/download/2024.08.06/yt-dlp > ./executables/yt-dlp;
+# Pull yt-dlp (v2024.09.27)
+curl -L https://github.com/yt-dlp/yt-dlp/releases/download/2024.09.27/yt-dlp > ./executables/yt-dlp;
 chmod a+x ./executables/yt-dlp;
 
 # Pull crip (v2.1.0)
