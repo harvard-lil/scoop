@@ -44,12 +44,6 @@ test('filterOptions entries are typecast based on defaults.', async (_t) => {
   }
 })
 
-test('filterOptions pdfSnapshot cannot be activated in headless mode.', async (_t) => {
-  assert.throws(() => {
-    filterOptions({ pdfSnapshot: true, headless: false })
-  })
-})
-
 test('filterOptions ytDlpPath must be a valid path to a file.', async (_t) => {
   assert.doesNotThrow(() => filterOptions()) // Default should not throw
 

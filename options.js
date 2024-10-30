@@ -127,11 +127,6 @@ export function filterOptions (newOptions = {}) {
     }
   }
 
-  // Check for invalid combinations
-  if (options.pdfSnapshot && !options.headless) {
-    throw new Error('"pdfSnapshot" option is only available in "headless" mode. Both options need to be "true".')
-  }
-
   // Check that paths are valid
   for (const toCheck of ['ytDlpPath', 'cripPath']) {
     if (!statSync(options[toCheck]).isFile()) {
