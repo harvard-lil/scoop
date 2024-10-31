@@ -1008,9 +1008,14 @@ export class Scoop {
         }
       }
 
+      // Merge parsed metadata into a single JSON string and clean it before saving it
+      const metadataAsJSON = JSON
+        .stringify(metadataParsed, null, 2)
+        .replaceAll(this.captureTmpFolderPath, '')
+
       const url = 'file:///video-extracted-metadata.json'
       const httpHeaders = new Headers({ 'content-type': 'application/json' })
-      const body = Buffer.from(JSON.stringify(metadataParsed, null, 2))
+      const body = Buffer.from(metadataAsJSON)
       const isEntryPoint = false
 
       this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint)
