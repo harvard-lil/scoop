@@ -911,7 +911,7 @@ export class Scoop {
 
       const dlpOptions = [
         '--dump-json', // Will return JSON meta data via stdout
-        '--no-simulate', // Forces download despites `--dump-json`
+        '--no-simulate', // Forces download despite `--dump-json`
         '--no-warnings', // Prevents pollution of stdout
         '--no-progress', // (Same as above)
         '--write-subs', // Try to pull subs
@@ -1008,6 +1008,10 @@ export class Scoop {
         }
       }
 
+      if (!metadataParsed.length) {
+        throw new Error('yt-dlp reported success (returned 0) but produced no metadata.')
+      }
+
       // Merge parsed metadata into a single JSON string and clean it before saving it
       const metadataAsJSON = JSON
         .stringify(metadataParsed, null, 2)
@@ -1028,6 +1032,10 @@ export class Scoop {
     //
     // Generate summary page
     //
+    if ((videoSaved || metadataSaved || subtitlesSaved) === false) {
+      this.log.warn('yt-dlp reported success (returned 0), but produced no output.')
+      return
+    }
     try {
       const html = nunjucks.render('video-extracted-summary.njk', {
         url: this.url,
