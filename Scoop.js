@@ -1008,20 +1008,22 @@ export class Scoop {
         }
       }
 
-      if (metadataParsed.length) {
-        // Merge parsed metadata into a single JSON string and clean it before saving it
-        const metadataAsJSON = JSON
-          .stringify(metadataParsed, null, 2)
-          .replaceAll(this.captureTmpFolderPath, '')
-
-        const url = 'file:///video-extracted-metadata.json'
-        const httpHeaders = new Headers({ 'content-type': 'application/json' })
-        const body = Buffer.from(metadataAsJSON)
-        const isEntryPoint = false
-
-        this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint)
-        metadataSaved = true
+      if (!metadataParsed.length) {
+        throw new Error('yt-dlp reported success (returned 0) but produced no metadata.')
       }
+
+      // Merge parsed metadata into a single JSON string and clean it before saving it
+      const metadataAsJSON = JSON
+        .stringify(metadataParsed, null, 2)
+        .replaceAll(this.captureTmpFolderPath, '')
+
+      const url = 'file:///video-extracted-metadata.json'
+      const httpHeaders = new Headers({ 'content-type': 'application/json' })
+      const body = Buffer.from(metadataAsJSON)
+      const isEntryPoint = false
+
+      this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint)
+      metadataSaved = true
     } catch (err) {
       this.log.warn('Error while creating exchange for file:///video-extracted-medatadata.json.')
       this.log.trace(err)
@@ -1030,31 +1032,31 @@ export class Scoop {
     //
     // Generate summary page
     //
-    if (videoSaved || metadataSaved || subtitlesSaved) {
-      try {
-        const html = nunjucks.render('video-extracted-summary.njk', {
-          url: this.url,
-          now: new Date().toISOString(),
-          videoSaved,
-          metadataSaved,
-          subtitlesSaved,
-          availableVideosAndSubtitles,
-          metadataParsed
-        })
+    if ((videoSaved || metadataSaved || subtitlesSaved) === false) {
+      this.log.warn('yt-dlp reported success (returned 0), but produced no output.')
+      return
+    }
+    try {
+      const html = nunjucks.render('video-extracted-summary.njk', {
+        url: this.url,
+        now: new Date().toISOString(),
+        videoSaved,
+        metadataSaved,
+        subtitlesSaved,
+        availableVideosAndSubtitles,
+        metadataParsed
+      })
 
-        const url = 'file:///video-extracted-summary.html'
-        const httpHeaders = new Headers({ 'content-type': 'text/html' })
-        const body = Buffer.from(html)
-        const isEntryPoint = true
-        const description = `Extracted Video data from: ${this.url}`
+      const url = 'file:///video-extracted-summary.html'
+      const httpHeaders = new Headers({ 'content-type': 'text/html' })
+      const body = Buffer.from(html)
+      const isEntryPoint = true
+      const description = `Extracted Video data from: ${this.url}`
 
-        this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description)
-      } catch (err) {
-        this.log.warn('Error while creating exchange for file:///video-extracted-summary.html.')
-        this.log.trace(err)
-      }
-    } else {
-      this.log.debug('Skipping creation of file:///video-extracted-summary.html; yt-dlp silently failed to produce output.')
+      this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint, description)
+    } catch (err) {
+      this.log.warn('Error while creating exchange for file:///video-extracted-summary.html.')
+      this.log.trace(err)
     }
   }
 
