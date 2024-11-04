@@ -911,7 +911,7 @@ export class Scoop {
 
       const dlpOptions = [
         '--dump-json', // Will return JSON meta data via stdout
-        '--no-simulate', // Forces download despites `--dump-json`
+        '--no-simulate', // Forces download despite `--dump-json`
         '--no-warnings', // Prevents pollution of stdout
         '--no-progress', // (Same as above)
         '--write-subs', // Try to pull subs
