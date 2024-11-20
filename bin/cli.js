@@ -100,7 +100,7 @@ program.addOption(
 program.addOption(
   new Option('--provenance-summary <bool>', 'Add provenance summary to capture?')
     .choices(['true', 'false'])
-    .default(String(defaults.captureVideoAsAttachment))
+    .default(String(defaults.provenanceSummary))
 )
 
 program.addOption(
