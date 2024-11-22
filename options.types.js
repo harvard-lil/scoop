@@ -21,7 +21,9 @@
  * @property {number} captureWindowX=1600 - Browser window resolution in pixels: X axis.
  * @property {number} captureWindowY=900 - Browser window resolution in pixels: Y axis.
  *
- * @property {number} maxCaptureSize=209715200 - Maximum size, in bytes, for the exchanges list. Scoop stop intercepting exchanges at this threshold.
+ * @property {number} maxCaptureSize=209715200 - Maximum size, in bytes, for the exchanges list. Scoop stops intercepting exchanges at this threshold.
+ *
+ * @property {number} maxVideoCaptureSize=209715200 - Maximum size, in bytes, for video attachments. Scoop will not capture video attachments larger than this.
  *
  * @property {boolean} autoScroll=true - Should Scoop try to scroll through the page?
  * @property {boolean} autoPlayMedia=true - Should Scoop try to autoplay `<audio>` and `<video>` tags?

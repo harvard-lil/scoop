@@ -181,6 +181,13 @@ program.addOption(
     .default(defaults.maxCaptureSize)
 )
 
+program.addOption(
+  new Option(
+    '--max-video-capture-size <number>',
+    'Size limit for the video attachment, in bytes. Scoop will not capture video attachments larger than this.')
+    .default(defaults.maxVideoCaptureSize)
+)
+
 //
 // Behaviors
 //
