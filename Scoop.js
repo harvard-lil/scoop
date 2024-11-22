@@ -949,19 +949,17 @@ export class Scoop {
           const body = await readFile(`${this.captureTmpFolderPath}${file}`)
           const isEntryPoint = false // TODO: Reconsider whether this should be an entry point.
 
-          if (body.length) {
-            this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint)
-            videoSaved = true
+          if (!body.length) {
+            continue
+          }
+          this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint)
+          videoSaved = true
 
-            // Push to map of available videos and subtitles
-            const index = file.replace('.mp4', '')
+          // Push to map of available videos and subtitles
+          const index = file.replace('.mp4', '')
 
-            if (!(index in availableVideosAndSubtitles)) {
-              availableVideosAndSubtitles[index] = []
-            }
-          } else {
-            videoSaved = false
-            this.log.warn(`No content in ${file}.`)
+          if (!(index in availableVideosAndSubtitles)) {
+            availableVideosAndSubtitles[index] = []
           }
         } catch (err) {
           this.log.warn(`Error while creating exchange for ${file}.`)
@@ -970,7 +968,7 @@ export class Scoop {
       }
 
       // Subtitles
-      if (videoSaved && file.startsWith('video-extracted-') && file.endsWith('.vtt')) {
+      if (file.startsWith('video-extracted-') && file.endsWith('.vtt')) {
         try {
           const url = `file:///${file}`
           const httpHeaders = new Headers({ 'content-type': 'text/vtt' })
@@ -1001,49 +999,48 @@ export class Scoop {
       }
     }
 
+    if (videoSaved === false) {
+      this.log.warn('yt-dlp reported success (returned 0), but produced no output.')
+      return
+    }
+
     //
     // Try to add metadata to exchanges
     //
-    if (videoSaved) {
-      try {
-        metadataParsed = []
+    try {
+      metadataParsed = []
 
-        // yt-dlp returns JSONL when there is more than 1 video
-        for (const line of metadataRaw.split('\n')) {
-          if (line) {
-            metadataParsed.push(JSON.parse(line)) // May throw
-          }
+      // yt-dlp returns JSONL when there is more than 1 video
+      for (const line of metadataRaw.split('\n')) {
+        if (line) {
+          metadataParsed.push(JSON.parse(line)) // May throw
         }
-
-        if (!metadataParsed.length) {
-          throw new Error('yt-dlp reported success (returned 0) but produced no metadata.')
-        }
-
-        // Merge parsed metadata into a single JSON string and clean it before saving it
-        const metadataAsJSON = JSON
-          .stringify(metadataParsed, null, 2)
-          .replaceAll(this.captureTmpFolderPath, '')
-
-        const url = 'file:///video-extracted-metadata.json'
-        const httpHeaders = new Headers({ 'content-type': 'application/json' })
-        const body = Buffer.from(metadataAsJSON)
-        const isEntryPoint = false
-
-        this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint)
-        metadataSaved = true
-      } catch (err) {
-        this.log.warn('Error while creating exchange for file:///video-extracted-medatadata.json.')
-        this.log.trace(err)
       }
+
+      if (!metadataParsed.length) {
+        throw new Error('yt-dlp reported success (returned 0) but produced no metadata.')
+      }
+
+      // Merge parsed metadata into a single JSON string and clean it before saving it
+      const metadataAsJSON = JSON
+        .stringify(metadataParsed, null, 2)
+        .replaceAll(this.captureTmpFolderPath, '')
+
+      const url = 'file:///video-extracted-metadata.json'
+      const httpHeaders = new Headers({ 'content-type': 'application/json' })
+      const body = Buffer.from(metadataAsJSON)
+      const isEntryPoint = false
+
+      this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint)
+      metadataSaved = true
+    } catch (err) {
+      this.log.warn('Error while creating exchange for file:///video-extracted-medatadata.json.')
+      this.log.trace(err)
     }
 
     //
     // Generate summary page
     //
-    if (videoSaved === false) {
-      this.log.warn('yt-dlp reported success (returned 0), but produced no output.')
-      return
-    }
     try {
       const html = nunjucks.render('video-extracted-summary.njk', {
         url: this.url,
