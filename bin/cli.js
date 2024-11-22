@@ -100,7 +100,7 @@ program.addOption(
 program.addOption(
   new Option('--provenance-summary <bool>', 'Add provenance summary to capture?')
     .choices(['true', 'false'])
-    .default(String(defaults.captureVideoAsAttachment))
+    .default(String(defaults.provenanceSummary))
 )
 
 program.addOption(
@@ -179,6 +179,13 @@ program.addOption(
     '--max-capture-size <number>',
     'Size limit for the capture\'s exchanges list, in bytes.')
     .default(defaults.maxCaptureSize)
+)
+
+program.addOption(
+  new Option(
+    '--max-video-capture-size <number>',
+    'Size limit for the video attachment, in bytes. Scoop will not capture video attachments larger than this.')
+    .default(defaults.maxVideoCaptureSize)
 )
 
 //

@@ -920,6 +920,7 @@ export class Scoop {
         '--output', `"${videoFilename}"`,
         '--no-check-certificate',
         '--proxy', `'http://${this.options.proxyHost}:${this.options.proxyPort}'`,
+        '--max-filesize', `"${this.options.maxVideoCaptureSize}"`,
         this.url
       ]
 
@@ -948,6 +949,9 @@ export class Scoop {
           const body = await readFile(`${this.captureTmpFolderPath}${file}`)
           const isEntryPoint = false // TODO: Reconsider whether this should be an entry point.
 
+          if (!body.length) {
+            continue
+          }
           this.addGeneratedExchange(url, httpHeaders, body, isEntryPoint)
           videoSaved = true
 
@@ -995,6 +999,11 @@ export class Scoop {
       }
     }
 
+    if (videoSaved === false) {
+      this.log.warn('yt-dlp reported success (returned 0), but produced no output.')
+      return
+    }
+
     //
     // Try to add metadata to exchanges
     //
@@ -1032,10 +1041,6 @@ export class Scoop {
     //
     // Generate summary page
     //
-    if ((videoSaved || metadataSaved || subtitlesSaved) === false) {
-      this.log.warn('yt-dlp reported success (returned 0), but produced no output.')
-      return
-    }
     try {
       const html = nunjucks.render('video-extracted-summary.njk', {
         url: this.url,

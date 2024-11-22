@@ -34,6 +34,8 @@ await test('Scoop - capture of a web page.', async (t) => {
   app.get('/redirect', (req, res) => res.redirect(parseInt(req.query.statusCode), req.query.path))
   app.get('/:path', (req, res) => res.sendFile(FIXTURES_PATH + req.params.path))
 
+  const testVideoFixture = await readFile(`${FIXTURES_PATH}video.mp4`)
+
   /*
    * TESTS
    */
@@ -72,6 +74,21 @@ await test('Scoop - capture of a web page.', async (t) => {
       'file:///video-extracted-summary.html'
     ]
     assert.deepEqual(expected.filter(url => urls.includes(url)), expected)
+    const attachment = exchanges.filter(
+      ex => ex.url === 'file:///video-extracted-1.mp4'
+    )[0]
+    assert.deepEqual(attachment.response.body, testVideoFixture)
+  })
+
+  await t.test('Scoop observes maxVideoCaptureSize', async (_t) => {
+    const { exchanges } = await Scoop.capture(`${URL}/test.html`, { ...options, captureVideoAsAttachment: true, maxVideoCaptureSize: 50000 })
+    const urls = exchanges.map(ex => ex.url)
+    const expected = [
+      'file:///video-extracted-1.mp4',
+      'file:///video-extracted-metadata.json',
+      'file:///video-extracted-summary.html'
+    ]
+    assert.deepEqual(expected.filter(url => urls.includes(url)), [])
   })
 
   await t.test('Scoop can be configured for different window dimensions', async (_t) => {

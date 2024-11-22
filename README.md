@@ -196,6 +196,7 @@ Options:
   --capture-window-x <number>                            Width of the browser window Scoop will open to capture, in pixels. (default: 1600)
   --capture-window-y <number>                            Height of the browser window Scoop will open to capture, in pixels. (default: 900)
   --max-capture-size <number>                            Size limit for the capture's exchanges list, in bytes. (default: 209715200)
+  --max-video-capture-size <number>                      Size limit for the video attachment, in bytes. Scoop will not capture video attachments larger than this. (default: 209715200)
   --auto-scroll <bool>                                   Should Scoop try to scroll through the page? (choices: "true", "false", default: "true")
   --auto-play-media <bool>                               Should Scoop try to autoplay `<audio>` and `<video>` tags? (choices: "true", "false", default: "true")
   --grab-secondary-resources <bool>                      Should Scoop try to download img srcsets and secondary stylesheets? (choices: "true", "false", default: "true")
