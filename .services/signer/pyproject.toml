@@ -1,9 +1,5 @@
 [tool.poetry]
-name = "signer"
-version = "0.2.9"
-description = ""
-authors = ["Library Innovation Lab <lil@law.harvard.edu>"]
-readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.9"
