@@ -9,7 +9,6 @@ To maintain `requirements.txt`, we use [Poetry](https://python-poetry.org/), hen
 ```
 poetry update requests
 poetry export -o requirements.txt
-poetry version 0.1.1
 ```
 
-and commit the changes. (Versioning is not strictly necessary here.)
+and commit the changes.
