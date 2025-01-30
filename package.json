@@ -48,7 +48,7 @@
     "@harvard-lil/js-wacz": "^0.1.6",
     "@harvard-lil/portal": "^0.0.2",
     "@laverdet/beaugunderson-ip-address": "^8.1.0",
-    "@playwright/browser-chromium": "^1.49.1",
+    "@playwright/browser-chromium": "^1.50.0",
     "browsertrix-behaviors": "0.6.0",
     "chalk": "^5.2.0",
     "commander": "^12.0.0",
@@ -57,7 +57,7 @@
     "loglevel-plugin-prefix": "^0.8.4",
     "node-stream-zip": "^1.15.0",
     "nunjucks": "^3.2.3",
-    "playwright": "^1.49.1",
+    "playwright": "^1.50.0",
     "uuid": "^9.0.0",
     "warcio": "^2.1.0"
   },
