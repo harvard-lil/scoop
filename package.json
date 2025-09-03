@@ -5,7 +5,7 @@
   "main": "Scoop.js",
   "type": "module",
   "bin": {
-    "scoop": "./bin/cli.js"
+    "scoop": "bin/cli.js"
   },
   "files": [
     "*.js",
