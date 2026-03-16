@@ -1208,7 +1208,7 @@ export class Scoop {
    */
   async #captureProvenanceInfo (page) {
     let captureIp = 'UNKNOWN'
-    const osInfo = await getOSInfo()
+    const osInfo = (await getOSInfo() || {name: "UNKNOWN", version: "UNKNOWN"});
     let ytDlpHash = ''
     let cripHash = ''
 
