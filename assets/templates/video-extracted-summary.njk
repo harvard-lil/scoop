@@ -187,14 +187,10 @@
           </tr>
           {% endif %}
 
-          {% if entry.timestamp %}
+          {% if entry.publicationTime %}
           <tr>
             <td>Publication time:</td>
-            <td class="publication-timestamp-{{ loop.index }}"></td>
-            <script>
-            const publication = new Date({{ entry.timestamp }} * 1000);
-            document.querySelector(".publication-timestamp-{{ loop.index }}").innerText = publication.toISOString();
-            </script>
+            <td>{{ entry.publicationTime }}</td>
           </tr>
           {% endif %}
         </table>

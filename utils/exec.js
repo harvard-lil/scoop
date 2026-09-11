@@ -1,28 +1,44 @@
-import { promisify } from 'util'
-import { exec as execCB } from 'child_process'
-const execPromisified = promisify(execCB)
+import { execFile as execFileCallback } from 'node:child_process'
+import { promisify } from 'node:util'
+
+const execFile = promisify(execFileCallback)
 
 /**
- * A async version of exec that also adds an `options.input`
- * that is passed to stdin, mirroring the functionality of `execSync`
+ * Copy an environment while omitting selected variables.
+ *
+ * @param {NodeJS.ProcessEnv} environment - Environment to copy.
+ * @param {string[]} variableNames - Exact variable names to omit.
+ * @returns {NodeJS.ProcessEnv} A sanitized copy of the environment.
+ */
+export function omitEnvironmentVariables (environment, variableNames) {
+  const childEnvironment = { ...environment }
+
+  for (const variableName of variableNames) {
+    delete childEnvironment[variableName]
+  }
+
+  return childEnvironment
+}
+
+/**
+ * Run an executable with literal arguments and return its stdout.
+ *
+ * `shell` is deliberately unsupported. Timeouts, AbortSignal, output limits,
+ * and failure metadata use Node's execFile implementation.
  *
  * @param {string} file - The name or path of the executable file to run.
- * @param {?string[]} args - List of string arguments.
- * @param {Object} options
- * @returns {Promise<?string>} - The contents of stdout
+ * @param {string[]} args - List of literal arguments.
+ * @param {import('node:child_process').ExecFileOptions & { input?: string | Buffer }} options
+ * @returns {Promise<string | Buffer>} The contents of stdout.
  */
 export async function exec (file, args = [], options = {}) {
-  const promise = execPromisified([file, ...args].join(' '), options)
-
-  if (options.input) {
-    promise.child.stdin.write(options.input)
-    promise.child.stdin.end()
+  if (options.shell && options.shell !== false) {
+    throw new TypeError('exec does not support shell execution')
   }
 
-  try {
-    const { stdout } = await promise
-    return stdout
-  } catch (err) {
-    throw new Error(err) // Should be stderr
-  }
+  const { input, shell: _shell, ...execOptions } = options
+  const promise = execFile(file, args, { ...execOptions, shell: false })
+  promise.child.stdin.end(input)
+  const { stdout } = await promise
+  return stdout
 }

@@ -83,7 +83,7 @@ Playback software such as [replayweb.page](https://replayweb.page/) can be used 
 ## Getting started
 
 ### Dependencies and requirements
-**Scoop** requires [Node.js 18+](https://nodejs.org/en/). 
+**Scoop** requires [Node.js 22+](https://nodejs.org/en/).
 
 Other _recommended_ system-level dependencies: 
 [curl](https://curl.se/), [python3](https://www.python.org/) (for `--capture-video-as-attachment` option).
@@ -92,6 +92,12 @@ While the amount of resources **Scoop** needs is entirely dependent on what is b
 
 ### Compatibility
 This program has been written for UNIX-like systems and is expected to work on **Linux, Mac OS, and Windows Subsystem for Linux**.
+
+### Chromium sandbox
+
+Chromium sandboxing is enabled by default. The host or container must support sandboxing. For Linux containers, use a non-root user and a compatible seccomp configuration; see [Playwright's Docker guidance](https://playwright.dev/docs/docker#crawling-and-scraping).
+
+To disable this protection explicitly, pass `--chromium-sandbox false` or set `chromiumSandbox: false` in the library options.
 
 ### Installation
 
@@ -112,7 +118,7 @@ sudo npx playwright install-deps chromium
   <summary><strong>Trouble installing the CLI?</strong></summary>
 
 
-- Make sure you are running Node.js 20-23 (`node -v`)
+- Make sure you are running Node.js 22 or later (`node -v`)
 - Permissions issues are a common when installing `npm` packages globally for the first time. 
 See [npm's documentation](https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally) for solutions.
 - On certain systems, using `install-deps` without the `chromium` argument might be necessary:
@@ -202,6 +208,7 @@ Options:
   --grab-secondary-resources <bool>                      Should Scoop try to download img srcsets and secondary stylesheets? (choices: "true", "false", default: "true")
   --run-site-specific-behaviors <bool>                   Should Scoop run site-specific capture behaviors? (via: browsertrix-behaviors) (choices: "true", "false", default: "true")
   --headless <bool>                                      Should Chrome run in headless mode? (choices: "true", "false", default: "true")
+  --chromium-sandbox <bool>                              Enable Chromium sandboxing (requires a compatible host or worker image). (choices: "true", "false", default: "true")
   --user-agent-suffix <string>                           If provided, will be appended to Chrome's user agent. (default: "")
   --blocklist <string>                                   If set, replaces Scoop's default list of url patterns and IP ranges Scoop should not capture. Comma-separated. Example: "/https?://localhost/,0.0.0.0/8,10.0.0.0".
   --intercepter <string>                                 ScoopIntercepter class to be used to intercept network exchanges. (default: "ScoopProxy")

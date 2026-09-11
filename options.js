@@ -34,6 +34,7 @@ export const defaults = {
   runSiteSpecificBehaviors: true,
 
   headless: true,
+  chromiumSandbox: true,
   userAgentSuffix: '',
 
   blocklist: [
