@@ -1,6 +1,12 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { PassThrough } from 'node:stream'
+import { createServer } from 'node:http'
+import net from 'node:net'
+import { once } from 'node:events'
+import { mkdtemp, writeFile, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
 import detectPort from 'detect-port'
 
@@ -76,4 +82,79 @@ test('recordExchanges flag actively controls whether records are added to exchan
     intercepter.onRequest(Object.assign(new PassThrough(), { url: '' }))
     assert.equal(intercepter.exchanges.length, expectedExchangesLength)
   }
+})
+
+test('Scoop preserves allowed browser wire bytes through raw WACZ export and import', { timeout: 15000 }, async t => {
+  const directory = await mkdtemp(join(tmpdir(), 'scoop-proxy-fidelity-'))
+  t.after(() => rm(directory, { recursive: true, force: true }))
+  const body = '<!doctype html><html><head><link rel="icon" href="data:,"><title>Fixture</title></head><body>Raw fixture</body></html>'
+  const rawResponse = Buffer.from(`HTTP/1.1 200 Original Reason\r\nContent-Type: text/html\r\nContent-Length: ${Buffer.byteLength(body)}\r\nX-Weird:   padded   \r\nX-Dupe: one\r\nX-Dupe: two\r\n\r\n${body}`)
+  const received = []
+  const origin = createServer((request, response) => {
+    if (request.method === 'HEAD') {
+      response.setHeader('Content-Type', 'text/html')
+      response.end()
+    } else request.socket.write(rawResponse)
+  })
+  origin.on('connection', socket => socket.on('data', data => received.push(Buffer.from(data))))
+  origin.listen(0, '127.0.0.1')
+  await once(origin, 'listening')
+  t.after(() => { origin.closeAllConnections(); origin.close() })
+  const url = `http://127.0.0.1:${origin.address().port}/`
+  const capture = await Scoop.capture(url, {
+    ...testDefaults,
+    blocklist: [],
+    proxyHost: '127.0.0.1',
+    proxyPort: 0,
+    captureTimeout: 5000,
+    loadTimeout: 1000,
+    networkIdleTimeout: 2000,
+    behaviorsTimeout: 100,
+    screenshot: false,
+    pdfSnapshot: false,
+    domSnapshot: false,
+    provenanceSummary: false,
+    captureVideoAsAttachment: false,
+    captureCertificatesAsAttachment: false,
+    autoScroll: false,
+    autoPlayMedia: false,
+    grabSecondaryResources: false,
+    runSiteSpecificBehaviors: false
+  })
+  assert.equal(capture.state, Scoop.states.COMPLETE)
+  const exchange = capture.exchanges.find(exchange => exchange.url === url)
+  assert.ok(exchange)
+  assert.ok(Buffer.concat(received).includes(exchange.requestRaw))
+  assert.deepEqual(exchange.responseRaw, rawResponse)
+  assert.equal(exchange.response.bodyCombined.toString(), body)
+  const filepath = join(directory, 'capture.wacz')
+  await writeFile(filepath, Buffer.from(await capture.toWACZ(true)))
+  const reconstructed = await Scoop.fromWACZ(filepath)
+  const imported = reconstructed.exchanges.find(item => item.id === exchange.id)
+  assert.deepEqual(imported.requestRaw, exchange.requestRaw)
+  assert.deepEqual(imported.responseRaw, exchange.responseRaw)
+})
+
+test('Scoop rejects a Host authority that conflicts with the absolute target', async t => {
+  let connections = 0
+  const origin = net.createServer(socket => { connections++; socket.destroy() })
+  origin.listen(0, '127.0.0.1')
+  await once(origin, 'listening')
+  t.after(() => origin.close())
+  const capture = new Scoop('https://example.com/', {
+    ...testDefaults,
+    proxyHost: '127.0.0.1',
+    proxyPort: 0,
+    blocklist: ['/forbidden.invalid/']
+  })
+  await capture.intercepter.setup()
+  t.after(() => capture.intercepter.teardown())
+  const socket = net.connect(capture.options.proxyPort, '127.0.0.1')
+  t.after(() => socket.destroy())
+  socket.on('error', () => {})
+  const output = once(socket, 'data')
+  socket.write(`GET http://127.0.0.1:${origin.address().port}/ HTTP/1.1\r\nHost: forbidden.invalid\r\n\r\n`)
+  assert.match((await output)[0].toString(), /400 Bad Request/)
+  assert.equal(connections, 0)
+  assert.equal(capture.provenanceInfo.blockedRequests.length, 0) // Invalid authority, not a blocklist match.
 })

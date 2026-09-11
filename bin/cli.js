@@ -32,7 +32,7 @@ program.arguments('<url>')
 
 program.addOption(
   new Option('-o, --output <string>', 'Output path.')
-    .default(path.join(process.env.PWD, 'archive.wacz'))
+    .default(path.join(process.cwd(), 'archive.wacz'))
 )
 
 program.addOption(
@@ -232,6 +232,14 @@ program.addOption(
     'Should Chrome run in headless mode?')
     .choices(['true', 'false'])
     .default(String(defaults.headless))
+)
+
+program.addOption(
+  new Option(
+    '--chromium-sandbox <bool>',
+    'Enable Chromium sandboxing (requires a compatible host or worker image).')
+    .choices(['true', 'false'])
+    .default(String(defaults.chromiumSandbox))
 )
 
 program.addOption(
