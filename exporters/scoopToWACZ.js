@@ -11,6 +11,7 @@ import { getHead } from '../utils/http.js'
 import { formatErrorMessage } from '../utils/formatErrorMessage.js'
 import { ScoopGeneratedExchange } from '../exchanges/ScoopGeneratedExchange.js'
 import { ScoopExchange } from '../exchanges/ScoopExchange.js' // eslint-disable-line
+import { rawResourceName } from './rawResourceName.js'
 
 /**
  * Scoop capture to WACZ converter.
@@ -181,7 +182,7 @@ export async function scoopToWACZ (capture, includeRaw = false, signingServer) {
           }
 
           const dataHash = await transformer.sha256(data)
-          const destination = `raw/${type}_${exchange.date.toISOString()}_${exchange.id}`
+          const destination = rawResourceName(type, exchange.date, exchange.id)
 
           if (warcPayloadDigests.includes(dataHash)) {
             await transformer.addFileToZip(getHead(data), destination) // Add only the head and trailing CRLF
