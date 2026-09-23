@@ -6,6 +6,7 @@ import { ScoopIntercepter } from './ScoopIntercepter.js'
 import { ScoopProxyExchange } from '../exchanges/index.js'
 import { searchBlocklistFor } from '../utils/blocklist.js'
 import { NetworkPolicy } from '../utils/network.js'
+import { MAX_HTTP_HEADER_SIZE } from '../constants.js'
 
 import http from 'http' // eslint-disable-line
 
@@ -43,6 +44,7 @@ export class ScoopProxy extends ScoopIntercepter {
       let connected = false
 
       this.#connection = createServer({
+        maxHeaderSize: MAX_HTTP_HEADER_SIZE,
         authorizeRequest: (request, signal) => {
           const target = requestUrl(request)
           return this.networkPolicy.resolve(target, { signal })

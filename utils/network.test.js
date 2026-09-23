@@ -184,3 +184,12 @@ test('a policy closed as resolution completes cannot open a HEAD connection', as
   await assert.rejects(fetchHead(url, policy), { code: 'ERR_NETWORK_POLICY' })
   assert.equal(connections, 0)
 })
+
+test('HEAD reads response headers larger than Node\'s default limit', async t => {
+  const { url } = await origin(t, (_req, res) => {
+    res.writeHead(200, { 'content-type': 'application/pdf', 'content-security-policy': 'x'.repeat(20000) })
+    res.end()
+  })
+  const result = await fetchHead(url, new NetworkPolicy([]))
+  assert.equal(result.headers.get('content-type'), 'application/pdf')
+})

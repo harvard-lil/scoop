@@ -158,3 +158,39 @@ test('Scoop rejects a Host authority that conflicts with the absolute target', a
   assert.equal(connections, 0)
   assert.equal(capture.provenanceInfo.blockedRequests.length, 0) // Invalid authority, not a blocklist match.
 })
+
+test('ScoopProxy captures a page whose response headers exceed Node\'s default 16 KiB limit', { timeout: 30000 }, async t => {
+  // Some sites send a single Content-Security-Policy header of about 16 KB.
+  const csp = `default-src 'self'${' https://example.com'.repeat(1000)}`
+  assert.ok(csp.length > 16 * 1024)
+  const origin = createServer((_request, response) => {
+    response.setHeader('Content-Type', 'text/html')
+    response.setHeader('Content-Security-Policy', csp)
+    response.end('<!doctype html><title>Large headers</title><link rel="icon" href="data:,">')
+  })
+  origin.listen(0, '127.0.0.1')
+  await once(origin, 'listening')
+  t.after(() => { origin.closeAllConnections(); origin.close() })
+  const url = `http://127.0.0.1:${origin.address().port}/`
+
+  const capture = await Scoop.capture(url, {
+    ...testDefaults,
+    blocklist: [],
+    proxyPort: await detectPort(0),
+    screenshot: false,
+    domSnapshot: false,
+    pdfSnapshot: false,
+    captureCertificatesAsAttachment: false,
+    provenanceSummary: false,
+    autoScroll: false,
+    autoPlayMedia: false,
+    grabSecondaryResources: false,
+    runSiteSpecificBehaviors: false,
+    networkIdleTimeout: 1000,
+    captureTimeout: 10000
+  })
+  assert.equal(capture.state, Scoop.states.COMPLETE)
+  const page = capture.exchanges.find(exchange => exchange.url === url)
+  assert.equal(page.response.headers.get('Content-Security-Policy'), csp)
+  assert.ok(Buffer.from(await capture.toWARC()).includes(csp))
+})
