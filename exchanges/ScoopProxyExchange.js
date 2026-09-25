@@ -74,16 +74,35 @@ export class ScoopProxyExchange extends ScoopExchange {
   }
 
   /**
-   * Stores the parsed body on the incoming message for easy access
+   * Stores the parsed body on the incoming message for easy access, as
+   * `message.body`: everything received so far, or undefined before any data.
+   *
+   * Chunks are kept as they arrive and joined when the body is read. Joining
+   * on every chunk instead copies the whole body each time, which for a
+   * response that keeps streaming after the capture has stopped recording (a
+   * video, an ad slot) grows until it occupies the event loop entirely.
    *
    * @param {IncomingMessage} message
    * @private
    */
   _cacheBody (message) {
+    const chunks = []
+
     message.on('data', (data) => {
-      message.body = message.body
-        ? Buffer.concat([message.body, data])
-        : data
+      chunks.push(data)
+    })
+
+    Object.defineProperty(message, 'body', {
+      configurable: true,
+      get () {
+        if (chunks.length === 0) {
+          return undefined
+        }
+        if (chunks.length > 1) {
+          chunks.splice(0, chunks.length, Buffer.concat(chunks))
+        }
+        return chunks[0]
+      }
     })
   }
 
