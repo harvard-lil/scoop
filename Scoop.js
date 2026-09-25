@@ -1314,7 +1314,9 @@ export class Scoop {
    */
   async #captureProvenanceInfo (page) {
     let captureIp = 'UNKNOWN'
-    const osInfo = (await getOSInfo() || {name: "UNKNOWN", version: "UNKNOWN"});
+    // Null when the OS cannot be identified (e.g. NixOS, which getos
+    // mistakes for Ubuntu without a release); the summary then has no name.
+    const osInfo = await getOSInfo()
     let ytDlpHash = ''
     let cripHash = ''
 
@@ -1375,8 +1377,8 @@ export class Scoop {
       software: CONSTANTS.SOFTWARE,
       version: CONSTANTS.VERSION,
       osType: os.type(),
-      osName: osInfo.name,
-      osVersion: osInfo.version,
+      osName: osInfo?.name ?? null,
+      osVersion: osInfo?.version ?? null,
       cpuArchitecture: os.machine(),
       ytDlpHash,
       cripHash,
