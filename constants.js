@@ -4,6 +4,8 @@ import { fileURLToPath } from 'url'
 
 import chalk from 'chalk'
 
+import { describeVersion } from './utils/version.js'
+
 /**
  * Description of this software.
  * Used in provenance data to indicate which software made the capture.
@@ -90,6 +92,27 @@ export const PACKAGE_INFO = Object.freeze(
 )
 
 /**
- * The current version of Scoop. Also used in provenance data.
+ * The commit this copy of Scoop was built from, when it came from an archive
+ * of a git commit, as npm installs a GitHub dependency. Null otherwise.
+ *
+ * build-info.json is marked `export-subst` in .gitattributes, so `git archive`
+ * (and GitHub's tarballs) replace its placeholder with the commit. In a git
+ * checkout, or a package published from one, the placeholder stays.
+ * @constant
+ * @type {?string}
  */
-export const VERSION = PACKAGE_INFO.version
+export const BUILD_COMMIT = await fs.readFile(join(BASE_PATH, 'build-info.json'))
+  .then(data => {
+    const { commit } = JSON.parse(data)
+    return /^[0-9a-f]{40}$/.test(commit) ? commit : null
+  })
+  .catch(err => {
+    if (err.code === 'ENOENT') return null
+    throw err
+  })
+
+/**
+ * The current version of Scoop. Also used in provenance data.
+ * Between releases, includes the commit: see `describeVersion`.
+ */
+export const VERSION = describeVersion(PACKAGE_INFO.version, BUILD_COMMIT)

@@ -7,7 +7,7 @@ import path from 'path'
 import { Command, Option } from 'commander'
 
 import { Scoop } from '../Scoop.js'
-import { PACKAGE_INFO } from '../constants.js'
+import { PACKAGE_INFO, VERSION } from '../constants.js'
 import { formatErrorMessage } from '../utils/formatErrorMessage.js'
 
 /** @type {Command} */
@@ -22,7 +22,7 @@ const defaults = Scoop.defaults
 program
   .name('scoop')
   .description(`${PACKAGE_INFO.description}\nMore info: https://github.com/harvard-lil/scoop`)
-  .version(PACKAGE_INFO.version, '-v, --version', 'Display Scoop and Scoop CLI version.')
+  .version(VERSION, '-v, --version', 'Display Scoop and Scoop CLI version.')
   .helpOption(null, 'Show options list.')
 
 //

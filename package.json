@@ -1,6 +1,6 @@
 {
   "name": "@harvard-lil/scoop",
-  "version": "0.7.0",
+  "version": "0.7.1-dev.0",
   "description": "\ud83c\udf68 High-fidelity, browser-based, single-page web archiving library and CLI.",
   "main": "Scoop.js",
   "type": "module",
@@ -18,7 +18,8 @@
     "*.sh",
     ".keep",
     "*/.keep",
-    "assets/templates/*.njk"
+    "assets/templates/*.njk",
+    "build-info.json"
   ],
   "engines": {
     "node": ">=22.0.0"
