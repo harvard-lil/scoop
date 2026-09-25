@@ -23,9 +23,11 @@ import * as exporters from './exporters/index.js'
 import * as importers from './importers/index.js'
 import { filterOptions, defaults } from './options.js'
 import { formatErrorMessage } from './utils/formatErrorMessage.js'
+import { getDimensions } from './utils/png.js'
 import { NetworkPolicy, fetchHead } from './utils/network.js'
 import { createCertificateTunnel } from './utils/certificate-tunnel.js'
 import { withSnapshotDeadline } from './utils/snapshot-deadline.js'
+import { forEachHttpsHostWithinBudget } from './utils/host-budget.js'
 import { createArtifactScratchDirectory, readArtifactFile, removeArtifactScratchDirectory } from './utils/artifact-files.js'
 
 nunjucks.configure(CONSTANTS.TEMPLATES_PATH)
@@ -140,6 +142,18 @@ export class Scoop {
    * @type {Date}
    */
   startedAt
+
+  /**
+   * What each capture step did and how long it took, in the order they ran.
+   * `outcome` is one of:
+   * - `completed`: the step finished on its own.
+   * - `failed`: the step threw.
+   * - `limit`: the step ended because the capture reached its time or size limit.
+   * - `interrupted`: the capture left the CAPTURE state while the step was still running; Scoop moved on without waiting for it.
+   * - `skipped`: the step did not run.
+   * @type {{name: string, startedAt: string, durationMs: number, outcome: string}[]}
+   */
+  steps = []
 
   /**
    * The Playwright browser instance for this capture.
@@ -383,7 +397,11 @@ export class Scoop {
         main: async (page) => {
           const url = 'file:///screenshot.png'
           const httpHeaders = new Headers({ 'content-type': 'image/png' })
-          const body = await page.screenshot({ fullPage: true, timeout: 5000 })
+          const body = await page.screenshot({ fullPage: true, timeout: 5000, ...this.#screenshotClip() })
+          const [width, height] = getDimensions(body)
+          if (width === options.screenshotMaxWidth || height === options.screenshotMaxHeight) {
+            this.log.info(`Screenshot reached its size limit (${width}x${height}); the page may extend beyond it.`)
+          }
           const isEntryPoint = true
           const description = `Capture Time Screenshot of ${this.url}`
 
@@ -521,6 +539,8 @@ export class Scoop {
       // If capture was not interrupted, run steps
       //
       let stateCheckInterval = null
+      const stepStartedAt = Date.now()
+      const record = { name: step.name, startedAt: new Date(stepStartedAt).toISOString() }
       try {
         // Only if state is `CAPTURE`, unless `alwaysRun` is set for step
         let shouldRun = this.state === Scoop.states.CAPTURE || step.alwaysRun === true
@@ -532,14 +552,15 @@ export class Scoop {
 
         if (shouldRun === false) {
           this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} (skipped)`)
+          record.outcome = 'skipped'
           continue
         }
 
         this.log.info(`STEP [${i + 1}/${steps.length}]: ${step.name}`)
 
-        await Promise.race([
+        const interrupted = await Promise.race([
           // Run current step
-          step.main(page),
+          step.main(page).then(() => false),
 
           // Check capture state every second - so current step can be interrupted if state changes
           new Promise(resolve => {
@@ -550,6 +571,7 @@ export class Scoop {
             }, 1000)
           })
         ])
+        record.outcome = interrupted ? 'interrupted' : 'completed'
 
       //
       // On error:
@@ -558,12 +580,16 @@ export class Scoop {
       } catch (err) {
         if (this.state === Scoop.states.PARTIAL) {
           this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} - ended due to max time or size reached.`)
+          record.outcome = 'limit'
         } else {
           this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} - failed`)
           this.log.trace(err)
+          record.outcome = 'failed'
         }
       } finally {
         clearInterval(stateCheckInterval)
+        record.durationMs = Date.now() - stepStartedAt
+        this.steps.push(record)
       }
     }
 
@@ -1168,12 +1194,6 @@ export class Scoop {
     const { captureCertificatesAsAttachmentTimeout, cripPath } = this.options
 
     //
-    // Start timeout timer
-    //
-    let timeIsOut = false
-    const timer = setTimeout(() => { timeIsOut = true }, captureCertificatesAsAttachmentTimeout)
-
-    //
     // Check that `crip` is available
     //
     try {
@@ -1184,78 +1204,87 @@ export class Scoop {
     }
 
     //
-    // Pull certs
+    // Pull certs: each host once, all within the step's one time budget.
     //
-    const processedHosts = new Map()
+    const urls = this.intercepter.exchanges.map(exchange => exchange.url)
 
-    for (const exchange of this.intercepter.exchanges) {
-      const url = new URL(exchange.url)
-
-      if (timeIsOut) {
-        throw new Error('Capture certificates at attachment timeout reached')
-      }
-
-      if (url.protocol !== 'https:' || processedHosts.get(url.host) === true) {
-        continue
-      }
-
-      if (this.blocklist.find(searchBlocklistFor(`https://${url.host}`))) {
-        this.log.warn(`${url.host} matched against blocklist - skipped trying to pull its certificate.`)
-        continue
-      }
-
-      try {
-        const cripOptions = [
-          'print',
-          '-u', `https://${url.host}`,
-          '-f', 'pem'
-        ]
-
-        let timeout = captureCertificatesAsAttachmentTimeout
-
-        if (processedHosts.length > 0) { // Timeout per request decreases as we go through the list.
-          timeout = captureCertificatesAsAttachmentTimeout / processedHosts.length
-        }
-
-        const spawnOptions = {
-          timeout: timeout > 1000 ? timeout : 1000,
-          maxBuffer: 1024 * 1024 * 128
+    try {
+      await forEachHttpsHostWithinBudget(urls, captureCertificatesAsAttachmentTimeout, async (host, remainingMs) => {
+        if (this.blocklist.find(searchBlocklistFor(`https://${host}`))) {
+          this.log.warn(`${host} matched against blocklist - skipped trying to pull its certificate.`)
+          return
         }
 
         const tunnel = await createCertificateTunnel(this.intercepter.networkPolicy)
         let pem
         try {
           pem = await exec(cripPath, [
-            ...cripOptions,
+            'print',
+            '-u', `https://${host}`,
+            '-f', 'pem',
             '--proxy-host', tunnel.host,
             '--proxy-port', String(tunnel.port)
-          ], spawnOptions)
+          ], {
+            timeout: remainingMs,
+            // exec waits for the process to exit before it gives up, so a
+            // call must not be able to outlive its timeout by ignoring SIGTERM.
+            killSignal: 'SIGKILL',
+            maxBuffer: 1024 * 1024 * 128
+          })
         } finally {
           await tunnel.close()
         }
 
-        processedHosts.set(url.host, true)
-
         if (!pem) {
-          throw new Error(`crip did not return a PEM for ${url.host}.`)
+          throw new Error(`crip did not return a PEM for ${host}.`)
         }
 
         // Add to generated exchanges
-        const fileUrl = `file:///${url.host}.pem`
+        const fileUrl = `file:///${host}.pem`
         const httpHeaders = new Headers({ 'content-type': 'application/x-pem-file' })
         const body = Buffer.from(pem)
         const isEntryPoint = false
         await this.addGeneratedExchange(fileUrl, httpHeaders, body, isEntryPoint)
 
         // Add to `this.provenanceInfo.certificates`
-        this.provenanceInfo.certificates.push({ host: url.host, pem })
-      } catch (err) {
-        this.log.trace(err)
-        this.log.warn(`Certificates could not be extracted for ${url.host}`)
-      }
+        this.provenanceInfo.certificates.push({ host, pem })
+      }, {
+        onError: (host, err) => {
+          this.log.trace(err)
+          this.log.warn(`Certificates could not be extracted for ${host}`)
+        }
+      })
+    } catch (err) {
+      throw new Error('Capture certificates at attachment timeout reached', { cause: err })
+    }
+  }
+
+  /**
+   * The clip for a full-page screenshot, from `screenshotMaxWidth` and
+   * `screenshotMaxHeight`: the top-left of the page, up to those sizes.
+   *
+   * Playwright trims a full-page clip to the page's own size, so a smaller page
+   * is captured whole, and Chromium renders only the clipped area. Unbounded,
+   * a very tall page can take the browser gigabytes of memory to render.
+   *
+   * @returns {{clip?: {x: number, y: number, width: number, height: number}}}
+   * @private
+   */
+  #screenshotClip () {
+    const { screenshotMaxWidth, screenshotMaxHeight } = this.options
+
+    if (!screenshotMaxWidth && !screenshotMaxHeight) {
+      return {}
     }
 
-    clearTimeout(timer)
+    return {
+      clip: {
+        x: 0,
+        y: 0,
+        width: screenshotMaxWidth || Number.MAX_SAFE_INTEGER,
+        height: screenshotMaxHeight || Number.MAX_SAFE_INTEGER
+      }
+    }
   }
 
   /**
@@ -1517,6 +1546,7 @@ export class Scoop {
    * @property {?string[]} attachments.videoExtractedSubtitles - Filenames
    * @property {?string[]} attachments.certificates - Filenames
    * @property {?object} provenanceInfo - See {@link Scoop.provenanceInfo}. Only populated if the "provenanceSummary" option was turned on.
+   * @property {object[]} steps - See {@link Scoop.steps}.
    */
 
   /**
@@ -1536,7 +1566,8 @@ export class Scoop {
       exchangeUrls: this.exchanges.map(exchange => exchange.url),
       attachments: {},
       provenanceInfo: this.options.provenanceSummary ? this.provenanceInfo : {},
-      pageInfo: this.pageInfo
+      pageInfo: this.pageInfo,
+      steps: this.steps
       // NOTE:
       // `provenanceInfo` also contains an `options` object,
       // but some of its properties have been edited because it is meant to be embedded in a WACZ.
@@ -1553,7 +1584,11 @@ export class Scoop {
     //
     // Summarize attachments
     //
-    const generatedExchanges = this.extractGeneratedExchanges()
+    // A failed capture has no attachments to offer: its exchanges are not
+    // exportable. Its summary still reports how far it got.
+    const generatedExchanges = [Scoop.states.COMPLETE, Scoop.states.PARTIAL].includes(this.state)
+      ? this.extractGeneratedExchanges()
+      : {}
 
     // 1-to-1 matches:
     // - Add filename to "attachments" as key if present in generated exchanges list

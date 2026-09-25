@@ -41,12 +41,12 @@ export function castBlocklistMatcher (val) {
  * @param {(string | RegExp | Address4 | Address6)} test - A blocklist matcher to test against
  * @returns {function(val):Boolean} A curried function to be used in an array search
  */
-function matchAgainst (matcher) {
+function matchAgainst (matcher, cast = castBlocklistMatcher) {
   return (val) => {
     if ([Address4, Address6].includes(matcher.constructor)) {
       // If the test val is an IP, it must first be cast as Address4|Address6
       // to work with an Address4|Address6 matcher
-      return Boolean(castBlocklistMatcher(val).isInSubnet?.(matcher))
+      return Boolean(cast(val).isInSubnet?.(matcher))
     }
 
     if (matcher.constructor === String) {
@@ -67,5 +67,15 @@ function matchAgainst (matcher) {
  * @returns {function(val):Boolean} A curried function to be used in an array search
  */
 export function searchBlocklistFor (...args) {
-  return (matcher) => args.find(matchAgainst(matcher))
+  // Each value is cast once per search rather than once per IP rule: casting
+  // a URL tries, and fails, to parse it as an IPv4 and an IPv6 address, and
+  // those exceptions were a measurable share of the proxy's CPU time.
+  const casts = new Map()
+  const cast = (val) => {
+    if (!casts.has(val)) {
+      casts.set(val, castBlocklistMatcher(val))
+    }
+    return casts.get(val)
+  }
+  return (matcher) => args.find(matchAgainst(matcher, cast))
 }

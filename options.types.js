@@ -20,6 +20,8 @@
  *
  * @property {number} captureWindowX=1600 - Browser window resolution in pixels: X axis.
  * @property {number} captureWindowY=900 - Browser window resolution in pixels: Y axis.
+ * @property {number} screenshotMaxWidth=0 - Widest full-page screenshot to take, in pixels. A wider page is clipped to this width, from the left. 0 means no limit.
+ * @property {number} screenshotMaxHeight=0 - Tallest full-page screenshot to take, in pixels. A taller page is clipped to this height, from the top. 0 means no limit. Chromium's memory use grows with the area it renders: an unbounded screenshot of a very tall page can take gigabytes.
  *
  * @property {number} maxCaptureSize=209715200 - Maximum size, in bytes, for the exchanges list. Scoop stops intercepting exchanges at this threshold.
  *
