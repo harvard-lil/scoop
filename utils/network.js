@@ -4,6 +4,7 @@ import https from 'node:https'
 import net from 'node:net'
 import { Address6 } from '@laverdet/beaugunderson-ip-address'
 import { castBlocklistMatcher, searchBlocklistFor } from './blocklist.js'
+import { MAX_HTTP_HEADER_SIZE } from '../constants.js'
 
 // Node 20.9 updated Undici's default User-Agent from "undici" to "node".
 const [nodeMajor, nodeMinor] = process.versions.node.split('.').map(Number)
@@ -139,6 +140,7 @@ export async function fetchHead (input, policy, { signal } = {}) {
       const request = (destination.url.protocol === 'https:' ? https : http).request(destination.url, {
         method: 'HEAD',
         agent: false,
+        maxHeaderSize: MAX_HTTP_HEADER_SIZE,
         lookup: destination.lookup,
         family: destination.family,
         signal,

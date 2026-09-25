@@ -31,6 +31,14 @@ export const EXCHANGE_ID_HEADER_LABEL = 'Scoop-Exchange-ID'
 export const EXCHANGE_DESCRIPTION_HEADER_LABEL = 'Scoop-Exchange-Description'
 
 /**
+ * Byte limit for HTTP header blocks parsed by Scoop's proxy and its metadata HEAD request.
+ * Matches Chromium's response header limit (net::HttpStreamParser::kMaxHeaderBufSize, 256 KiB),
+ * so that the proxy does not reject a response the browser would render.
+ * Node's default (16 KiB) rejects real sites that send large Content-Security-Policy headers.
+ */
+export const MAX_HTTP_HEADER_SIZE = 256 * 1024
+
+/**
  * Path to the Scoop library.
  */
 export const BASE_PATH = dirname(fileURLToPath(import.meta.url))

@@ -48,7 +48,7 @@
   "homepage": "https://github.com/harvard-lil/scoop#readme",
   "dependencies": {
     "@harvard-lil/js-wacz": "^0.2.0",
-    "@harvard-lil/portal": "0.1.0",
+    "@harvard-lil/portal": "github:harvard-lil/portal#74ef868a0016986711254319e167ea0afea5dc61",
     "@laverdet/beaugunderson-ip-address": "^8.1.0",
     "@playwright/browser-chromium": "1.63.0",
     "browsertrix-behaviors": "0.6.0",
