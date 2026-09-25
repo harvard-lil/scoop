@@ -27,6 +27,7 @@ import { getDimensions } from './utils/png.js'
 import { NetworkPolicy, fetchHead } from './utils/network.js'
 import { createCertificateTunnel } from './utils/certificate-tunnel.js'
 import { withSnapshotDeadline } from './utils/snapshot-deadline.js'
+import { forEachHttpsHostWithinBudget } from './utils/host-budget.js'
 import { createArtifactScratchDirectory, readArtifactFile, removeArtifactScratchDirectory } from './utils/artifact-files.js'
 
 nunjucks.configure(CONSTANTS.TEMPLATES_PATH)
@@ -1193,12 +1194,6 @@ export class Scoop {
     const { captureCertificatesAsAttachmentTimeout, cripPath } = this.options
 
     //
-    // Start timeout timer
-    //
-    let timeIsOut = false
-    const timer = setTimeout(() => { timeIsOut = true }, captureCertificatesAsAttachmentTimeout)
-
-    //
     // Check that `crip` is available
     //
     try {
@@ -1209,78 +1204,59 @@ export class Scoop {
     }
 
     //
-    // Pull certs
+    // Pull certs: each host once, all within the step's one time budget.
     //
-    const processedHosts = new Map()
+    const urls = this.intercepter.exchanges.map(exchange => exchange.url)
 
-    for (const exchange of this.intercepter.exchanges) {
-      const url = new URL(exchange.url)
-
-      if (timeIsOut) {
-        throw new Error('Capture certificates at attachment timeout reached')
-      }
-
-      if (url.protocol !== 'https:' || processedHosts.get(url.host) === true) {
-        continue
-      }
-
-      if (this.blocklist.find(searchBlocklistFor(`https://${url.host}`))) {
-        this.log.warn(`${url.host} matched against blocklist - skipped trying to pull its certificate.`)
-        continue
-      }
-
-      try {
-        const cripOptions = [
-          'print',
-          '-u', `https://${url.host}`,
-          '-f', 'pem'
-        ]
-
-        let timeout = captureCertificatesAsAttachmentTimeout
-
-        if (processedHosts.length > 0) { // Timeout per request decreases as we go through the list.
-          timeout = captureCertificatesAsAttachmentTimeout / processedHosts.length
-        }
-
-        const spawnOptions = {
-          timeout: timeout > 1000 ? timeout : 1000,
-          maxBuffer: 1024 * 1024 * 128
+    try {
+      await forEachHttpsHostWithinBudget(urls, captureCertificatesAsAttachmentTimeout, async (host, remainingMs) => {
+        if (this.blocklist.find(searchBlocklistFor(`https://${host}`))) {
+          this.log.warn(`${host} matched against blocklist - skipped trying to pull its certificate.`)
+          return
         }
 
         const tunnel = await createCertificateTunnel(this.intercepter.networkPolicy)
         let pem
         try {
           pem = await exec(cripPath, [
-            ...cripOptions,
+            'print',
+            '-u', `https://${host}`,
+            '-f', 'pem',
             '--proxy-host', tunnel.host,
             '--proxy-port', String(tunnel.port)
-          ], spawnOptions)
+          ], {
+            timeout: remainingMs,
+            // exec waits for the process to exit before it gives up, so a
+            // call must not be able to outlive its timeout by ignoring SIGTERM.
+            killSignal: 'SIGKILL',
+            maxBuffer: 1024 * 1024 * 128
+          })
         } finally {
           await tunnel.close()
         }
 
-        processedHosts.set(url.host, true)
-
         if (!pem) {
-          throw new Error(`crip did not return a PEM for ${url.host}.`)
+          throw new Error(`crip did not return a PEM for ${host}.`)
         }
 
         // Add to generated exchanges
-        const fileUrl = `file:///${url.host}.pem`
+        const fileUrl = `file:///${host}.pem`
         const httpHeaders = new Headers({ 'content-type': 'application/x-pem-file' })
         const body = Buffer.from(pem)
         const isEntryPoint = false
         await this.addGeneratedExchange(fileUrl, httpHeaders, body, isEntryPoint)
 
         // Add to `this.provenanceInfo.certificates`
-        this.provenanceInfo.certificates.push({ host: url.host, pem })
-      } catch (err) {
-        this.log.trace(err)
-        this.log.warn(`Certificates could not be extracted for ${url.host}`)
-      }
+        this.provenanceInfo.certificates.push({ host, pem })
+      }, {
+        onError: (host, err) => {
+          this.log.trace(err)
+          this.log.warn(`Certificates could not be extracted for ${host}`)
+        }
+      })
+    } catch (err) {
+      throw new Error('Capture certificates at attachment timeout reached', { cause: err })
     }
-
-    clearTimeout(timer)
   }
 
   /**
