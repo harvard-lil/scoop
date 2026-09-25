@@ -32,6 +32,7 @@ await test('Scoop - capture of a web page.', async (t) => {
    */
   const server = await app.listen(PORT, () => console.log(`Test webserver started on port ${PORT}`))
   app.get('/redirect', (req, res) => res.redirect(parseInt(req.query.statusCode), req.query.path))
+  app.get('/tall', (req, res) => res.send('<!DOCTYPE html><body style="margin:0"><div style="width:800px;height:5000px;background:linear-gradient(red,blue)"></div></body>'))
   app.get('/:path', (req, res) => res.sendFile(FIXTURES_PATH + req.params.path))
 
   const testVideoFixture = await readFile(`${FIXTURES_PATH}video.mp4`)
@@ -96,6 +97,37 @@ await test('Scoop - capture of a web page.', async (t) => {
     const { exchanges } = await Scoop.capture(`${URL}/test.html`, { ...options, screenshot: true, captureWindowX: xy, captureWindowY: xy })
     const attachment = exchanges[exchanges.length - 1]
     assert.deepEqual(getDimensions(attachment.response.body), [xy, xy])
+  })
+
+  await t.test('Scoop clips a full-page screenshot to screenshotMaxHeight', async (_t) => {
+    const unbounded = await Scoop.capture(`${URL}/tall`, { ...options, screenshot: true })
+    assert.deepEqual(getDimensions(unbounded.exchanges.at(-1).response.body), [options.captureWindowX, 5000])
+
+    const { exchanges } = await Scoop.capture(`${URL}/tall`, { ...options, screenshot: true, screenshotMaxHeight: 2000 })
+    assert.deepEqual(getDimensions(exchanges.at(-1).response.body), [options.captureWindowX, 2000])
+  })
+
+  await t.test('Scoop clips a full-page screenshot to screenshotMaxWidth', async (_t) => {
+    const { exchanges } = await Scoop.capture(`${URL}/tall`, { ...options, screenshot: true, screenshotMaxWidth: 700, screenshotMaxHeight: 1000 })
+    assert.deepEqual(getDimensions(exchanges.at(-1).response.body), [700, 1000])
+  })
+
+  await t.test('Screenshot limits larger than the page leave the screenshot whole', async (_t) => {
+    const { exchanges } = await Scoop.capture(`${URL}/test.html`, { ...options, screenshot: true, screenshotMaxWidth: 16000, screenshotMaxHeight: 16000 })
+    assert.deepEqual(getDimensions(exchanges.at(-1).response.body), [options.captureWindowX, options.captureWindowY])
+  })
+
+  await t.test('Scoop records what each step did', async (_t) => {
+    const capture = await Scoop.capture(`${URL}/test.html`, { ...options, screenshot: true })
+    const { steps } = await capture.summary()
+    const screenshot = steps.find(step => step.name === 'Screenshot')
+    assert.equal(screenshot.outcome, 'completed')
+    assert(screenshot.durationMs >= 0)
+    assert(!Number.isNaN(Date.parse(screenshot.startedAt)))
+    assert.equal(steps.find(step => step.name === 'Wait for initial page load').outcome, 'completed')
+    for (const step of steps) {
+      assert(['completed', 'failed', 'limit', 'interrupted', 'skipped'].includes(step.outcome), step.name)
+    }
   })
 
   await t.test('Scoop adds a provenance summary html page', async (_t) => {

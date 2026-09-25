@@ -182,7 +182,7 @@ Options:
   -v, --version                                          Display Scoop and Scoop CLI version.
   -o, --output <string>                                  Output path. (default: "./archive.wacz")
   -f, --format <string>                                  Output format. (choices: "warc", "warc-gzipped", "wacz", "wacz-with-raw", default: "wacz")
-  --json-summary-output <string>                         If set, allows for saving a capture summary as JSON. Must be a path to .json file.
+  --json-summary-output <string>                         If set, allows for saving a capture summary as JSON. Must be a path to .json file. Written for failed captures too, whose summary has the FAILED state.
   --export-attachments-output <string>                   If set, allows for exporting attachments (screenshot, certs, ...). Must be a path to an existing directory.
   --signing-url <string>                                 Authsign-compatible endpoint for signing WACZ file.
   --signing-token <string>                               Authentication token to --signing-url, if needed.
@@ -201,6 +201,8 @@ Options:
   --capture-certificates-as-attachment-timeout <number>  Max time Scoop will wait for the certificates capture process to complete, in ms. (default: 10000)
   --capture-window-x <number>                            Width of the browser window Scoop will open to capture, in pixels. (default: 1600)
   --capture-window-y <number>                            Height of the browser window Scoop will open to capture, in pixels. (default: 900)
+  --screenshot-max-width <number>                        Clip full-page screenshots to this width, in pixels. 0 means no limit. (default: 0)
+  --screenshot-max-height <number>                       Clip full-page screenshots to this height, in pixels. 0 means no limit. (default: 0)
   --max-capture-size <number>                            Size limit for the capture's exchanges list, in bytes. (default: 209715200)
   --max-video-capture-size <number>                      Size limit for the video attachment, in bytes. Scoop will not capture video attachments larger than this. (default: 209715200)
   --auto-scroll <bool>                                   Should Scoop try to scroll through the page? (choices: "true", "false", default: "true")
