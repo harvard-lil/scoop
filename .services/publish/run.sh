@@ -45,6 +45,12 @@ then
     npm version patch --no-git-tag-version;
 fi
 
+version=$(node -p 'require("./package.json").version')
+if ! grep -q "^## ${version} - " CHANGELOG.md; then
+    echo "CHANGELOG.md has no section for ${version}: rename \"Unreleased\" to \"${version} - $(date +%Y-%m-%d)\"."
+    exit 1
+fi
+
 read -p "Do a publish dry-run (y/n)? " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
