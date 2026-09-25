@@ -26,7 +26,7 @@ const exchangeId = 'd8cb07dd-9363-4d78-b779-843dc77438cc'
 const requestRaw = Buffer.from(`GET ${url} HTTP/1.1\r\nHost: example.com\r\n\r\n`)
 const responseRaw = Buffer.from('HTTP/1.1 200 OK\r\nContent-Length: 7\r\nContent-Type: text/plain\r\n\r\nfixture')
 
-async function archiveFixture (t, provenanceInfo, mainPageUrl = url) {
+async function archiveFixture (t, provenanceInfo, mainPageUrl = url, rawTimestamp = date) {
   const directory = await mkdtemp(join(tmpdir(), 'scoop-import-test-'))
   t.after(() => rm(directory, { recursive: true, force: true }))
   const zipPath = join(directory, 'capture.wacz')
@@ -36,8 +36,8 @@ async function archiveFixture (t, provenanceInfo, mainPageUrl = url) {
     mainPageDate: date,
     ...(provenanceInfo ? { extras: { provenanceInfo } } : {})
   })))
-  zip.addFile(`raw/request_${date}_${exchangeId}`, requestRaw)
-  zip.addFile(`raw/response_${date}_${exchangeId}`, responseRaw)
+  zip.addFile(`raw/request_${rawTimestamp}_${exchangeId}`, requestRaw)
+  zip.addFile(`raw/response_${rawTimestamp}_${exchangeId}`, responseRaw)
   zip.addFile('archive/data.warc', Buffer.concat([
     Buffer.from([
       'WARC/1.0',
@@ -127,4 +127,11 @@ test('historical private URLs remain importable without allowing live capture', 
   assert.deepEqual(capture.exchanges[0].responseRaw, responseRaw)
   assert.ok((await capture.toWARC()).byteLength > 0)
   await assert.rejects(capture.capture(), /reconstructed|state|initialized/i)
+})
+
+test('raw exchanges keep their dates from 17-digit and legacy ISO resource names', async t => {
+  for (const rawTimestamp of ['20200101000000000', date]) {
+    const capture = await Scoop.fromWACZ(await archiveFixture(t, undefined, url, rawTimestamp))
+    assert.equal(capture.exchanges[0].date.toISOString(), date, rawTimestamp)
+  }
 })
