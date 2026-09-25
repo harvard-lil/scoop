@@ -33,6 +33,9 @@ await test('Scoop - capture of a web page.', async (t) => {
   const server = await app.listen(PORT, () => console.log(`Test webserver started on port ${PORT}`))
   app.get('/redirect', (req, res) => res.redirect(parseInt(req.query.statusCode), req.query.path))
   app.get('/tall', (req, res) => res.send('<!DOCTYPE html><body style="margin:0"><div style="width:800px;height:5000px;background:linear-gradient(red,blue)"></div></body>'))
+  // Refuses HEAD with a JSON error, as some servers do, but serves HTML to GET.
+  app.head('/head-refused', (req, res) => res.status(405).json({ error: 'Method Not Allowed' }))
+  app.get('/head-refused', (req, res) => res.sendFile(`${FIXTURES_PATH}test.html`))
   app.get('/:path', (req, res) => res.sendFile(FIXTURES_PATH + req.params.path))
 
   const testVideoFixture = await readFile(`${FIXTURES_PATH}video.mp4`)
@@ -43,6 +46,12 @@ await test('Scoop - capture of a web page.', async (t) => {
   await t.test('Scoop captures the body of an html document', async (_t) => {
     const { exchanges: [html] } = await Scoop.capture(`${URL}/test.html`, options)
     assert.equal(html.response.body.toString(), testHtmlFixture.toString())
+  })
+
+  await t.test('Scoop captures a page in the browser when the server refuses HEAD requests', async (_t) => {
+    const capture = await Scoop.capture(`${URL}/head-refused`, options)
+    assert.equal(capture.targetUrlIsWebPage, true)
+    assert.equal(capture.exchanges[0].response.body.toString(), testHtmlFixture.toString())
   })
 
   await t.test('Scoop follows redirects', async (_t) => {

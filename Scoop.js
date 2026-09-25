@@ -727,6 +727,9 @@ export class Scoop {
     /** @type {?number} */
     let contentLength = null
 
+    /** @type {?number} */
+    let status = null
+
     /**
      * Time spent on the initial HEAD request, in ms.
      * @type {?number}
@@ -765,11 +768,20 @@ export class Scoop {
       headRequestTimeMs = after - before
 
       this.targetUrlResolved = headRequest.url
+      status = headRequest.status
       contentType = headRequest.headers.get('Content-Type')
       contentLength = headRequest.headers.get('Content-Length')
     } catch (err) {
       this.log.trace(err)
       this.log.warn('Resource type detection failed - skipping')
+      return
+    }
+
+    // A HEAD request that fails says nothing about what the browser's GET will
+    // receive: some servers refuse HEAD (405) with an error body of another
+    // content type, e.g. JSON, while serving the page itself as HTML.
+    if (status < 200 || status >= 300) {
+      this.log.info(`Requested URL is assumed to be a web page (HEAD request returned ${status})`)
       return
     }
 
