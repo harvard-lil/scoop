@@ -7,7 +7,7 @@
 - **Summaries of failed captures.** `--json-summary-output` is now written for failed captures too, with `state` set to FAILED, and the CLI still exits 1. Callers that treated the file's existence as success should check `state`.
 - **Version between releases.** Main carries the next version as a prerelease, e.g. `0.7.1-dev.0`. A copy installed from a GitHub commit reports that commit as build metadata, e.g. `0.7.1-dev.0+0031ff8`, in provenance and `--version`.
 - **Raw exchange file names.** In WACZs that include raw exchanges (`wacz-with-raw`, `toWACZ(true)`), files are named with a 17-digit UTC timestamp, `raw/request_20260708152143602_<id>`, rather than an ISO timestamp, which the WACZ resource-name pattern does not allow (#417). `Scoop.fromWACZ()` reads both forms.
-- **Operating system in provenance.** `osName` and `osVersion` come from what the system records: `/etc/os-release` (and `/etc/debian_version` on Debian) or macOS's `SystemVersion.plist`. On Debian they change from `Debian` / `12.15` to `Debian GNU/Linux` / `12.15 (bookworm)`. They are `null` when the system cannot be identified.
+- **Operating system in provenance.** Drop unmaintained `get-os` dependency and set `osName` and `osVersion` from our own OS-specific checks. On Debian they change from `Debian` / `12.15` to `Debian GNU/Linux` / `12.15 (bookworm)`. They are `null` when the system cannot be identified.
 
 ### Additions
 
