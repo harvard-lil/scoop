@@ -11,7 +11,6 @@ import nunjucks from 'nunjucks'
 import { Address4, Address6 } from '@laverdet/beaugunderson-ip-address'
 import { v4 as uuidv4 } from 'uuid'
 import { chromium } from 'playwright'
-import { getOSInfo } from 'get-os-info'
 
 import { exec, omitEnvironmentVariables } from './utils/exec.js'
 import { ScoopGeneratedExchange } from './exchanges/index.js'
@@ -23,6 +22,7 @@ import * as exporters from './exporters/index.js'
 import * as importers from './importers/index.js'
 import { filterOptions, defaults } from './options.js'
 import { formatErrorMessage } from './utils/formatErrorMessage.js'
+import { getOSInfo } from './utils/os-info.js'
 import { getDimensions } from './utils/png.js'
 import { NetworkPolicy, fetchHead } from './utils/network.js'
 import { createCertificateTunnel } from './utils/certificate-tunnel.js'
@@ -1314,6 +1314,7 @@ export class Scoop {
    */
   async #captureProvenanceInfo (page) {
     let captureIp = 'UNKNOWN'
+    // Null when the OS cannot be identified; the summary then has no name.
     const osInfo = await getOSInfo()
     let ytDlpHash = ''
     let cripHash = ''
@@ -1375,8 +1376,8 @@ export class Scoop {
       software: CONSTANTS.SOFTWARE,
       version: CONSTANTS.VERSION,
       osType: os.type(),
-      osName: osInfo.name,
-      osVersion: osInfo.version,
+      osName: osInfo?.name ?? null,
+      osVersion: osInfo?.version ?? null,
       cpuArchitecture: os.machine(),
       ytDlpHash,
       cripHash,
