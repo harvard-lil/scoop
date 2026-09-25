@@ -1,7 +1,7 @@
 /// <reference path="./options.types.js" />
 
 import os from 'os'
-import { readFile, rm, readdir, mkdir, mkdtemp, access } from 'fs/promises'
+import { readFile, readdir, mkdir, access } from 'fs/promises'
 import { constants as fsConstants } from 'node:fs'
 import { createHash } from 'crypto'
 
@@ -13,7 +13,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { chromium } from 'playwright'
 import { getOSInfo } from 'get-os-info'
 
-import { exec } from './utils/exec.js'
+import { exec, omitEnvironmentVariables } from './utils/exec.js'
 import { ScoopGeneratedExchange } from './exchanges/index.js'
 import { castBlocklistMatcher, searchBlocklistFor } from './utils/blocklist.js'
 
@@ -23,8 +23,15 @@ import * as exporters from './exporters/index.js'
 import * as importers from './importers/index.js'
 import { filterOptions, defaults } from './options.js'
 import { formatErrorMessage } from './utils/formatErrorMessage.js'
+import { getDimensions } from './utils/png.js'
+import { NetworkPolicy, fetchHead } from './utils/network.js'
+import { createCertificateTunnel } from './utils/certificate-tunnel.js'
+import { withSnapshotDeadline } from './utils/snapshot-deadline.js'
+import { forEachHttpsHostWithinBudget } from './utils/host-budget.js'
+import { createArtifactScratchDirectory, readArtifactFile, removeArtifactScratchDirectory } from './utils/artifact-files.js'
 
 nunjucks.configure(CONSTANTS.TEMPLATES_PATH)
+const archiveReconstruction = Symbol('archiveReconstruction')
 
 /**
  * @class Scoop
@@ -64,6 +71,7 @@ export class Scoop {
    * @type {number}
    */
   state = Scoop.states.INIT
+  #browserClosedAfterSnapshotTimeout = false
 
   /**
    * URL to capture.
@@ -127,11 +135,25 @@ export class Scoop {
    */
   captureTmpFolderPath = null
 
+  #captureScratchDirectory = null
+
   /**
    * The time at which the page was crawled.
    * @type {Date}
    */
   startedAt
+
+  /**
+   * What each capture step did and how long it took, in the order they ran.
+   * `outcome` is one of:
+   * - `completed`: the step finished on its own.
+   * - `failed`: the step threw.
+   * - `limit`: the step ended because the capture reached its time or size limit.
+   * - `interrupted`: the capture left the CAPTURE state while the step was still running; Scoop moved on without waiting for it.
+   * - `skipped`: the step did not run.
+   * @type {{name: string, startedAt: string, durationMs: number, outcome: string}[]}
+   */
+  steps = []
 
   /**
    * The Playwright browser instance for this capture.
@@ -190,10 +212,11 @@ export class Scoop {
    * @param {string} url - Must be a valid HTTP(S) url.
    * @param {?ScoopOptions} [options={}] - See {@link ScoopOptions}.
    */
-  constructor (url, options = {}) {
+  constructor (url, options = {}, mode) {
     this.options = filterOptions(options)
     this.blocklist = this.options.blocklist.map(castBlocklistMatcher)
-    this.url = this.filterUrl(url)
+    this.url = mode === archiveReconstruction ? url : this.filterUrl(url)
+    if (mode === archiveReconstruction) this.state = Scoop.states.RECONSTRUCTED
     this.targetUrlResolved = this.url
 
     // Logging setup (level, output formatting)
@@ -208,6 +231,13 @@ export class Scoop {
     this.log.setLevel(this.options.logLevel)
 
     this.intercepter = new intercepters[this.options.intercepter](this)
+  }
+
+  /** Reconstruct historical HTTP data without executing its stored options or live URL policy. */
+  static fromArchive (url) {
+    const parsed = new URL(url)
+    if (!['http:', 'https:'].includes(parsed.protocol)) throw new TypeError('Invalid archive page URL.')
+    return new Scoop(parsed.href, {}, archiveReconstruction)
   }
 
   /**
@@ -229,6 +259,21 @@ export class Scoop {
    * @private
    */
   async capture () {
+    if (this.state === Scoop.states.RECONSTRUCTED) throw new Error('Reconstructed captures cannot be recaptured.')
+    try {
+      await this.#capture()
+    } finally {
+      await this.#removeScratchDirectory()
+    }
+  }
+
+  async #removeScratchDirectory () {
+    if (!this.#captureScratchDirectory) return
+    await removeArtifactScratchDirectory(this.#captureScratchDirectory)
+    this.#captureScratchDirectory = null
+  }
+
+  async #capture () {
     const options = this.options
 
     /**
@@ -352,7 +397,11 @@ export class Scoop {
         main: async (page) => {
           const url = 'file:///screenshot.png'
           const httpHeaders = new Headers({ 'content-type': 'image/png' })
-          const body = await page.screenshot({ fullPage: true, timeout: 5000 })
+          const body = await page.screenshot({ fullPage: true, timeout: 5000, ...this.#screenshotClip() })
+          const [width, height] = getDimensions(body)
+          if (width === options.screenshotMaxWidth || height === options.screenshotMaxHeight) {
+            this.log.info(`Screenshot reached its size limit (${width}x${height}); the page may extend beyond it.`)
+          }
           const isEntryPoint = true
           const description = `Capture Time Screenshot of ${this.url}`
 
@@ -373,7 +422,7 @@ export class Scoop {
             'content-type': 'text/html',
             'content-disposition': 'Attachment'
           })
-          const body = Buffer.from(await page.content())
+          const body = Buffer.from(await this.#browserSnapshot(() => page.content(), 'DOM'))
           const isEntryPoint = true
           const description = `Capture Time DOM Snapshot of ${this.url}`
 
@@ -389,7 +438,8 @@ export class Scoop {
         alwaysRun: options.attachmentsBypassLimits,
         webPageOnly: true,
         main: async (page) => {
-          await this.#takePdfSnapshot(page)
+          if (this.#browserClosedAfterSnapshotTimeout) return
+          await this.#browserSnapshot(() => this.#takePdfSnapshot(page), 'PDF')
         }
       })
     }
@@ -445,6 +495,7 @@ export class Scoop {
       this.log.error(`An error occurred during capture setup (${formatErrorMessage(err)}).`)
       this.log.trace(err)
       this.state = Scoop.states.FAILED
+      await this.teardown()
       return // exit early if the browser and proxy couldn't be launched
     }
 
@@ -474,7 +525,7 @@ export class Scoop {
       }
 
       // Page was closed
-      if (this.targetUrlIsWebPage && page.isClosed()) {
+      if (this.targetUrlIsWebPage && page.isClosed() && !this.#browserClosedAfterSnapshotTimeout) {
         this.log.error('Page closed before it could be captured.')
         shouldStop = true
       }
@@ -487,6 +538,9 @@ export class Scoop {
       //
       // If capture was not interrupted, run steps
       //
+      let stateCheckInterval = null
+      const stepStartedAt = Date.now()
+      const record = { name: step.name, startedAt: new Date(stepStartedAt).toISOString() }
       try {
         // Only if state is `CAPTURE`, unless `alwaysRun` is set for step
         let shouldRun = this.state === Scoop.states.CAPTURE || step.alwaysRun === true
@@ -498,17 +552,15 @@ export class Scoop {
 
         if (shouldRun === false) {
           this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} (skipped)`)
+          record.outcome = 'skipped'
           continue
         }
 
         this.log.info(`STEP [${i + 1}/${steps.length}]: ${step.name}`)
 
-        /** @type {?function} */
-        let stateCheckInterval = null
-
-        await Promise.race([
+        const interrupted = await Promise.race([
           // Run current step
-          step.main(page),
+          step.main(page).then(() => false),
 
           // Check capture state every second - so current step can be interrupted if state changes
           new Promise(resolve => {
@@ -519,8 +571,8 @@ export class Scoop {
             }, 1000)
           })
         ])
+        record.outcome = interrupted ? 'interrupted' : 'completed'
 
-        clearInterval(stateCheckInterval) // Clear "state checker" interval in case it is still running
       //
       // On error:
       // - Only deliver full trace if error is not due to time / size limit reached.
@@ -528,10 +580,16 @@ export class Scoop {
       } catch (err) {
         if (this.state === Scoop.states.PARTIAL) {
           this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} - ended due to max time or size reached.`)
+          record.outcome = 'limit'
         } else {
           this.log.warn(`STEP [${i + 1}/${steps.length}]: ${step.name} - failed`)
           this.log.trace(err)
+          record.outcome = 'failed'
         }
+      } finally {
+        clearInterval(stateCheckInterval)
+        record.durationMs = Date.now() - stepStartedAt
+        this.steps.push(record)
       }
     }
 
@@ -577,15 +635,13 @@ export class Scoop {
 
     // Create captures-specific temporary folder under base temporary folder
     try {
-      this.captureTmpFolderPath = await mkdtemp(CONSTANTS.TMP_PATH)
-      this.captureTmpFolderPath += '/'
+      this.#captureScratchDirectory = await createArtifactScratchDirectory(CONSTANTS.TMP_PATH)
+      this.captureTmpFolderPath = this.#captureScratchDirectory.path + '/'
       await access(this.captureTmpFolderPath, fsConstants.W_OK)
 
       this.log.info(`Capture-specific temporary folder ${this.captureTmpFolderPath} created.`)
     } catch (err) {
-      try {
-        await rm(this.captureTmpFolderPath)
-      } catch { /* Ignore: Deletes the capture-specific folder if it was created, if possible. */ }
+      await this.#removeScratchDirectory()
 
       throw new Error(`Scoop was unable to create a capture-specific temporary folder.\n${err}`)
     }
@@ -599,7 +655,8 @@ export class Scoop {
     this.log.info(`User Agent used for capture: ${userAgent}`)
 
     this.#browser = await chromium.launch({
-      headless: options.headless
+      headless: options.headless,
+      chromiumSandbox: options.chromiumSandbox
     })
 
     const context = await this.#browser.newContext({
@@ -644,12 +701,12 @@ export class Scoop {
   async teardown () {
     this.log.info('Closing browser and intercepter')
     await this.intercepter.teardown()
-    await this.#browser.close()
+    await this.#browser?.close()
 
     this.exchanges = this.intercepter.exchanges.concat(this.exchanges)
 
     this.log.info(`Clearing capture-specific temporary folder ${this.captureTmpFolderPath}`)
-    await rm(this.captureTmpFolderPath, { recursive: true, force: true })
+    await this.#removeScratchDirectory()
   }
 
   /**
@@ -669,6 +726,9 @@ export class Scoop {
 
     /** @type {?number} */
     let contentLength = null
+
+    /** @type {?number} */
+    let status = null
 
     /**
      * Time spent on the initial HEAD request, in ms.
@@ -691,24 +751,37 @@ export class Scoop {
 
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), timeout)
-
-      const headRequest = await fetch(this.url, {
-        method: 'HEAD',
-        signal: controller.signal
+      const policy = new NetworkPolicy(this.options.blocklist, (match, rule) => {
+        this.provenanceInfo.blockedRequests.push({ match, rule })
       })
 
-      clearTimeout(timeoutId)
+      let headRequest
+      try {
+        headRequest = await fetchHead(this.url, policy, { signal: controller.signal })
+      } finally {
+        clearTimeout(timeoutId)
+        policy.close()
+      }
 
       const after = new Date()
 
       headRequestTimeMs = after - before
 
       this.targetUrlResolved = headRequest.url
+      status = headRequest.status
       contentType = headRequest.headers.get('Content-Type')
       contentLength = headRequest.headers.get('Content-Length')
     } catch (err) {
       this.log.trace(err)
       this.log.warn('Resource type detection failed - skipping')
+      return
+    }
+
+    // A HEAD request that fails says nothing about what the browser's GET will
+    // receive: some servers refuse HEAD (405) with an error body of another
+    // content type, e.g. JSON, while serving the page itself as HTML.
+    if (status < 200 || status >= 300) {
+      this.log.info(`Requested URL is assumed to be a web page (HEAD request returned ${status})`)
       return
     }
 
@@ -737,7 +810,7 @@ export class Scoop {
     // Check if curl is present
     //
     try {
-      await exec('curl', ['-V'])
+      await exec('curl', ['--disable', '-V'])
     } catch (err) {
       this.log.trace(err)
       this.log.warn('curl is not present on this system - skipping')
@@ -757,15 +830,16 @@ export class Scoop {
       }
 
       const curlOptions = [
-        this.url,
-        '--header', `"User-Agent: ${userAgent}"`,
+        '--disable', '--globoff', '--proto', '=http,https', '--proto-redir', '=http,https',
+        '--noproxy', '', '--url', this.url,
+        '--header', `User-Agent: ${userAgent}`,
         '--output', '/dev/null',
-        '--proxy', `'http://${this.options.proxyHost}:${this.options.proxyPort}'`,
+        '--proxy', `http://${this.options.proxyHost}:${this.options.proxyPort}`,
         '--insecure', // TBD: SSL checks are delegated to the proxy
         '--location',
         // This will be the only capture step running:
         // use all available time - time spent on first request
-        '--max-time', Math.floor(timeout / 1000)
+        '--max-time', String(Math.floor(timeout / 1000))
       ]
 
       await exec('curl', curlOptions, { timeout })
@@ -824,7 +898,7 @@ export class Scoop {
       return
     }
 
-    if (!this.pageInfo.faviconUrl.startsWith('http')) {
+    if (!['http:', 'https:'].includes(new URL(this.pageInfo.faviconUrl).protocol)) {
       return
     }
 
@@ -836,12 +910,13 @@ export class Scoop {
         const timeout = 1000
 
         const curlOptions = [
-          this.pageInfo.faviconUrl,
-          '--header', `"User-Agent: ${userAgent}"`,
+          '--disable', '--globoff', '--proto', '=http,https', '--proto-redir', '=http,https',
+          '--noproxy', '', '--url', this.pageInfo.faviconUrl,
+          '--header', `User-Agent: ${userAgent}`,
           '--output', '/dev/null',
-          '--proxy', `'http://${this.options.proxyHost}:${this.options.proxyPort}'`,
+          '--proxy', `http://${this.options.proxyHost}:${this.options.proxyPort}`,
           '--insecure', // TBD: SSL checks are delegated to the proxy
-          '--max-time', Math.floor(timeout / 1000)
+          '--max-time', String(Math.floor(timeout / 1000))
         ]
 
         await exec('curl', curlOptions, { timeout })
@@ -874,6 +949,7 @@ export class Scoop {
   async #captureVideoAsAttachment () {
     const videoFilename = `${this.captureTmpFolderPath}video-extracted-%(autonumber)d.mp4`
     const ytDlpPath = this.options.ytDlpPath
+    const ytDlpEnvironment = omitEnvironmentVariables(process.env, ['no_proxy', 'NO_PROXY'])
 
     let metadataRaw = null
     let metadataParsed = null
@@ -893,7 +969,9 @@ export class Scoop {
     // yt-dlp health check
     //
     try {
-      const version = await exec(ytDlpPath, ['--version']).then((v) => v.trim())
+      const version = await exec(ytDlpPath, ['--ignore-config', '--version'], {
+        env: ytDlpEnvironment
+      }).then((v) => v.trim())
 
       if (!version.match(/^[0-9]{4}\.[0-9]{2}\.[0-9]{2}$/)) {
         throw new Error(`Unknown version: ${version}`)
@@ -910,6 +988,7 @@ export class Scoop {
       this.intercepter.recordExchanges = false
 
       const dlpOptions = [
+        '--ignore-config',
         '--dump-json', // Will return JSON meta data via stdout
         '--no-simulate', // Forces download despite `--dump-json`
         '--no-warnings', // Prevents pollution of stdout
@@ -917,16 +996,17 @@ export class Scoop {
         '--write-subs', // Try to pull subs
         '--sub-langs', 'all',
         '--format', 'mp4', // Forces .mp4 format
-        '--output', `"${videoFilename}"`,
+        '--output', videoFilename,
         '--no-check-certificate',
-        '--proxy', `'http://${this.options.proxyHost}:${this.options.proxyPort}'`,
-        '--max-filesize', `"${this.options.maxVideoCaptureSize}"`,
-        this.url
+        '--proxy', `http://${this.options.proxyHost}:${this.options.proxyPort}`,
+        '--max-filesize', String(this.options.maxVideoCaptureSize),
+        '--', this.url
       ]
 
       const spawnOptions = {
         timeout: this.options.captureVideoAsAttachmentTimeout,
-        maxBuffer: 1024 * 1024 * 128
+        maxBuffer: 1024 * 1024 * 128,
+        env: ytDlpEnvironment
       }
 
       metadataRaw = await exec(ytDlpPath, dlpOptions, spawnOptions)
@@ -946,7 +1026,7 @@ export class Scoop {
         try {
           const url = `file:///${file}`
           const httpHeaders = new Headers({ 'content-type': 'video/mp4' })
-          const body = await readFile(`${this.captureTmpFolderPath}${file}`)
+          const body = await readArtifactFile(`${this.captureTmpFolderPath}${file}`)
           const isEntryPoint = false // TODO: Reconsider whether this should be an entry point.
 
           if (!body.length) {
@@ -972,7 +1052,7 @@ export class Scoop {
         try {
           const url = `file:///${file}`
           const httpHeaders = new Headers({ 'content-type': 'text/vtt' })
-          const body = await readFile(`${this.captureTmpFolderPath}${file}`)
+          const body = await readArtifactFile(`${this.captureTmpFolderPath}${file}`)
           const isEntryPoint = false
           const locale = file.split('.')[1]
 
@@ -1049,7 +1129,10 @@ export class Scoop {
         metadataSaved,
         subtitlesSaved,
         availableVideosAndSubtitles,
-        metadataParsed
+        metadataParsed: metadataParsed.map(entry => {
+          const date = typeof entry.timestamp === 'number' ? new Date(entry.timestamp * 1000) : null
+          return { ...entry, publicationTime: date && Number.isFinite(date.getTime()) ? date.toISOString() : '' }
+        })
       })
 
       const url = 'file:///video-extracted-summary.html'
@@ -1063,6 +1146,16 @@ export class Scoop {
       this.log.warn('Error while creating exchange for file:///video-extracted-summary.html.')
       this.log.trace(err)
     }
+  }
+
+  /** Bound browser snapshot work while preserving completed capture artifacts. */
+  async #browserSnapshot (operation, name) {
+    return await withSnapshotDeadline(operation, async () => {
+      this.#browserClosedAfterSnapshotTimeout = true
+      this.state = Scoop.states.PARTIAL
+      this.log.warn(`${name} snapshot exceeded 10 seconds; closing browser and preserving the partial capture.`)
+      await this.#browser.close()
+    })
   }
 
   /**
@@ -1113,12 +1206,6 @@ export class Scoop {
     const { captureCertificatesAsAttachmentTimeout, cripPath } = this.options
 
     //
-    // Start timeout timer
-    //
-    let timeIsOut = false
-    const timer = setTimeout(() => { timeIsOut = true }, captureCertificatesAsAttachmentTimeout)
-
-    //
     // Check that `crip` is available
     //
     try {
@@ -1129,68 +1216,87 @@ export class Scoop {
     }
 
     //
-    // Pull certs
+    // Pull certs: each host once, all within the step's one time budget.
     //
-    const processedHosts = new Map()
+    const urls = this.intercepter.exchanges.map(exchange => exchange.url)
 
-    for (const exchange of this.intercepter.exchanges) {
-      const url = new URL(exchange.url)
-
-      if (timeIsOut) {
-        throw new Error('Capture certificates at attachment timeout reached')
-      }
-
-      if (url.protocol !== 'https:' || processedHosts.get(url.host) === true) {
-        continue
-      }
-
-      if (this.blocklist.find(searchBlocklistFor(`https://${url.host}`))) {
-        this.log.warn(`${url.host} matched against blocklist - skipped trying to pull its certificate.`)
-        continue
-      }
-
-      try {
-        const cripOptions = [
-          'print',
-          '-u', `https://${url.host}`,
-          '-f', 'pem'
-        ]
-
-        let timeout = captureCertificatesAsAttachmentTimeout
-
-        if (processedHosts.length > 0) { // Timeout per request decreases as we go through the list.
-          timeout = captureCertificatesAsAttachmentTimeout / processedHosts.length
+    try {
+      await forEachHttpsHostWithinBudget(urls, captureCertificatesAsAttachmentTimeout, async (host, remainingMs) => {
+        if (this.blocklist.find(searchBlocklistFor(`https://${host}`))) {
+          this.log.warn(`${host} matched against blocklist - skipped trying to pull its certificate.`)
+          return
         }
 
-        const spawnOptions = {
-          timeout: timeout > 1000 ? timeout : 1000,
-          maxBuffer: 1024 * 1024 * 128
+        const tunnel = await createCertificateTunnel(this.intercepter.networkPolicy)
+        let pem
+        try {
+          pem = await exec(cripPath, [
+            'print',
+            '-u', `https://${host}`,
+            '-f', 'pem',
+            '--proxy-host', tunnel.host,
+            '--proxy-port', String(tunnel.port)
+          ], {
+            timeout: remainingMs,
+            // exec waits for the process to exit before it gives up, so a
+            // call must not be able to outlive its timeout by ignoring SIGTERM.
+            killSignal: 'SIGKILL',
+            maxBuffer: 1024 * 1024 * 128
+          })
+        } finally {
+          await tunnel.close()
         }
-
-        const pem = await exec(cripPath, cripOptions, spawnOptions)
-
-        processedHosts.set(url.host, true)
 
         if (!pem) {
-          throw new Error(`crip did not return a PEM for ${url.host}.`)
+          throw new Error(`crip did not return a PEM for ${host}.`)
         }
 
         // Add to generated exchanges
-        const fileUrl = `file:///${url.host}.pem`
+        const fileUrl = `file:///${host}.pem`
         const httpHeaders = new Headers({ 'content-type': 'application/x-pem-file' })
         const body = Buffer.from(pem)
         const isEntryPoint = false
         await this.addGeneratedExchange(fileUrl, httpHeaders, body, isEntryPoint)
 
         // Add to `this.provenanceInfo.certificates`
-        this.provenanceInfo.certificates.push({ host: url.host, pem })
-      } catch (err) {
-        this.log.trace(err)
-        this.log.warn(`Certificates could not be extracted for ${url.host}`)
-      }
+        this.provenanceInfo.certificates.push({ host, pem })
+      }, {
+        onError: (host, err) => {
+          this.log.trace(err)
+          this.log.warn(`Certificates could not be extracted for ${host}`)
+        }
+      })
+    } catch (err) {
+      throw new Error('Capture certificates at attachment timeout reached', { cause: err })
+    }
+  }
+
+  /**
+   * The clip for a full-page screenshot, from `screenshotMaxWidth` and
+   * `screenshotMaxHeight`: the top-left of the page, up to those sizes.
+   *
+   * Playwright trims a full-page clip to the page's own size, so a smaller page
+   * is captured whole, and Chromium renders only the clipped area. Unbounded,
+   * a very tall page can take the browser gigabytes of memory to render.
+   *
+   * @returns {{clip?: {x: number, y: number, width: number, height: number}}}
+   * @private
+   */
+  #screenshotClip () {
+    const { screenshotMaxWidth, screenshotMaxHeight } = this.options
+
+    if (!screenshotMaxWidth && !screenshotMaxHeight) {
+      return {}
     }
 
-    clearTimeout(timer)
+    return {
+      clip: {
+        x: 0,
+        y: 0,
+        width: screenshotMaxWidth || Number.MAX_SAFE_INTEGER,
+        height: screenshotMaxHeight || Number.MAX_SAFE_INTEGER
+      }
+    }
   }
 
   /**
@@ -1215,7 +1321,8 @@ export class Scoop {
     // Grab public IP address - uses CURL
     try {
       const response = await exec('curl', [
-        this.options.publicIpResolverEndpoint,
+        '--disable', '--globoff', '--proto', '=http,https',
+        '--url', this.options.publicIpResolverEndpoint,
         '--max-time', '3'
       ])
 
@@ -1451,6 +1558,7 @@ export class Scoop {
    * @property {?string[]} attachments.videoExtractedSubtitles - Filenames
    * @property {?string[]} attachments.certificates - Filenames
    * @property {?object} provenanceInfo - See {@link Scoop.provenanceInfo}. Only populated if the "provenanceSummary" option was turned on.
+   * @property {object[]} steps - See {@link Scoop.steps}.
    */
 
   /**
@@ -1470,7 +1578,8 @@ export class Scoop {
       exchangeUrls: this.exchanges.map(exchange => exchange.url),
       attachments: {},
       provenanceInfo: this.options.provenanceSummary ? this.provenanceInfo : {},
-      pageInfo: this.pageInfo
+      pageInfo: this.pageInfo,
+      steps: this.steps
       // NOTE:
       // `provenanceInfo` also contains an `options` object,
       // but some of its properties have been edited because it is meant to be embedded in a WACZ.
@@ -1487,7 +1596,11 @@ export class Scoop {
     //
     // Summarize attachments
     //
-    const generatedExchanges = this.extractGeneratedExchanges()
+    // A failed capture has no attachments to offer: its exchanges are not
+    // exportable. Its summary still reports how far it got.
+    const generatedExchanges = [Scoop.states.COMPLETE, Scoop.states.PARTIAL].includes(this.state)
+      ? this.extractGeneratedExchanges()
+      : {}
 
     // 1-to-1 matches:
     // - Add filename to "attachments" as key if present in generated exchanges list

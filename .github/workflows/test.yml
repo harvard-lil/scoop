@@ -16,7 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        node: [ 20, 22, 23 ]
+        node: [ 22, 24, 26 ]
 
     name: Node.js ${{ matrix.node }}
 
@@ -29,14 +29,43 @@ jobs:
     - name: Install mkcert
       run: |
         sudo apt-get update
-        sudo apt install wget libnss3-tools
-        curl -s https://api.github.com/repos/FiloSottile/mkcert/releases/latest | grep browser_download_url  | grep linux-amd64 | cut -d '"' -f 4 | wget -qi -
-        mv mkcert-v*-linux-amd64 mkcert
-        chmod a+x mkcert
-        sudo mv mkcert /usr/local/bin/
+        sudo apt-get install -y mkcert libnss3-tools
+
+    - name: Set browser install directory
+      run: echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/playwright-browsers" >> "$GITHUB_ENV"
 
     - name: Install dependencies
       run: npm install
+
+    - name: Install Chromium dependencies
+      run: npx playwright install --with-deps chromium
+
+    - name: Allow Chromium sandbox user namespaces
+      # Ubuntu restricts user namespaces for downloaded browsers. Allow only the
+      # installed Playwright executables so Chromium can create its sandbox.
+      # https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md
+      shell: bash
+      run: |
+        mapfile -d '' browsers < <(find "$PLAYWRIGHT_BROWSERS_PATH" -type f \( -name chrome -o -name chrome-headless-shell \) -print0)
+        test "${#browsers[@]}" -gt 0
+        profile="$RUNNER_TEMP/playwright-apparmor"
+        printf 'abi <abi/4.0>,\ninclude <tunables/global>\n' > "$profile"
+        for index in "${!browsers[@]}"; do
+          printf 'profile playwright-%s "%s" flags=(unconfined) {\n  userns,\n}\n' "$index" "${browsers[$index]}" >> "$profile"
+        done
+        sudo install -m 644 "$profile" /etc/apparmor.d/playwright
+        sudo apparmor_parser -r /etc/apparmor.d/playwright
+
+    - name: Check sandboxed Chromium
+      timeout-minutes: 1
+      env:
+        DEBUG: pw:browser
+      run: |
+        node --input-type=module <<'NODE'
+        import { chromium } from 'playwright'
+        const browser = await chromium.launch({ chromiumSandbox: true, timeout: 15000 })
+        await browser.close()
+        NODE
 
     - name: Run signer
       run: |
@@ -45,4 +74,5 @@ jobs:
         sleep 5
 
     - name: Run tests
+      timeout-minutes: 5
       run: npm run test

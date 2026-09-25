@@ -20,6 +20,8 @@
  *
  * @property {number} captureWindowX=1600 - Browser window resolution in pixels: X axis.
  * @property {number} captureWindowY=900 - Browser window resolution in pixels: Y axis.
+ * @property {number} screenshotMaxWidth=0 - Widest full-page screenshot to take, in pixels. A wider page is clipped to this width, from the left. 0 means no limit.
+ * @property {number} screenshotMaxHeight=0 - Tallest full-page screenshot to take, in pixels. A taller page is clipped to this height, from the top. 0 means no limit. Chromium's memory use grows with the area it renders: an unbounded screenshot of a very tall page can take gigabytes.
  *
  * @property {number} maxCaptureSize=209715200 - Maximum size, in bytes, for the exchanges list. Scoop stops intercepting exchanges at this threshold.
  *
@@ -31,6 +33,7 @@
  * @property {boolean} runSiteSpecificBehaviors=true - Should Scoop run site-specific capture behaviors? (via: browsertrix-behaviors)
  *
  * @property {boolean} headless=true - Should Playwright run in headless mode?
+ * @property {boolean} chromiumSandbox=false - Enable Chromium's internal sandbox. Operator setting; requires a compatible host or worker image. Launch failure does not retry without the sandbox.
  * @property {string} userAgentSuffix="" - String to append to the user agent.
  *
  * @property {string[]} blocklist - A list of patterns to be matched against each request's URL and IP address and subsequently blocked during capture. Valid entries include url strings, CIDR strings, and regular expressions in string form.

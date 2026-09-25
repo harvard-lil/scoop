@@ -7,7 +7,7 @@ import path from 'path'
 import { Command, Option } from 'commander'
 
 import { Scoop } from '../Scoop.js'
-import { PACKAGE_INFO } from '../constants.js'
+import { PACKAGE_INFO, VERSION } from '../constants.js'
 import { formatErrorMessage } from '../utils/formatErrorMessage.js'
 
 /** @type {Command} */
@@ -22,7 +22,7 @@ const defaults = Scoop.defaults
 program
   .name('scoop')
   .description(`${PACKAGE_INFO.description}\nMore info: https://github.com/harvard-lil/scoop`)
-  .version(PACKAGE_INFO.version, '-v, --version', 'Display Scoop and Scoop CLI version.')
+  .version(VERSION, '-v, --version', 'Display Scoop and Scoop CLI version.')
   .helpOption(null, 'Show options list.')
 
 //
@@ -32,7 +32,7 @@ program.arguments('<url>')
 
 program.addOption(
   new Option('-o, --output <string>', 'Output path.')
-    .default(path.join(process.env.PWD, 'archive.wacz'))
+    .default(path.join(process.cwd(), 'archive.wacz'))
 )
 
 program.addOption(
@@ -44,7 +44,7 @@ program.addOption(
 program.addOption(
   new Option(
     '--json-summary-output <string>',
-    'If set, allows for saving a capture summary as JSON. Must be a path to .json file. ')
+    'If set, allows for saving a capture summary as JSON. Must be a path to .json file. Written for failed captures too, whose summary has the FAILED state.')
 )
 
 program.addOption(
@@ -171,6 +171,20 @@ program.addOption(
     .default(defaults.captureWindowY)
 )
 
+program.addOption(
+  new Option(
+    '--screenshot-max-width <number>',
+    'Clip full-page screenshots to this width, in pixels. 0 means no limit.')
+    .default(defaults.screenshotMaxWidth)
+)
+
+program.addOption(
+  new Option(
+    '--screenshot-max-height <number>',
+    'Clip full-page screenshots to this height, in pixels. 0 means no limit.')
+    .default(defaults.screenshotMaxHeight)
+)
+
 //
 // Size
 //
@@ -232,6 +246,14 @@ program.addOption(
     'Should Chrome run in headless mode?')
     .choices(['true', 'false'])
     .default(String(defaults.headless))
+)
+
+program.addOption(
+  new Option(
+    '--chromium-sandbox <bool>',
+    'Enable Chromium sandboxing (requires a compatible host or worker image).')
+    .choices(['true', 'false'])
+    .default(String(defaults.chromiumSandbox))
 )
 
 program.addOption(
@@ -325,6 +347,30 @@ program.action(async (name, options, command) => {
 
   /** @type {string}  */
   const extension = path.extname(options.output)
+
+  /**
+   * Writes the JSON summary, if one was requested, and returns whether that
+   * succeeded. Called on failure as well as success, so a caller can tell how
+   * far a failed capture got.
+   *
+   * @returns {Promise<boolean>}
+   */
+  async function saveSummary () {
+    if (!options.jsonSummaryOutput) {
+      return true
+    }
+
+    try {
+      const summary = JSON.stringify(await capture.summary(), null, 2)
+      await fs.writeFile(options.jsonSummaryOutput, summary)
+      capture.log.info(`${options.jsonSummaryOutput} saved to disk.`)
+      return true
+    } catch (err) {
+      capture.log.trace(err)
+      capture.log.error(`Something went wrong while saving ${options.jsonSummaryOutput} to disk (${formatErrorMessage(err)}). Use --log-level trace for details.`)
+      return false
+    }
+  }
 
   //
   // Process options
@@ -428,6 +474,8 @@ program.action(async (name, options, command) => {
     // Logs are handled by Scoop directly, unless `Scoop.capture` fails during initialization
     if (!capture) {
       console.error(err.message)
+    } else {
+      await saveSummary()
     }
     process.exit(1)
   }
@@ -464,6 +512,7 @@ program.action(async (name, options, command) => {
   } catch (err) {
     capture.log.trace(err)
     capture.log.error(`Something went wrong while preparing ${options.output} (${formatErrorMessage(err)}). Use --log-level trace for details.`)
+    await saveSummary()
     process.exit(1)
   }
 
@@ -476,24 +525,15 @@ program.action(async (name, options, command) => {
   } catch (err) {
     capture.log.trace(err)
     capture.log.error(`Something went wrong while saving ${options.output} to disk (${formatErrorMessage(err)}). Use --log-level trace for details.`)
+    await saveSummary()
     process.exit(1)
   }
 
   //
   // JSON summary (optional)
   //
-  if (options.jsonSummaryOutput) {
-    const jsonSummaryOutput = options.jsonSummaryOutput
-
-    try {
-      const summary = JSON.stringify(await capture.summary(), null, 2)
-      await fs.writeFile(jsonSummaryOutput, summary)
-      capture.log.info(`${jsonSummaryOutput} saved to disk.`)
-    } catch (err) {
-      capture.log.trace(err)
-      capture.log.error(`Something went wrong while saving ${jsonSummaryOutput} to disk (${formatErrorMessage(err)}). Use --log-level trace for details.`)
-      process.exit(1)
-    }
+  if (!await saveSummary()) {
+    process.exit(1)
   }
 
   //

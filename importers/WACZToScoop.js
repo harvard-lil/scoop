@@ -32,9 +32,8 @@ const parsers = {
 export async function WACZToScoop (zipPath) {
   const zip = new StreamZip.async({ file: zipPath }) // eslint-disable-line
   const datapackage = await getDataPackage(zip)
-  const options = datapackage.extras?.provenanceInfo?.options
-
-  const capture = new Scoop(datapackage.mainPageUrl, options)
+  // Archived options describe the original capture; they are not trusted runtime configuration.
+  const capture = Scoop.fromArchive(datapackage.mainPageUrl)
 
   Object.assign(capture, {
     // TODO: id assignment was skipped during the transition to js-wacz. To reconsider?

@@ -1,13 +1,14 @@
 import * as crypto from 'node:crypto'
 import { Transform } from 'node:stream'
-import { createServer } from '@harvard-lil/portal'
+import { createServer, requestUrl } from '@harvard-lil/portal'
 
 import { ScoopIntercepter } from './ScoopIntercepter.js'
 import { ScoopProxyExchange } from '../exchanges/index.js'
 import { searchBlocklistFor } from '../utils/blocklist.js'
+import { NetworkPolicy } from '../utils/network.js'
+import { MAX_HTTP_HEADER_SIZE } from '../constants.js'
 
 import http from 'http' // eslint-disable-line
-import net from 'net' // eslint-disable-line
 
 /**
  * @class ScoopProxy
@@ -24,6 +25,16 @@ export class ScoopProxy extends ScoopIntercepter {
   /** @type {ScoopProxyExchange[]} */
   exchanges = []
 
+  #networkPolicy
+
+  get networkPolicy () {
+    this.#networkPolicy ||= new NetworkPolicy(this.options.blocklist, (match, rule) => {
+      this.capture.log.warn(`Blocking ${match} matching rule ${rule}`)
+      this.capture.provenanceInfo.blockedRequests.push({ match, rule })
+    })
+    return this.#networkPolicy
+  }
+
   /**
    * Initializes the proxy server
    * @returns {Promise<void>}
@@ -33,6 +44,12 @@ export class ScoopProxy extends ScoopIntercepter {
       let connected = false
 
       this.#connection = createServer({
+        maxHeaderSize: MAX_HTTP_HEADER_SIZE,
+        authorizeRequest: (request, signal) => {
+          const target = requestUrl(request)
+          return this.networkPolicy.resolve(target, { signal })
+        },
+        verifyPeer: (socket, destination) => this.networkPolicy.verifyPeer(socket, destination),
         requestTransformer: this.requestTransformer.bind(this),
         responseTransformer: this.responseTransformer.bind(this),
         serverOptions: () => {
@@ -47,7 +64,6 @@ export class ScoopProxy extends ScoopIntercepter {
 
       this.#connection
         .on('request', this.onRequest.bind(this))
-        .on('connected', this.onConnected.bind(this))
         .on('response', this.onResponse.bind(this))
         .on('error', (err, serverRequest, clientRequest) => {
           // Special handling of EACCES/EADDRINUSE on init
@@ -58,6 +74,7 @@ export class ScoopProxy extends ScoopIntercepter {
           this.onError(err, serverRequest, clientRequest)
         })
         .listen(this.options.proxyPort, this.options.proxyHost, () => {
+          if (this.options.proxyPort === 0) this.options.proxyPort = this.#connection.address().port
           this.capture.log.info(`TCP-Proxy-Server started ${JSON.stringify(this.#connection.address())}`)
           connected = true
           resolve()
@@ -95,12 +112,14 @@ export class ScoopProxy extends ScoopIntercepter {
    * @returns {Promise<boolean>}
    */
   teardown () {
+    this.#networkPolicy?.close()
+    if (!this.#connection) return Promise.resolve(true)
     let closeTimeout = null
 
     return Promise.race([
       new Promise(resolve => {
         // server.close does not close keep-alive connections so do so here
-        this.#connection.closeAllConnections()
+        this.#connection.destroyConnections()
         this.#connection.close(() => {
           clearTimeout(closeTimeout)
           this.capture.log.info('TCP-Proxy-Server closed')
@@ -120,39 +139,13 @@ export class ScoopProxy extends ScoopIntercepter {
   /**
    * On request:
    * - Add to exchanges list (if currently recording exchanges)
-   * - Check request against blocklist, block if necessary
+   * Authorization occurs in the awaited pre-forwarding hook.
    *
    * @param {http.ClientRequest} request
    */
   onRequest (request) {
     if (this.recordExchanges) {
       this.exchanges.push(new ScoopProxyExchange({ requestParsed: request }))
-    }
-
-    const url = request.url.startsWith('/')
-      ? `https://${request.headers.host}${request.url}`
-      : request.url
-
-    const rule = this.findMatchingBlocklistRule(url)
-
-    if (rule) {
-      this.blockRequest(request, url, rule)
-    }
-  }
-
-  /**
-   * On connected:
-   * - Check against blocklist, block if necessary
-   *
-   * @param {net.Socket} serverSocket
-   * @param {http.ClientRequest} request
-   */
-  onConnected (serverSocket, request) {
-    const ip = serverSocket.remoteAddress
-    const rule = this.findMatchingBlocklistRule(ip)
-    if (rule) {
-      serverSocket.destroy()
-      this.blockRequest(request, ip, rule)
     }
   }
 
@@ -182,10 +175,13 @@ export class ScoopProxy extends ScoopIntercepter {
   onError (err, _serverRequest, clientRequest) {
     // Quietly suppress socket disconnection errors
     // when we have no way to send notice back to the client
-    if (!clientRequest) return
+    if (!clientRequest || clientRequest.socket.destroyed) return
 
     const CRLFx2 = '\r\n\r\n'
     switch (err.code) {
+      case 'ERR_NETWORK_POLICY':
+        clientRequest.socket.write('HTTP/1.1 403 Forbidden' + CRLFx2)
+        break
       case 'ETIMEDOUT':
         clientRequest.socket.write('HTTP/1.1 408 Request Timeout' + CRLFx2)
         break
@@ -227,21 +223,6 @@ export class ScoopProxy extends ScoopIntercepter {
     return this.capture.options.blocklist[
       this.capture.blocklist.findIndex(searchBlocklistFor(toMatch))
     ]
-  }
-
-  /**
-   * "Blocks" a request by writing HTTP 403 to request socket.
-   * @param {http.ClientRequest} request
-   * @param {string} match
-   * @param {object} rule
-   */
-  blockRequest (request, match, rule) {
-    request.socket.write(
-      'HTTP/1.1 403 Forbidden\r\n\r\n' +
-      `During capture, request for ${match} matched blocklist rule ${rule} and was blocked.`
-    )
-    this.capture.log.warn(`Blocking ${match} matching rule ${rule}`)
-    this.capture.provenanceInfo.blockedRequests.push({ match, rule })
   }
 
   /**

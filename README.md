@@ -83,7 +83,7 @@ Playback software such as [replayweb.page](https://replayweb.page/) can be used 
 ## Getting started
 
 ### Dependencies and requirements
-**Scoop** requires [Node.js 18+](https://nodejs.org/en/). 
+**Scoop** requires [Node.js 22+](https://nodejs.org/en/).
 
 Other _recommended_ system-level dependencies: 
 [curl](https://curl.se/), [python3](https://www.python.org/) (for `--capture-video-as-attachment` option).
@@ -92,6 +92,12 @@ While the amount of resources **Scoop** needs is entirely dependent on what is b
 
 ### Compatibility
 This program has been written for UNIX-like systems and is expected to work on **Linux, Mac OS, and Windows Subsystem for Linux**.
+
+### Chromium sandbox
+
+Chromium sandboxing is enabled by default. The host or container must support sandboxing. For Linux containers, use a non-root user and a compatible seccomp configuration; see [Playwright's Docker guidance](https://playwright.dev/docs/docker#crawling-and-scraping).
+
+To disable this protection explicitly, pass `--chromium-sandbox false` or set `chromiumSandbox: false` in the library options.
 
 ### Installation
 
@@ -112,7 +118,7 @@ sudo npx playwright install-deps chromium
   <summary><strong>Trouble installing the CLI?</strong></summary>
 
 
-- Make sure you are running Node.js 20-23 (`node -v`)
+- Make sure you are running Node.js 22 or later (`node -v`)
 - Permissions issues are a common when installing `npm` packages globally for the first time. 
 See [npm's documentation](https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally) for solutions.
 - On certain systems, using `install-deps` without the `chromium` argument might be necessary:
@@ -176,7 +182,7 @@ Options:
   -v, --version                                          Display Scoop and Scoop CLI version.
   -o, --output <string>                                  Output path. (default: "./archive.wacz")
   -f, --format <string>                                  Output format. (choices: "warc", "warc-gzipped", "wacz", "wacz-with-raw", default: "wacz")
-  --json-summary-output <string>                         If set, allows for saving a capture summary as JSON. Must be a path to .json file.
+  --json-summary-output <string>                         If set, allows for saving a capture summary as JSON. Must be a path to .json file. Written for failed captures too, whose summary has the FAILED state.
   --export-attachments-output <string>                   If set, allows for exporting attachments (screenshot, certs, ...). Must be a path to an existing directory.
   --signing-url <string>                                 Authsign-compatible endpoint for signing WACZ file.
   --signing-token <string>                               Authentication token to --signing-url, if needed.
@@ -195,6 +201,8 @@ Options:
   --capture-certificates-as-attachment-timeout <number>  Max time Scoop will wait for the certificates capture process to complete, in ms. (default: 10000)
   --capture-window-x <number>                            Width of the browser window Scoop will open to capture, in pixels. (default: 1600)
   --capture-window-y <number>                            Height of the browser window Scoop will open to capture, in pixels. (default: 900)
+  --screenshot-max-width <number>                        Clip full-page screenshots to this width, in pixels. 0 means no limit. (default: 0)
+  --screenshot-max-height <number>                       Clip full-page screenshots to this height, in pixels. 0 means no limit. (default: 0)
   --max-capture-size <number>                            Size limit for the capture's exchanges list, in bytes. (default: 209715200)
   --max-video-capture-size <number>                      Size limit for the video attachment, in bytes. Scoop will not capture video attachments larger than this. (default: 209715200)
   --auto-scroll <bool>                                   Should Scoop try to scroll through the page? (choices: "true", "false", default: "true")
@@ -202,6 +210,7 @@ Options:
   --grab-secondary-resources <bool>                      Should Scoop try to download img srcsets and secondary stylesheets? (choices: "true", "false", default: "true")
   --run-site-specific-behaviors <bool>                   Should Scoop run site-specific capture behaviors? (via: browsertrix-behaviors) (choices: "true", "false", default: "true")
   --headless <bool>                                      Should Chrome run in headless mode? (choices: "true", "false", default: "true")
+  --chromium-sandbox <bool>                              Enable Chromium sandboxing (requires a compatible host or worker image). (choices: "true", "false", default: "true")
   --user-agent-suffix <string>                           If provided, will be appended to Chrome's user agent. (default: "")
   --blocklist <string>                                   If set, replaces Scoop's default list of url patterns and IP ranges Scoop should not capture. Comma-separated. Example: "/https?://localhost/,0.0.0.0/8,10.0.0.0".
   --intercepter <string>                                 ScoopIntercepter class to be used to intercept network exchanges. (default: "ScoopProxy")

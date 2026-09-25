@@ -51,3 +51,9 @@ test('filterOptions ytDlpPath must be a valid path to a file.', async (_t) => {
     assert.throws(() => filterOptions({ ytDlpPath }))
   }
 })
+
+test('Chromium sandboxing defaults to enabled and accepts an explicit operator choice', () => {
+  assert.equal(filterOptions().chromiumSandbox, true)
+  assert.equal(filterOptions({ chromiumSandbox: true }).chromiumSandbox, true)
+  assert.equal(filterOptions({ chromiumSandbox: false }).chromiumSandbox, false)
+})

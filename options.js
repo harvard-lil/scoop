@@ -24,6 +24,8 @@ export const defaults = {
 
   captureWindowX: 1600,
   captureWindowY: 900,
+  screenshotMaxWidth: 0,
+  screenshotMaxHeight: 0,
 
   maxCaptureSize: 200 * 1024 * 1024,
   maxVideoCaptureSize: 200 * 1024 * 1024,
@@ -34,6 +36,7 @@ export const defaults = {
   runSiteSpecificBehaviors: true,
 
   headless: true,
+  chromiumSandbox: true,
   userAgentSuffix: '',
 
   blocklist: [
