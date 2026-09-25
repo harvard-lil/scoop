@@ -9,6 +9,7 @@ import StreamZip from 'node-stream-zip'
 import { Scoop } from '../Scoop.js'
 import { ScoopProxyExchange, ScoopGeneratedExchange } from '../exchanges/index.js'
 import { EXCHANGE_ID_HEADER_LABEL, EXCHANGE_DESCRIPTION_HEADER_LABEL } from '../constants.js'
+import { parseRawResourceDate } from '../exporters/rawResourceName.js'
 
 const parsers = {
   request: (data) => new Promise(resolve =>
@@ -131,7 +132,7 @@ const getExchanges = async (zip) => {
 
         return {
           id,
-          date: new Date(date),
+          date: parseRawResourceDate(date),
           [`${type}Raw`]: combined,
           [`${type}Parsed`]: await parsers[type](combined)
         }
