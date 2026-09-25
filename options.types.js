@@ -33,7 +33,7 @@
  * @property {boolean} runSiteSpecificBehaviors=true - Should Scoop run site-specific capture behaviors? (via: browsertrix-behaviors)
  *
  * @property {boolean} headless=true - Should Playwright run in headless mode?
- * @property {boolean} chromiumSandbox=false - Enable Chromium's internal sandbox. Operator setting; requires a compatible host or worker image. Launch failure does not retry without the sandbox.
+ * @property {boolean} chromiumSandbox=true - Enable Chromium's internal sandbox. Operator setting; requires a compatible host or worker image. Launch failure does not retry without the sandbox.
  * @property {string} userAgentSuffix="" - String to append to the user agent.
  *
  * @property {string[]} blocklist - A list of patterns to be matched against each request's URL and IP address and subsequently blocked during capture. Valid entries include url strings, CIDR strings, and regular expressions in string form.
