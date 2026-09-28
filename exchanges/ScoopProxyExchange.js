@@ -1,6 +1,6 @@
 /// <reference path="./ScoopExchange.types.js" />
 
-import { getBody } from '../utils/http.js'
+import { getBody, responseBodyStartIndex } from '../utils/http.js'
 
 import { ScoopExchange } from './ScoopExchange.js'
 
@@ -171,12 +171,14 @@ export class ScoopProxyExchange extends ScoopExchange {
 
   /** @type {?ScoopExchange~Message} */
   get response () {
-    // TODO: figure out why this.responseRaw may sometimes be an empty buffer of length 0
-    if (!this._response && this.responseRaw?.length) {
+    if (!this._response && this.responseParsed && this.responseRaw?.length) {
+      const bodyStart = responseBodyStartIndex(this.responseRaw)
+      if (bodyStart === -1) return undefined
       this.response = {
         startLine: `HTTP/${this.responseParsed.httpVersion} ${this.responseParsed.statusCode} ${this.responseParsed.statusMessage}`,
         headers: new Headers(this.responseParsed.headers),
-        body: getBody(this.responseRaw),
+        // Keep transfer framing and content encoding exactly as captured.
+        body: this.responseRaw.subarray(bodyStart),
         bodyCombined: this.responseParsed.body
       }
     }

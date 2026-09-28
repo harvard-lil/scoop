@@ -9,20 +9,51 @@ import StreamZip from 'node-stream-zip'
 import { Scoop } from '../Scoop.js'
 import { ScoopProxyExchange, ScoopGeneratedExchange } from '../exchanges/index.js'
 import { EXCHANGE_ID_HEADER_LABEL, EXCHANGE_DESCRIPTION_HEADER_LABEL } from '../constants.js'
-import { parseRawResourceDate } from '../exporters/rawResourceName.js'
+import { parseRawResourceDate, parseRawResourceDigest } from '../exporters/rawResourceName.js'
+import { bodyStartIndex, responseBodyStartIndex } from '../utils/http.js'
 
 const parsers = {
-  request: (data) => new Promise(resolve =>
-    createServer()
-      .on('request', resolve)
-      .on('connection', stream => stream.write(data))
-      .emit('connection', new PassThrough())
-  ),
-  response: (data) => new Promise(resolve =>
-    request({ createConnection: () => new PassThrough() })
-      .on('socket', stream => stream.write(data))
-      .on('response', resolve)
-  )
+  request: (data) => {
+    if (bodyStartIndex(data) === -1) return undefined
+    return new Promise(resolve => {
+      const stream = new PassThrough()
+      stream.once('close', () => resolve(undefined))
+      const unsupportedRequest = () => {
+        stream.destroy()
+        resolve(undefined)
+      }
+      createServer()
+        .once('request', message => {
+          message.on('error', () => {})
+          resolve(message)
+        })
+        .once('connect', unsupportedRequest)
+        .once('upgrade', unsupportedRequest)
+        .once('clientError', unsupportedRequest)
+        .emit('connection', stream)
+      stream.end(data)
+    })
+  },
+  response: (data) => {
+    // An archive is finite: an informational or truncated header block will
+    // never acquire a final response. Preserve its raw bytes without metadata.
+    if (responseBodyStartIndex(data) === -1) return undefined
+    return new Promise(resolve => {
+      request({ createConnection: () => new PassThrough() })
+        .once('socket', stream => stream.end(data))
+        .once('error', () => resolve(undefined))
+        .once('upgrade', (_response, stream) => {
+          // Upgrade traffic has no ordinary final HTTP response to reconstruct.
+          stream.destroy()
+          resolve(undefined)
+        })
+        .once('response', response => {
+          // Truncated payloads can emit an error after headers were parsed.
+          response.on('error', () => {})
+          resolve(response)
+        })
+    })
+  }
 }
 
 /**
@@ -32,24 +63,27 @@ const parsers = {
  */
 export async function WACZToScoop (zipPath) {
   const zip = new StreamZip.async({ file: zipPath }) // eslint-disable-line
-  const datapackage = await getDataPackage(zip)
-  // Archived options describe the original capture; they are not trusted runtime configuration.
-  const capture = Scoop.fromArchive(datapackage.mainPageUrl)
+  try {
+    const datapackage = await getDataPackage(zip)
+    // Archived options describe the original capture; they are not trusted runtime configuration.
+    const capture = Scoop.fromArchive(datapackage.mainPageUrl)
 
-  Object.assign(capture, {
-    // TODO: id assignment was skipped during the transition to js-wacz. To reconsider?
-    startedAt: new Date(datapackage.mainPageDate),
-    exchanges: await getExchanges(zip),
-    state: Scoop.states.RECONSTRUCTED
-  })
+    Object.assign(capture, {
+      // TODO: id assignment was skipped during the transition to js-wacz. To reconsider?
+      startedAt: new Date(datapackage.mainPageDate),
+      exchanges: await getExchanges(zip, capture.log),
+      state: Scoop.states.RECONSTRUCTED
+    })
 
-  // Only set `provenanceInfo` if available.
-  if (datapackage?.extras?.provenanceInfo) {
-    capture.provenanceInfo = datapackage?.extras?.provenanceInfo
+    // Only set `provenanceInfo` if available.
+    if (datapackage?.extras?.provenanceInfo) {
+      capture.provenanceInfo = datapackage?.extras?.provenanceInfo
+    }
+
+    return capture
+  } finally {
+    await zip.close()
   }
-
-  await zip.close()
-  return capture
 }
 
 /**
@@ -68,10 +102,11 @@ const getDataPackage = async (zip) => {
  * them into ScoopProxyExchanges
  *
  * @param {StreamZipAsync} zip
+ * @param {object} log - Capture logger
  * @returns {ScoopProxyExchange[]} an array of reconstructed ScoopProxyExchanges
  * @private
  */
-const getExchanges = async (zip) => {
+const getExchanges = async (zip, log) => {
   const exchanges = []
   const generatedExchanges = []
 
@@ -84,8 +119,7 @@ const getExchanges = async (zip) => {
   }, {})
 
   const warcEntriesByDigest = {}
-  const rawPayloadDigests = zipDirs.raw.map(name => path.basename(name).split('_')[3])
-    .filter(digest => digest)
+  const rawPayloadDigests = new Set(zipDirs.raw.map(parseRawResourceDigest).filter(Boolean))
 
   for (const name of zipDirs.archive) {
     const zipData = await zip.entryData(name)
@@ -94,7 +128,7 @@ const getExchanges = async (zip) => {
     for await (const record of warc) {
       // Get data for rehydrating regular exchanges
       const digest = record.warcHeader('WARC-Payload-Digest')
-      if (rawPayloadDigests.includes(digest)) {
+      if (rawPayloadDigests.has(digest)) {
         warcEntriesByDigest[digest] = Buffer.from(await record.readFully(false))
       }
 
@@ -120,21 +154,26 @@ const getExchanges = async (zip) => {
     zipDirs.raw
       // get the data from the zip and shape it for exchange initialization
       .map(async (name) => {
-        const [type, date, id, warcPayloadDigest] = path.basename(name).split('_')
+        const [type, date, id] = path.basename(name).split('_')
+        const warcPayloadDigest = parseRawResourceDigest(name)
         const buffers = [await zip.entryData(name)]
         // if the file name contains a warc payload digest and there's a matching
         // record from the warc file, append it to the headers
-        if (warcEntriesByDigest[warcPayloadDigest]) {
+        const missingPayload = warcPayloadDigest && !warcEntriesByDigest[warcPayloadDigest]
+        if (missingPayload) {
+          log.warn(`Missing WARC payload for ${name}; preserving the available raw bytes without parsed metadata.`)
+        } else if (warcPayloadDigest) {
           buffers.push(warcEntriesByDigest[warcPayloadDigest])
         }
 
         const combined = Buffer.concat(buffers)
+        const parsed = missingPayload ? undefined : await parsers[type](combined)
 
         return {
           id,
           date: parseRawResourceDate(date),
           [`${type}Raw`]: combined,
-          [`${type}Parsed`]: await parsers[type](combined)
+          ...(parsed ? { [`${type}Parsed`]: parsed } : {})
         }
       })
   )

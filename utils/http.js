@@ -1,5 +1,6 @@
 import zlib from 'node:zlib'
 import { promisify } from 'util'
+import { MAX_HTTP_HEADER_SIZE } from '../constants.js'
 
 const inflate = promisify(zlib.inflate)
 const gunzip = promisify(zlib.gunzip)
@@ -40,12 +41,44 @@ export function bodyStartIndex (buffer) {
 }
 
 /**
+ * Locates the final response body after any informational header blocks.
+ * Informational responses have no body. A 101 terminates HTTP parsing rather
+ * than introducing another response. Never scan payload bytes for headers.
  *
- * @param {any} buffer -
- * @returns {any} -
+ * @param {Buffer} buffer - Captured HTTP responses in wire order
+ * @returns {number} Body offset, or -1 if the final headers are incomplete
  */
-export function getHead (buffer) {
-  return buffer.subarray(0, bodyStartIndex(buffer))
+export function responseBodyStartIndex (buffer) {
+  let offset = 0
+  while (offset < buffer.length) {
+    // Only locate boundaries here: Node validates the HTTP metadata. Keep the
+    // scan bounded and accept leading blank lines in older raw archives.
+    const remaining = buffer.subarray(offset, offset + MAX_HTTP_HEADER_SIZE)
+    let position = 0
+    let code
+    let end = -1
+    while (position < remaining.length) {
+      const newline = remaining.indexOf(LF, position)
+      if (newline === -1) return -1
+      const lineEnd = remaining[newline - 1] === 13 ? newline - 1 : newline
+      const line = remaining.subarray(position, lineEnd).toString('latin1')
+      position = newline + 1
+      if (code === undefined) {
+        if (!line) continue
+        const status = /^HTTP\/1\.[01] ([0-9]{3})(?: |$)/.exec(line)
+        if (!status) return -1
+        code = Number(status[1])
+        if (code < 100) return -1
+      } else if (!line) {
+        end = position
+        break
+      }
+    }
+    if (end === -1) return -1
+    offset += end
+    if (code === 101 || code >= 200) return offset
+  }
+  return -1
 }
 
 /**

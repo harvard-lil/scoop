@@ -7,7 +7,6 @@ import { WARCParser } from 'warcio'
 
 import { Scoop } from '../Scoop.js'
 import * as CONSTANTS from '../constants.js'
-import { getHead } from '../utils/http.js'
 import { formatErrorMessage } from '../utils/formatErrorMessage.js'
 import { ScoopGeneratedExchange } from '../exchanges/ScoopGeneratedExchange.js'
 import { ScoopExchange } from '../exchanges/ScoopExchange.js' // eslint-disable-line
@@ -162,13 +161,13 @@ export async function scoopToWACZ (capture, includeRaw = false, signingServer) {
     try {
       const stream = createReadStream(warcPath)
       const parser = new WARCParser(stream)
-      const warcPayloadDigests = []
+      const warcPayloadDigests = new Set()
 
       // Compiles a list of payload digests to match against below
       for await (const record of parser) {
         const digest = record.warcHeader('WARC-Payload-Digest')
         if (digest) {
-          warcPayloadDigests.push(digest)
+          warcPayloadDigests.add(digest)
         }
       }
 
@@ -181,14 +180,18 @@ export async function scoopToWACZ (capture, includeRaw = false, signingServer) {
             continue
           }
 
-          const dataHash = await transformer.sha256(data)
-          const destination = rawResourceName(type, exchange.date, exchange.id)
+          const body = exchange[type]?.body
+          const bodyStart = body ? data.length - body.length : -1
+          // An explicitly replaced body may differ from the captured raw bytes.
+          const digest = body?.length && bodyStart >= 0 && data.subarray(bodyStart).equals(body)
+            ? await transformer.sha256(body)
+            : undefined
+          const deduplicate = digest && warcPayloadDigests.has(digest)
+          const destination = rawResourceName(type, exchange.date, exchange.id, deduplicate ? digest : undefined)
 
-          if (warcPayloadDigests.includes(dataHash)) {
-            await transformer.addFileToZip(getHead(data), destination) // Add only the head and trailing CRLF
-          } else {
-            await transformer.addFileToZip(data, destination)
-          }
+          // Keep every informational header block AND the final headers. The
+          // suffix identifies the WARC payload to append when importing.
+          await transformer.addFileToZip(deduplicate ? data.subarray(0, bodyStart) : data, destination)
         }
       }
     } catch (err) {

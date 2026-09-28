@@ -1,6 +1,8 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { Readable } from 'node:stream'
+import { Readable, PassThrough } from 'node:stream'
+import { ScoopProxyExchange } from '../exchanges/ScoopProxyExchange.js'
+import { testDefaults } from '../options.js'
 import { promisify } from 'util'
 import zlib from 'zlib'
 
@@ -73,3 +75,34 @@ test('scoopToWARC\'s gzip option is properly taken into account.', async (_t) =>
   const inflated = await gunzip(deflated) // Would throw if not valid GZIP
   assert.equal(inflated.byteLength, raw.byteLength)
 })
+
+test('parsed responses with unlocatable raw headers are reported instead of silently omitted', async t => {
+  const capture = new Scoop('https://example.com/', testDefaults)
+  capture.state = Scoop.states.COMPLETE
+  capture.exchanges.push(new ScoopProxyExchange({
+    url: capture.url,
+    responseRaw: Buffer.from('invalid response\r\n\r\n'),
+    responseParsed: new PassThrough()
+  }))
+  const warn = t.mock.method(capture.log, 'warn', () => {})
+  await capture.toWARC()
+  assert.equal(warn.mock.callCount(), 1)
+  assert.match(warn.mock.calls[0].arguments[0], /Could not locate final response headers/)
+})
+
+for (const responseRaw of [Buffer.alloc(0), Buffer.from('invalid response\r\n\r\n')]) {
+  test(`missing response diagnostics are safe, accurate and emitted once (raw=${responseRaw.length})`, async t => {
+    const capture = new Scoop('https://example.com/', testDefaults)
+    capture.state = Scoop.states.COMPLETE
+    const requestParsed = Object.assign(new PassThrough(), { method: 'OPTIONS', url: '*', headers: {} })
+    capture.exchanges.push(new ScoopProxyExchange({ requestParsed, responseParsed: new PassThrough(), responseRaw }))
+    capture.addGeneratedExchange('file:///following.txt', new Headers(), Buffer.from('keep'))
+    const warn = t.mock.method(capture.log, 'warn', () => {})
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const output = await capture.toWARC()
+      assert.ok(Buffer.from(output).includes('keep'))
+    }
+    assert.equal(warn.mock.callCount(), 1)
+    assert.doesNotMatch(warn.mock.calls[0].arguments[0], /retaining raw/)
+  })
+}

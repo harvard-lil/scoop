@@ -6,6 +6,8 @@ import * as CONSTANTS from '../constants.js'
 import { Scoop } from '../Scoop.js'
 import { ScoopGeneratedExchange } from '../exchanges/index.js'
 
+const reportedMissingResponses = new WeakSet()
+
 // warcio needs the crypto utils suite as a global, but does not import it.
 // Node JS 19+ automatically imports webcrypto as globalThis.crypto.
 if (!globalThis.crypto) {
@@ -55,9 +57,14 @@ export async function scoopToWARC (capture, gzip = false) {
   for (const exchange of capture.exchanges) {
     // Ignore loose requests
     if (!exchange.response) {
+      if (exchange.responseParsed && !reportedMissingResponses.has(exchange)) {
+        reportedMissingResponses.add(exchange)
+        capture.log.warn(`Could not locate final response headers for exchange ${exchange.id}; skipping its WARC records.`)
+      }
       continue
     }
 
+    reportedMissingResponses.delete(exchange)
     for (const type of ['request', 'response']) {
       const msg = exchange[type]
       // Ignore empty records

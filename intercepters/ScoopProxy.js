@@ -26,6 +26,8 @@ export class ScoopProxy extends ScoopIntercepter {
   exchanges = []
 
   #networkPolicy
+  #closing = false
+  #reportedIncomplete = new WeakSet()
 
   get networkPolicy () {
     this.#networkPolicy ||= new NetworkPolicy(this.options.blocklist, (match, rule) => {
@@ -40,6 +42,7 @@ export class ScoopProxy extends ScoopIntercepter {
    * @returns {Promise<void>}
    */
   setup () {
+    this.#closing = false
     return new Promise((resolve, reject) => {
       let connected = false
 
@@ -112,6 +115,7 @@ export class ScoopProxy extends ScoopIntercepter {
    * @returns {Promise<boolean>}
    */
   teardown () {
+    this.#closing = true
     this.#networkPolicy?.close()
     if (!this.#connection) return Promise.resolve(true)
     let closeTimeout = null
@@ -173,6 +177,13 @@ export class ScoopProxy extends ScoopIntercepter {
    * @returns {void}
    */
   onError (err, _serverRequest, clientRequest) {
+    const exchange = this.exchanges.find(ex => ex.requestParsed === clientRequest)
+    if (!this.#closing && err.code !== 'ERR_NETWORK_POLICY' && exchange?.responseRaw.length && !exchange.responseParsed && !this.#reportedIncomplete.has(exchange)) {
+      this.#reportedIncomplete.add(exchange)
+      this.capture.log.warn(`No final response received for exchange ${exchange.id} after response bytes were captured.`)
+      this.capture.log.trace(err)
+    }
+
     // Quietly suppress socket disconnection errors
     // when we have no way to send notice back to the client
     if (!clientRequest || clientRequest.socket.destroyed) return

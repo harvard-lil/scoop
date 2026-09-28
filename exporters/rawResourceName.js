@@ -1,6 +1,6 @@
 /**
  * Builds the ZIP resource name for a raw HTTP exchange:
- * `raw/<type>_<timestamp>_<id>`.
+ * `raw/<type>_<timestamp>_<id>[_<payload-digest>]`.
  *
  * The timestamp is the exchange's date as 17 digits, `YYYYMMDDhhmmssSSS`, in
  * UTC: the web-archiving convention for timestamps in file names (the 14-digit
@@ -11,11 +11,12 @@
  * @param {'request'|'response'} type - Raw exchange type.
  * @param {Date} date - Exchange timestamp.
  * @param {string} id - Exchange identifier.
+ * @param {string} [payloadDigest] - WARC payload referenced by a header-only raw file.
  * @returns {string} WACZ resource name.
  */
-export function rawResourceName (type, date, id) {
+export function rawResourceName (type, date, id, payloadDigest) {
   const timestamp = date.toISOString().replace(/[^\d]/g, '')
-  return `raw/${type}_${timestamp}_${id}`
+  return `raw/${type}_${timestamp}_${id}${payloadDigest ? `_${payloadDigest.replace(':', '-')}` : ''}`
 }
 
 /**
@@ -41,4 +42,15 @@ export function parseRawResourceDate (value) {
     return new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds, milliseconds))
   }
   return new Date(value)
+}
+
+/**
+ * Reads a referenced WARC payload digest from a raw resource name.
+ * Accepts both the current hyphen separator and the legacy colon separator.
+ *
+ * @param {string} name - Raw resource name.
+ * @returns {string|undefined} Referenced payload digest, if present.
+ */
+export function parseRawResourceDigest (name) {
+  return name.split('/').pop().split('_')[3]?.replace(/^(sha\d+)-/, '$1:')
 }

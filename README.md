@@ -398,6 +398,10 @@ flowchart LR
 
 The `includeRaw` option of `Scoop.toWACZ()` allows for adding a folder named _"raw"_ in the WACZ file, which contains a copy of unprocessed HTTP exchanges coming directly from Scoop's HTTP proxy.
 
+WARC response records contain the final HTTP response, excluding preceding informational responses such as `103 Early Hints`. This is also true of the WARC inside a WACZ, regardless of `includeRaw`. Use `includeRaw: true` to retain captured informational responses together with the final response in the raw data. With `includeRaw: false`, informational responses are not separately preserved.
+
+If a connection ends after response bytes were captured but before the final response headers arrive, Scoop retains those bytes and logs the missing final response without interrupting the capture of other resources. Policy denials and intentional proxy shutdown do not produce this diagnostic. It does not export a final WARC response for that exchange; importing its raw data preserves the bytes without fabricating final response metadata. Portal forwards complete header blocks, so a truncated header block still buffered inside Portal is not available in Scoop's raw data. Import also preserves unsupported tunnel/upgrade requests as raw bytes without waiting for ordinary HTTP request events; this does not add WebSocket capture support. If a referenced WARC payload is missing, import reports it and preserves the available bytes without parsed metadata, while recovering the other exchanges.
+
 This feature may be used to preserve finer elements that would otherwise be lost, such as ill-formed HTTP headers, and could be relevant in certain contexts such as forensic analysis.
 
 In order to prevent unnecessary use of storage, Scoop only keeps in _"/raw"_ the contents of exchanges it assesses are presented differently in WARCs. 

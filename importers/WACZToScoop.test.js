@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Readable } from 'node:stream'
 import net from 'node:net'
+import { createHash } from 'node:crypto'
 
 import AdmZip from 'adm-zip'
 import { WARCParser } from 'warcio'
@@ -135,3 +136,109 @@ test('raw exchanges keep their dates from 17-digit and legacy ISO resource names
     assert.equal(capture.exchanges[0].date.toISOString(), date, rawTimestamp)
   }
 })
+
+for (const raw of [
+  '',
+  'HTTP/1.1 103 Early Hints\r\nLink: </style.css>\r\n\r\n',
+  'HTTP/1.1 103 Early Hints\r\n\r\nHTTP/1.1 200 OK\r\nContent-Length:',
+  'HTTP/1.1 200 OK\r\nInvalid Header\r\n\r\n',
+  'HTTP/1.1 101 Switching Protocols\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n\r\nHTTP/1.1 200 OK\r\n\r\nopaque'
+]) {
+  test(`incomplete or invalid archived response settles and preserves raw bytes (${JSON.stringify(raw)})`, { timeout: 2000 }, async t => {
+    const zipPath = await archiveFixture(t)
+    const zip = new AdmZip(zipPath)
+    zip.deleteFile(`raw/response_${date}_${exchangeId}`)
+    zip.addFile(`raw/response_${date}_${exchangeId}`, Buffer.from(raw))
+    zip.writeZip(zipPath)
+    const capture = await Scoop.fromWACZ(zipPath)
+    assert.deepEqual(capture.exchanges[0].responseRaw, Buffer.from(raw))
+    assert.ok(!capture.exchanges[0].response)
+  })
+}
+
+test('a missing WARC payload preserves available bytes and the other exchanges', async t => {
+  const zipPath = await archiveFixture(t)
+  const zip = new AdmZip(zipPath)
+  zip.deleteFile(`raw/response_${date}_${exchangeId}`)
+  zip.addFile(`raw/response_${date}_${exchangeId}_sha256-${'a'.repeat(64)}`, Buffer.from('HTTP/1.1 200 OK\r\n\r\n'))
+  zip.writeZip(zipPath)
+  const goodId = '16bc30f6-69ac-49df-aa19-2a015f698e09'
+  zip.addFile(`raw/request_${date}_${goodId}`, requestRaw)
+  zip.addFile(`raw/response_${date}_${goodId}`, responseRaw)
+  zip.writeZip(zipPath)
+  const capture = await Scoop.fromWACZ(zipPath)
+  const incomplete = capture.exchanges.find(exchange => exchange.id === exchangeId)
+  const complete = capture.exchanges.find(exchange => exchange.id === goodId)
+  assert.deepEqual(incomplete.responseRaw, Buffer.from('HTTP/1.1 200 OK\r\n\r\n'))
+  assert.ok(!incomplete.response)
+  assert.deepEqual(complete.response.body, Buffer.from('fixture'))
+  const records = []
+  for await (const record of new WARCParser(Readable.from(Buffer.from(await capture.toWARC())))) {
+    if (record.warcType === 'response') records.push(Buffer.from(await record.readFully(false)))
+  }
+  assert.deepEqual(records, [Buffer.from('fixture')])
+})
+
+for (const raw of ['', 'GET / HTTP/1.1\r\nHost:', 'invalid request\r\n\r\n']) {
+  test(`incomplete archived requests settle without losing raw bytes (${JSON.stringify(raw)})`, { timeout: 2000 }, async t => {
+    const zipPath = await archiveFixture(t)
+    const zip = new AdmZip(zipPath)
+    zip.deleteFile(`raw/request_${date}_${exchangeId}`)
+    zip.addFile(`raw/request_${date}_${exchangeId}`, Buffer.from(raw))
+    zip.writeZip(zipPath)
+    const capture = await Scoop.fromWACZ(zipPath)
+    assert.deepEqual(capture.exchanges[0].requestRaw, Buffer.from(raw))
+    assert.ok(!capture.exchanges[0].request)
+    assert.deepEqual(capture.exchanges[0].response.body, Buffer.from('fixture'))
+  })
+}
+
+for (const separator of [':', '-']) {
+  test(`raw payload references with ${separator} restore all informational and final headers`, async t => {
+    const zipPath = await archiveFixture(t)
+    const zip = new AdmZip(zipPath)
+    const digest = createHash('sha256').update('fixture').digest('hex')
+    const head = Buffer.from('HTTP/1.1 103 Early Hints\r\n\r\n' + responseRaw.toString().slice(0, -7))
+    const warc = zip.readFile('archive/data.warc').toString().replace('WARC-Type: response', `WARC-Payload-Digest: sha256:${digest}\r\nWARC-Type: response`)
+    zip.updateFile('archive/data.warc', Buffer.from(warc))
+    zip.deleteFile(`raw/response_${date}_${exchangeId}`)
+    zip.addFile(`raw/response_${date}_${exchangeId}_sha256${separator}${digest}`, head)
+    zip.writeZip(zipPath)
+    const capture = await Scoop.fromWACZ(zipPath)
+    assert.deepEqual(capture.exchanges[0].responseRaw, Buffer.concat([head, Buffer.from('fixture')]))
+    assert.deepEqual(capture.exchanges[0].response.body, Buffer.from('fixture'))
+  })
+}
+
+for (const prefix of ['\r\n', '\r\n\r\n', '\r\nHTTP/1.1 103 Early Hints\r\n\r\n\r\n']) {
+  test(`historical responses with leading blank lines survive import and re-export (${JSON.stringify(prefix)})`, async t => {
+    const zipPath = await archiveFixture(t)
+    const zip = new AdmZip(zipPath)
+    const raw = Buffer.concat([Buffer.from(prefix), responseRaw])
+    zip.updateFile(`raw/response_${date}_${exchangeId}`, raw)
+    zip.writeZip(zipPath)
+    const capture = await Scoop.fromWACZ(zipPath)
+    assert.deepEqual(capture.exchanges[0].responseRaw, raw)
+    assert.deepEqual(capture.exchanges[0].response?.body, Buffer.from('fixture'))
+    const records = []
+    for await (const record of new WARCParser(Readable.from(Buffer.from(await capture.toWARC())))) {
+      if (record.warcType === 'response') records.push(Buffer.from(await record.readFully(false)))
+    }
+    assert.deepEqual(records, [Buffer.from('fixture')])
+  })
+}
+
+for (const raw of [
+  'CONNECT example.com:443 HTTP/1.1\r\nHost: example.com:443\r\n\r\n',
+  'GET / HTTP/1.1\r\nHost: example.com\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n\r\n'
+]) {
+  test(`archived tunnel and upgrade requests settle (${raw.split(' ')[0]})`, { timeout: 2000 }, async t => {
+    const zipPath = await archiveFixture(t)
+    const zip = new AdmZip(zipPath)
+    zip.updateFile(`raw/request_${date}_${exchangeId}`, Buffer.from(raw))
+    zip.writeZip(zipPath)
+    t.mock.method(net.Socket.prototype, 'connect', () => assert.fail('Import opened a network connection'))
+    const capture = await Scoop.fromWACZ(zipPath)
+    assert.deepEqual(capture.exchanges[0].requestRaw, Buffer.from(raw))
+  })
+}

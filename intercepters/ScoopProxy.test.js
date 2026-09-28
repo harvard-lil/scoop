@@ -194,3 +194,30 @@ test('ScoopProxy captures a page whose response headers exceed Node\'s default 1
   assert.equal(page.response.headers.get('Content-Security-Policy'), csp)
   assert.ok(Buffer.from(await capture.toWARC()).includes(csp))
 })
+
+test('a final parsed response is not reported missing while its raw headers are queued', t => {
+  const capture = new Scoop(NON_BLOCKLISTED_URL, testDefaults)
+  capture.state = Scoop.states.CAPTURE
+  const request = Object.assign(new PassThrough(), { url: NON_BLOCKLISTED_URL, socket: { destroyed: true } })
+  capture.intercepter.onRequest(request)
+  const exchange = capture.intercepter.exchanges[0]
+  exchange.responseRaw = Buffer.from('HTTP/1.1 103 Early Hints\r\n\r\n')
+  exchange.responseParsed = Object.assign(new PassThrough(), { httpVersion: '1.1', statusCode: 200, statusMessage: 'OK', headers: {} })
+  const warn = t.mock.method(capture.log, 'warn', () => {})
+  capture.intercepter.onError(new Error('Connection cancelled'), undefined, request)
+  assert.equal(warn.mock.callCount(), 0)
+  assert.equal(capture.state, Scoop.states.CAPTURE)
+  assert.equal(capture.intercepter.recordExchanges, true)
+})
+
+test('error diagnostics do not parse an OPTIONS asterisk target or warn about a policy denial', t => {
+  const capture = new Scoop(NON_BLOCKLISTED_URL, testDefaults)
+  const request = Object.assign(new PassThrough(), { method: 'OPTIONS', url: '*', headers: { host: 'example.com' }, socket: { destroyed: true } })
+  capture.intercepter.onRequest(request)
+  const warn = t.mock.method(capture.log, 'warn', () => {})
+  assert.doesNotThrow(() => capture.intercepter.onError(new Error('ECONNREFUSED'), undefined, request))
+  assert.equal(warn.mock.callCount(), 0)
+  capture.intercepter.exchanges[0].responseRaw = Buffer.from('HTTP/1.1 103 Early Hints\r\n\r\n')
+  capture.intercepter.onError(Object.assign(new Error('Blocked'), { code: 'ERR_NETWORK_POLICY' }), undefined, request)
+  assert.equal(warn.mock.callCount(), 0)
+})
